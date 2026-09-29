@@ -88,6 +88,11 @@ header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
 .signal .name { font-size: 17px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
 .signal .state { font-size: 12px; color: var(--text-secondary); margin: 2px 0 4px; }
 .signal .why { font-size: 12px; color: var(--text-muted); }
+.signal .rule { list-style: none; margin: 8px 0 0; padding: 8px 0 0; border-top: 1px dashed var(--border); font-size: 11.5px; color: var(--text-secondary); }
+.signal > span:last-child { flex: 1; min-width: 0; }
+.signal .rule li { margin: 1px 0; }
+.signal .rule i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
+.signal .rule .r { background: #d03b3b; } .signal .rule .y { background: #fab219; } .signal .rule .g { background: #0ca30c; }
 @media (max-width: 720px) { .signals { grid-template-columns: 1fr; } }
 .toolbar { display: flex; gap: 8px; align-items: center; margin: 24px 0 16px; flex-wrap: wrap; }
 .toolbar span { color: var(--text-muted); font-size: 13px; margin-right: 4px; }
@@ -388,13 +393,15 @@ function renderSignals() {
   const c1 = up >= 3, c2 = cl >= 23;
   out.push({ id: "chart-claims", name: "初領失業金四周均值",
     level: c1 && c2 ? "red" : (c1 || c2 ? "yellow" : "green"),
-    why: `${cl.toFixed(2)} 萬（警戒 23 萬）；月均連升 ${up} 個月（警戒 ≥3）` });
+    why: `${cl.toFixed(2)} 萬（警戒 23 萬）；月均連升 ${up} 個月（警戒 ≥3）`,
+    rule: [["r", "警示：月均連升 ≥3 個月，且 ≥23 萬"], ["y", "注意：兩項成立其一"], ["g", "正常：兩項皆不成立"]] });
 
   // ② 非農三個月均值：< 1 萬警示、1–3 萬注意
   const n3 = DATA.nfp3[DATA.nfp3.length - 1];
   out.push({ id: "chart-nfp", name: "非農三個月均值",
     level: n3[1] < 1 ? "red" : (n3[1] <= 3 ? "yellow" : "green"),
-    why: `${fmtMonth(n3[0])} ${n3[1] > 0 ? "+" : ""}${n3[1].toFixed(1)} 萬（損益兩平 1–3 萬）` });
+    why: `${fmtMonth(n3[0])} ${n3[1] > 0 ? "+" : ""}${n3[1].toFixed(1)} 萬（損益兩平 1–3 萬）`,
+    rule: [["r", "警示：< 1 萬"], ["y", "注意：1–3 萬"], ["g", "正常：> 3 萬"]] });
 
   // ③ 失業率：高於 u* 且較上月上升＝警示；只成立一項＝注意
   const u = DATA.unrate, [ud, uv] = u[u.length - 1], upv = u[u.length - 2][1];
@@ -403,12 +410,13 @@ function renderSignals() {
   const gap = Math.round((uv - st) * 10) / 10, rising = uv > upv;
   out.push({ id: "chart-unrate", name: "失業率 vs Fed 長期失業率預估",
     level: gap > 0 && rising ? "red" : (gap > 0 || (gap === 0 && rising) ? "yellow" : "green"),
-    why: `${fmtMonth(ud)} ${uv.toFixed(1)}%，u* ${st}%，缺口 ${gap > 0 ? "+" : ""}${gap.toFixed(1)} pt；較上月${rising ? "上升" : (uv < upv ? "下降" : "持平")}` });
+    why: `${fmtMonth(ud)} ${uv.toFixed(1)}%，u* ${st}%，缺口 ${gap > 0 ? "+" : ""}${gap.toFixed(1)} pt；較上月${rising ? "上升" : (uv < upv ? "下降" : "持平")}`,
+    rule: [["r", "警示：高於 u*，且較上月上升"], ["y", "注意：兩項成立其一"], ["g", "正常：兩項皆不成立"]] });
 
   document.getElementById("signals").innerHTML = out.map(s =>
     `<a class="signal ${s.level}" href="#${s.id}">
        <span class="lamp" aria-hidden="true"></span>
-       <span><div class="name">${s.name}</div><div class="state">${STATE[s.level]}</div><div class="why">${s.why}</div></span>
+       <span><div class="name">${s.name}</div><div class="state">${STATE[s.level]}</div><div class="why">${s.why}</div><ul class="rule">${s.rule.map(([c, t]) => `<li><i class="${c}"></i>${t}</li>`).join("")}</ul></span>
      </a>`).join("");
 }
 
