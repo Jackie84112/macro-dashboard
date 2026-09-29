@@ -401,7 +401,7 @@ function renderSignals() {
   let st = null;
   for (const [d, x] of DATA.ustar) if (d <= ud.slice(0, 7) + "-31") st = x;
   const gap = Math.round((uv - st) * 10) / 10, rising = uv > upv;
-  out.push({ id: "chart-unrate", name: "失業率 vs u*",
+  out.push({ id: "chart-unrate", name: "失業率 vs Fed 長期失業率預估",
     level: gap > 0 && rising ? "red" : (gap > 0 || (gap === 0 && rising) ? "yellow" : "green"),
     why: `${fmtMonth(ud)} ${uv.toFixed(1)}%，u* ${st}%，缺口 ${gap > 0 ? "+" : ""}${gap.toFixed(1)} pt；較上月${rising ? "上升" : (uv < upv ? "下降" : "持平")}` });
 
