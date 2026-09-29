@@ -171,7 +171,7 @@ footer a { color: inherit; }
     <div class="card-head">
       <div>
         <h2>初領失業金四周均值</h2>
-        <p class="desc">週資料，單位萬人。紅色帶為惡化警戒區 23–25 萬。</p>
+        <p class="desc">單位萬人。灰線為每週四周均值，藍線為月均值（燈號依月均判斷，空心點＝未滿月）；點圖例可隱藏或顯示。紅色帶為惡化警戒區 23–25 萬。</p>
       </div>
       <div class="stat" id="stat-claims"></div>
     </div>
@@ -294,16 +294,42 @@ function renderClaims() {
   const [d, v] = s[n - 1], pv = s[n - 2][1];
   document.getElementById("stat-claims").innerHTML =
     `<div class="value">${v.toFixed(2)} 萬</div>${deltaHtml(v, pv, true, " 萬", 2)}<div class="meta">週結束 ${fmtDay(d)}</div>`;
+  // 月均值（燈號用的口徑）：週結束日落在該月的各週取平均，畫在該月 15 日
+  const byMonth = {};
+  for (const [dt, x] of s) (byMonth[dt.slice(0, 7)] ||= []).push([dt, x]);
+  const monthly = Object.keys(byMonth).sort().map(m => {
+    const wk = byMonth[m], lastWeek = new Date(wk[wk.length - 1][0] + "T00:00:00Z");
+    const next = new Date(lastWeek.getTime() + 7 * 864e5);
+    const partial = next.toISOString().slice(0, 7) === m; // 下一週仍落在同月＝本月還沒滿
+    const avg = wk.reduce((a, w) => a + w[1], 0) / wk.length;
+    return { value: [m + "-15", Math.round(avg * 100) / 100], weeks: wk.length, partial,
+      itemStyle: partial ? { color: css("--surface"), borderColor: css("--series-1"), borderWidth: 2 } : undefined };
+  });
+  const monthOf = (dt) => monthly.find(x => x.value[0].slice(0, 7) === dt.slice(0, 7));
+  const weekAt = (t) => s.reduce((best, w) => Math.abs(new Date(w[0]) - t) < Math.abs(new Date(best[0]) - t) ? w : best);
+
   charts.claims.setOption(base({
-    tooltip: { ...base().tooltip,
-      formatter: (p) => `${fmtDay(p[0].value[0])} 當週<br><b>${p[0].value[1].toFixed(2)} 萬</b>` },
-    series: [{
-      name: "初領四周均值", type: "line", data: s, showSymbol: false, symbolSize: 8,
-      lineStyle: { width: 2, color: css("--series-1") }, itemStyle: { color: css("--series-1") },
-      endLabel: endLabel((p) => p.value[1].toFixed(2)),
-      markArea: { silent: true, itemStyle: { color: css("--band-critical") },
-        label: bandLabel("惡化警戒 23–25 萬"), data: [[{ yAxis: 23 }, { yAxis: 25 }]] },
-    }],
+    legend: { top: 0, right: 0, data: ["每週四周均值", "月均值"], itemWidth: 16, itemHeight: 8,
+      textStyle: { color: css("--text-secondary"), fontSize: 12 } },
+    tooltip: { ...base().tooltip, formatter: (p) => {
+      const w = weekAt(new Date(p[0].axisValue));
+      const m = monthOf(w[0]);
+      let h = `${fmtDay(w[0])} 當週 <b>${w[1].toFixed(2)} 萬</b>`;
+      if (m) h += `<br>${fmtMonth(w[0])} 月均 <b>${m.value[1].toFixed(2)} 萬</b>${m.partial ? `（${m.weeks} 週，未滿月）` : ""}`;
+      return h;
+    } },
+    series: [
+      { name: "每週四周均值", type: "line", data: s, showSymbol: false, z: 2,
+        lineStyle: { width: 1.5, color: css("--text-muted") }, itemStyle: { color: css("--text-muted") } },
+      { name: "月均值", type: "line", data: monthly, symbol: "circle", symbolSize: 8, z: 3,
+        lineStyle: { width: 2, color: css("--series-1") },
+        itemStyle: { color: css("--series-1"), borderColor: css("--surface"), borderWidth: 2 },
+        endLabel: endLabel((p) => p.value[1].toFixed(2)) },
+      // 警戒帶獨立一條，隱藏任一條線時紅帶仍在
+      { name: "警戒帶", type: "line", data: [], silent: true,
+        markArea: { silent: true, itemStyle: { color: css("--band-critical") },
+          label: bandLabel("惡化警戒 23–25 萬"), data: [[{ yAxis: 23 }, { yAxis: 25 }]] } },
+    ],
   }), true);
 }
 
