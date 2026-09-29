@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>美國就業狀況</title>
+<meta name="description" content="美國就業市場三大惡化指標：初領失業金四周均值、非農三個月均值、失業率 vs Fed 長期失業率預估。資料來源 FRED，每日自動更新。">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f5f5f3;
+  --surface: #fcfcfb;
+  --border: #e4e3de;
+  --grid: #ecebe7;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #7a7973;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --bar-neutral: #c9c8c2;
+  --band-critical: rgba(208, 59, 59, 0.10);
+  --band-neutral: rgba(82, 81, 78, 0.10);
+  --good: #0a7d0a;
+  --bad: #c43131;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211;
+    --surface: #1a1a19;
+    --border: #2e2e2b;
+    --grid: #2a2a28;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8f8e86;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --bar-neutral: #55544f;
+    --band-critical: rgba(230, 103, 103, 0.14);
+    --band-neutral: rgba(195, 194, 183, 0.12);
+    --good: #4cc24c;
+    --bad: #e66767;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211;
+  --surface: #1a1a19;
+  --border: #2e2e2b;
+  --grid: #2a2a28;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #8f8e86;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --bar-neutral: #55544f;
+  --band-critical: rgba(230, 103, 103, 0.14);
+  --band-neutral: rgba(195, 194, 183, 0.12);
+  --good: #4cc24c;
+  --bad: #e66767;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif;
+  line-height: 1.5;
+}
+main { max-width: 1080px; margin: 0 auto; padding: 32px 16px 48px; }
+header h1 { font-size: 28px; margin: 0 0 4px; font-weight: 700; }
+header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
+.toolbar { display: flex; gap: 8px; align-items: center; margin: 24px 0 16px; flex-wrap: wrap; }
+.toolbar span { color: var(--text-muted); font-size: 13px; margin-right: 4px; }
+.toolbar button {
+  font: inherit; font-size: 13px; padding: 4px 12px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer;
+}
+.toolbar button[aria-pressed="true"] { background: var(--text-primary); color: var(--surface); border-color: var(--text-primary); }
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px 20px 8px; margin-bottom: 16px;
+}
+.card-head { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+.card h2 { font-size: 18px; margin: 0; font-weight: 700; }
+.card .desc { margin: 2px 0 0; color: var(--text-secondary); font-size: 13px; }
+.stat { text-align: right; }
+.stat .value { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat .meta { font-size: 12px; color: var(--text-muted); }
+.stat .delta { font-size: 13px; font-weight: 600; }
+.delta.good { color: var(--good); }
+.delta.bad { color: var(--bad); }
+.delta.flat { color: var(--text-muted); }
+.chart { width: 100%; height: 340px; }
+footer { color: var(--text-muted); font-size: 12px; margin-top: 24px; }
+footer a { color: inherit; }
+@media (max-width: 600px) {
+  .stat { text-align: left; }
+  .chart { height: 280px; }
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>美國就業狀況</h1>
+    <p>三大就業惡化指標：初領失業金連升到 23–25 萬、非農三個月均值跌破損益兩平（1–3 萬）、失業率突破 u* 且持續上升。</p>
+  </header>
+
+  <div class="toolbar" role="group" aria-label="時間範圍">
+    <span>時間範圍</span>
+    <button data-years="1">1 年</button>
+    <button data-years="3" aria-pressed="true">3 年</button>
+    <button data-years="5">5 年</button>
+    <button data-years="0">全部</button>
+  </div>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2>初領失業金四周均值</h2>
+        <p class="desc">週資料，單位萬人。紅色帶為惡化警戒區 23–25 萬。</p>
+      </div>
+      <div class="stat" id="stat-claims"></div>
+    </div>
+    <div class="chart" id="chart-claims" role="img" aria-label="初領失業金四周均值折線圖"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2>非農就業三個月均值</h2>
+        <p class="desc">月資料，單位萬人。灰柱為單月新增，折線為三個月均值；灰色帶為損益兩平 1–3 萬。</p>
+      </div>
+      <div class="stat" id="stat-nfp"></div>
+    </div>
+    <div class="chart" id="chart-nfp" role="img" aria-label="非農就業三個月均值圖"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h2>失業率 vs Fed 長期失業率預估 u*</h2>
+        <p class="desc">月資料，單位 %。u* 為 FOMC 經濟預測（SEP）長期失業率中位數，每季更新。</p>
+      </div>
+      <div class="stat" id="stat-unrate"></div>
+    </div>
+    <div class="chart" id="chart-unrate" role="img" aria-label="失業率與 u* 折線圖"></div>
+  </section>
+
+  <footer>
+    <div id="updated"></div>
+    <div>資料來源：<a href="https://fred.stlouisfed.org/" target="_blank" rel="noopener">FRED</a>（IC4WSA、PAYEMS、UNRATE、UNRATEMDLR）。每個工作日自動更新。</div>
+  </footer>
+</main>
+
+<script>
+const charts = {};
+let DATA = null;
+let years = 3;
+
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const fmtMonth = (d) => d.slice(0, 7).replace("-", "/");
+const fmtDay = (d) => d.replace(/-/g, "/");
+
+function startDate(allSeries) {
+  const last = allSeries.map(s => s[s.length - 1][0]).sort().pop();
+  if (!years) return null;
+  const d = new Date(last);
+  d.setFullYear(d.getFullYear() - years);
+  return d.toISOString().slice(0, 10);
+}
+
+function base(extra) {
+  const text2 = css("--text-secondary"), grid = css("--grid"), muted = css("--text-muted");
+  return {
+    animation: false,
+    textStyle: { fontFamily: getComputedStyle(document.body).fontFamily },
+    grid: { left: 8, right: 56, top: 36, bottom: 28, containLabel: true },
+    xAxis: {
+      type: "time",
+      axisLine: { lineStyle: { color: grid } },
+      axisTick: { show: false },
+      axisLabel: { color: muted, hideOverlap: true,
+        formatter: { year: "{yyyy}", month: "{M}月", day: "" } },
+      splitLine: { show: false },
+    },
+    yAxis: {
+      type: "value", scale: true,
+      axisLabel: { color: muted, formatter: (v) => Number.isInteger(v) ? String(v) : v.toFixed(1) },
+      splitLine: { lineStyle: { color: grid, width: 1 } },
+    },
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "line", lineStyle: { color: text2, width: 1 } },
+      backgroundColor: css("--surface"), borderColor: css("--border"),
+      textStyle: { color: css("--text-primary"), fontSize: 13 },
+    },
+    dataZoom: [{ type: "inside", filterMode: "weakFilter", zoomOnMouseWheel: false, moveOnMouseMove: false }],
+    ...extra,
+  };
+}
+
+function bandLabel(text) {
+  return { show: true, position: "insideTopLeft", color: css("--text-secondary"), fontSize: 11, formatter: text };
+}
+
+function endLabel(fmt) {
+  return { show: true, color: css("--text-primary"), fontWeight: 600, fontSize: 12, formatter: fmt };
+}
+
+function deltaHtml(cur, prev, upIsBad, unit, digits) {
+  const d = cur - prev;
+  const cls = Math.abs(d) < 1e-9 ? "flat" : ((d > 0) === upIsBad ? "bad" : "good");
+  const word = cls === "flat" ? "持平" : (cls === "bad" ? "惡化" : "好轉");
+  const sign = d > 0 ? "+" : "";
+  return `<div class="delta ${cls}">${word} ${sign}${d.toFixed(digits)}${unit}</div>`;
+}
+
+function renderClaims() {
+  const s = DATA.claims4w, n = s.length;
+  const [d, v] = s[n - 1], pv = s[n - 2][1];
+  document.getElementById("stat-claims").innerHTML =
+    `<div class="value">${v.toFixed(2)} 萬</div>${deltaHtml(v, pv, true, " 萬", 2)}<div class="meta">週結束 ${fmtDay(d)}</div>`;
+  charts.claims.setOption(base({
+    tooltip: { ...base().tooltip,
+      formatter: (p) => `${fmtDay(p[0].value[0])} 當週<br><b>${p[0].value[1].toFixed(2)} 萬</b>` },
+    series: [{
+      name: "初領四周均值", type: "line", data: s, showSymbol: false, symbolSize: 8,
+      lineStyle: { width: 2, color: css("--series-1") }, itemStyle: { color: css("--series-1") },
+      endLabel: endLabel((p) => p.value[1].toFixed(2)),
+      markArea: { silent: true, itemStyle: { color: css("--band-critical") },
+        label: bandLabel("惡化警戒 23–25 萬"), data: [[{ yAxis: 23 }, { yAxis: 25 }]] },
+    }],
+  }), true);
+}
+
+function renderNfp() {
+  const bars = DATA.nfp, line = DATA.nfp3, n = line.length;
+  const [d, v] = line[n - 1], pv = line[n - 2][1];
+  const barMap = Object.fromEntries(bars);
+  document.getElementById("stat-nfp").innerHTML =
+    `<div class="value">${v > 0 ? "+" : ""}${v.toFixed(1)} 萬</div>${deltaHtml(v, pv, false, " 萬", 1)}<div class="meta">${fmtMonth(d)}，單月 ${barMap[d] > 0 ? "+" : ""}${barMap[d]} 萬</div>`;
+  charts.nfp.setOption(base({
+    tooltip: { ...base().tooltip, formatter: (p) => {
+      const date = p[0].value[0];
+      const b = barMap[date], l = line.find(x => x[0] === date);
+      return `${fmtMonth(date)}<br>三個月均值 <b>${l ? l[1].toFixed(1) : "–"} 萬</b><br>單月新增 ${b > 0 ? "+" : ""}${b} 萬`;
+    } },
+    series: [
+      { name: "單月新增", type: "bar", data: bars, barMaxWidth: 24, barCategoryGap: "20%",
+        itemStyle: { color: css("--bar-neutral"), borderRadius: [4, 4, 0, 0] }, z: 1,
+        markArea: { silent: true, itemStyle: { color: css("--band-neutral") },
+          label: bandLabel("損益兩平 1–3 萬"), data: [[{ yAxis: 1 }, { yAxis: 3 }]] } },
+      { name: "三個月均值", type: "line", data: line, symbol: "circle", symbolSize: 7, z: 3,
+        lineStyle: { width: 2, color: css("--series-1") },
+        itemStyle: { color: css("--series-1"), borderColor: css("--surface"), borderWidth: 2 },
+        endLabel: endLabel((p) => p.value[1].toFixed(1)) },
+    ],
+  }), true);
+}
+
+function renderUnrate() {
+  const u = DATA.unrate, n = u.length;
+  // u* 往後延伸到最新日期，畫成階梯（每次 SEP 起生效到下一次）
+  const ustarAt = (date) => { let v = null; for (const [d, x] of DATA.ustar) if (d <= date) v = x; return v; };
+  const dates = [...new Set([...u.map(x => x[0]), ...DATA.ustar.map(x => x[0])])].sort();
+  const us = dates.map(dt => [dt, ustarAt(dt)]).filter(x => x[1] !== null);
+  const [d, v] = u[n - 1], pv = u[n - 2][1];
+  const gap = v - ustarAt(d);
+  document.getElementById("stat-unrate").innerHTML =
+    `<div class="value">${v.toFixed(1)}%</div>${deltaHtml(v, pv, true, " pt", 1)}<div class="meta">${fmtMonth(d)}，缺口 u−u* ${gap > 0 ? "+" : ""}${gap.toFixed(1)} pt</div>`;
+  charts.unrate.setOption(base({
+    legend: { top: 0, right: 0, itemWidth: 16, itemHeight: 2, icon: "rect",
+      textStyle: { color: css("--text-secondary"), fontSize: 12 } },
+    tooltip: { ...base().tooltip, formatter: (p) => {
+      const date = p[0].value[0];
+      const ur = u.find(x => x[0] === date), st = ustarAt(date);
+      if (!ur) return `${fmtDay(date)}<br>u* <b>${st}%</b>（SEP 更新）`;
+      const g = ur[1] - st;
+      return `${fmtMonth(date)}<br>失業率 <b>${ur[1].toFixed(1)}%</b><br>u* ${st}%<br>缺口 ${g > 0 ? "+" : ""}${g.toFixed(1)} pt`;
+    } },
+    series: [
+      { name: "失業率 U-3", type: "line", data: u, showSymbol: false, symbolSize: 8, z: 3,
+        lineStyle: { width: 2, color: css("--series-1") }, itemStyle: { color: css("--series-1") },
+        endLabel: endLabel((p) => p.value[1].toFixed(1) + "%") },
+      { name: "Fed 長期失業率預估 u*", type: "line", data: us, step: "end", showSymbol: false, z: 2,
+        lineStyle: { width: 2, color: css("--series-2") }, itemStyle: { color: css("--series-2") },
+        endLabel: endLabel((p) => "u* " + p.value[1] + "%") },
+    ],
+  }), true);
+}
+
+function applyRange() {
+  const groups = { claims: [DATA.claims4w], nfp: [DATA.nfp, DATA.nfp3], unrate: [DATA.unrate] };
+  for (const [k, series] of Object.entries(groups)) {
+    const start = startDate(series);
+    charts[k].dispatchAction(start
+      ? { type: "dataZoom", startValue: start, end: 100 }
+      : { type: "dataZoom", start: 0, end: 100 });
+  }
+}
+
+function renderAll() {
+  renderClaims(); renderNfp(); renderUnrate(); applyRange();
+}
+
+document.querySelectorAll(".toolbar button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    years = Number(btn.dataset.years);
+    document.querySelectorAll(".toolbar button").forEach(b => b.setAttribute("aria-pressed", b === btn));
+    applyRange();
+  });
+});
+
+fetch("data/labor.json", { cache: "no-store" })
+  .then(r => r.json())
+  .then(json => {
+    DATA = json;
+    for (const k of ["claims", "nfp", "unrate"]) charts[k] = echarts.init(document.getElementById("chart-" + k));
+    renderAll();
+    const t = new Date(DATA.updated.replace("Z", ":00Z"));
+    document.getElementById("updated").textContent =
+      "最後更新：" + t.toLocaleString("zh-TW", { timeZone: "Asia/Taipei", hour12: false }) + "（台灣時間）";
+  });
+
+window.addEventListener("resize", () => Object.values(charts).forEach(c => c.resize()));
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => DATA && renderAll());
+</script>
+</body>
+</html>
