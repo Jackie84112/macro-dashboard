@@ -85,8 +85,8 @@ header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
 .signal.yellow { --lamp: #fab219; --lamp-halo: rgba(250, 178, 25, 0.22); }
 .signal.red { --lamp: #d03b3b; --lamp-halo: rgba(208, 59, 59, 0.18); }
 .signal .lamp { background: var(--lamp); }
-.signal .name { font-size: 13px; color: var(--text-secondary); }
-.signal .state { font-size: 17px; font-weight: 700; margin: 1px 0 2px; }
+.signal .name { font-size: 17px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
+.signal .state { font-size: 12px; color: var(--text-secondary); margin: 2px 0 4px; }
 .signal .why { font-size: 12px; color: var(--text-muted); }
 @media (max-width: 720px) { .signals { grid-template-columns: 1fr; } }
 .toolbar { display: flex; gap: 8px; align-items: center; margin: 24px 0 16px; flex-wrap: wrap; }
@@ -386,13 +386,13 @@ function renderSignals() {
   for (let i = avg.length - 1; i > 0 && avg[i] > avg[i - 1]; i--) up++;
   const cl = DATA.claims4w[DATA.claims4w.length - 1][1];
   const c1 = up >= 3, c2 = cl >= 23;
-  out.push({ id: "chart-claims", name: "① 初領失業金四周均值",
+  out.push({ id: "chart-claims", name: "初領失業金四周均值",
     level: c1 && c2 ? "red" : (c1 || c2 ? "yellow" : "green"),
     why: `${cl.toFixed(2)} 萬（警戒 23 萬）；月均連升 ${up} 個月（警戒 ≥3）` });
 
   // ② 非農三個月均值：< 1 萬警示、1–3 萬注意
   const n3 = DATA.nfp3[DATA.nfp3.length - 1];
-  out.push({ id: "chart-nfp", name: "② 非農三個月均值",
+  out.push({ id: "chart-nfp", name: "非農三個月均值",
     level: n3[1] < 1 ? "red" : (n3[1] <= 3 ? "yellow" : "green"),
     why: `${fmtMonth(n3[0])} ${n3[1] > 0 ? "+" : ""}${n3[1].toFixed(1)} 萬（損益兩平 1–3 萬）` });
 
@@ -401,7 +401,7 @@ function renderSignals() {
   let st = null;
   for (const [d, x] of DATA.ustar) if (d <= ud.slice(0, 7) + "-31") st = x;
   const gap = Math.round((uv - st) * 10) / 10, rising = uv > upv;
-  out.push({ id: "chart-unrate", name: "③ 失業率 vs u*",
+  out.push({ id: "chart-unrate", name: "失業率 vs u*",
     level: gap > 0 && rising ? "red" : (gap > 0 || (gap === 0 && rising) ? "yellow" : "green"),
     why: `${fmtMonth(ud)} ${uv.toFixed(1)}%，u* ${st}%，缺口 ${gap > 0 ? "+" : ""}${gap.toFixed(1)} pt；較上月${rising ? "上升" : (uv < upv ? "下降" : "持平")}` });
 
