@@ -96,6 +96,32 @@ header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
 .delta.bad { color: var(--bad); }
 .delta.flat { color: var(--series-1); }
 .chart { width: 100%; height: 340px; }
+.legend-chips { display: flex; gap: 12px; font-size: 12px; color: var(--text-secondary); align-items: center; }
+.legend-chips i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.year-tabs { display: flex; gap: 6px; margin: 12px 0 10px; }
+.year-tabs button {
+  font: inherit; font-size: 12px; padding: 2px 10px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer;
+}
+.year-tabs button[aria-pressed="true"] { background: var(--text-primary); color: var(--surface); border-color: var(--text-primary); }
+.table-wrap { overflow-x: auto; margin: 0 -20px; padding: 0 20px 12px; }
+table.data { border-collapse: collapse; width: 100%; min-width: 860px; font-size: 13px; font-variant-numeric: tabular-nums; }
+table.data th, table.data td { padding: 6px 5px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+table.data thead th { font-weight: 600; color: var(--text-secondary); text-align: right; border-bottom: 1px solid var(--border); }
+table.data thead th.left { text-align: left; }
+table.data thead th.now { color: var(--text-primary); box-shadow: inset 0 0 0 2px var(--series-1); border-radius: 4px; }
+table.data td { text-align: right; color: var(--text-primary); }
+table.data td.group { white-space: normal; width: 96px; min-width: 96px; text-align: left; color: var(--text-secondary); font-weight: 600; vertical-align: middle; border-right: 1px solid var(--grid); }
+table.data td.label { text-align: left; }
+table.data td.next { text-align: center; color: var(--text-secondary); border-left: 1px solid var(--grid); vertical-align: middle; }
+table.data td.next.weekly { color: var(--bad); font-weight: 600; }
+table.data tr.key td.label { font-weight: 600; }
+table.data td.good { color: var(--good); font-weight: 700; }
+table.data td.bad { color: var(--bad); font-weight: 700; }
+table.data td.flat { color: var(--series-1); font-weight: 700; }
+table.data td.muted { color: var(--text-muted); }
+.notes { margin: 8px 0 12px; font-size: 12px; color: var(--text-secondary); }
+.notes p { margin: 2px 0; }
 footer { color: var(--text-muted); font-size: 12px; margin-top: 24px; }
 footer a { color: inherit; }
 @media (max-width: 600px) {
@@ -152,9 +178,30 @@ footer a { color: inherit; }
     <div class="chart" id="chart-unrate" role="img" aria-label="失業率與 u* 折線圖"></div>
   </section>
 
+  <section class="card" id="table-card">
+    <div class="card-head">
+      <div>
+        <h2>就業狀況數據表</h2>
+        <p class="desc">上圖的數據源。每列最新一期與上一期比較上色；藍框月份為最新就業報告月份。</p>
+      </div>
+      <div class="legend-chips" aria-label="顏色說明">
+        <span><i style="background:var(--good)"></i>好轉</span>
+        <span><i style="background:var(--bad)"></i>惡化</span>
+        <span><i style="background:var(--series-1)"></i>持平</span>
+      </div>
+    </div>
+    <div class="year-tabs" role="group" aria-label="年度" id="year-tabs"></div>
+    <div class="table-wrap"><table class="data" id="data-table"></table></div>
+    <div class="notes">
+      <p>[註1]：Warsh 強調關注趨勢和速度，非單一數據點。</p>
+      <p>[註2]：3 個就業情況惡化指標：（1）初領失業金四周均值連續 3–6 個月往上，達 23–25 萬；（2）非農三個月均值低於損益兩平（1–3 萬）；（3）失業率升破 u* 且持續上升。</p>
+      <p>[註3]：失業率穩定，主因需求和供給結構性減少。</p>
+    </div>
+  </section>
+
   <footer>
     <div id="updated"></div>
-    <div>資料來源：<a href="https://fred.stlouisfed.org/" target="_blank" rel="noopener">FRED</a>（IC4WSA、PAYEMS、UNRATE、UNRATEMDLR）。每個工作日自動更新。</div>
+    <div>資料來源：<a href="https://fred.stlouisfed.org/" target="_blank" rel="noopener">FRED</a>（IC4WSA、PAYEMS、UNRATE、UNRATEMDLR、JTSJOL、JTSHIR、JTSQUR、JTSLDR、UNEMPLOY、CES0500000003、CIVPART、EMRATIO、LNS13025703）；發布日：BLS、Fed。每個工作日自動更新。</div>
   </footer>
 </main>
 
@@ -309,6 +356,82 @@ function renderAll() {
   renderClaims(); renderNfp(); renderUnrate(); applyRange();
 }
 
+// ---------- 數據表 ----------
+let CAL = null;
+let tableYear = null;
+
+// 美東時間字串 → Date（自動判斷夏令時間）
+function etToDate(str) {
+  for (const off of [4, 5]) {
+    const d = new Date(str + ":00Z");
+    d.setUTCHours(d.getUTCHours() + off);
+    const h = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", hourCycle: "h23" }).format(d);
+    if (Number(h) === Number(str.slice(11, 13))) return d;
+  }
+  return new Date(str + ":00-05:00");
+}
+
+function twDate(d) {
+  const p = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Taipei", year: "numeric", month: "numeric", day: "numeric" }).formatToParts(d);
+  const g = (t) => p.find(x => x.type === t).value;
+  return `${g("year")}/${g("month")}/${g("day")}`;
+}
+
+function nextRelease(sched) {
+  const now = new Date();
+  if (sched === "weekly") {
+    // 初領失業金：每週四美東 8:30
+    for (let i = 0; i < 9; i++) {
+      const day = new Date(now.getTime() + i * 864e5).toISOString().slice(0, 10);
+      const cand = etToDate(day + "T08:30");
+      const wd = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", weekday: "short" }).format(cand);
+      if (wd === "Thu" && cand > now) return { text: `週更（${twDate(cand).slice(5)}）`, weekly: true };
+    }
+  }
+  if (!sched || !CAL || !CAL[sched]) return { text: "–" };
+  const hit = CAL[sched].map(etToDate).find(d => d > now);
+  return { text: hit ? twDate(hit) : "待公布" };
+}
+
+function renderTable() {
+  const T = DATA.table;
+  if (!tableYear) tableYear = T.latestYear;
+  const tabs = document.getElementById("year-tabs");
+  tabs.innerHTML = T.years.map(y => `<button data-year="${y}" aria-pressed="${y === tableYear}">${y}</button>`).join("");
+  tabs.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+    tableYear = Number(b.dataset.year);
+    renderTable();
+  }));
+
+  const nowCol = tableYear === T.latestYear ? T.latestMonth : 0;
+  let h = `<thead><tr><th class="left"></th><th class="left">指標</th>`;
+  for (let m = 1; m <= 12; m++) h += `<th class="${m === nowCol ? "now" : ""}">${m}月</th>`;
+  h += `<th>下次發布</th></tr></thead><tbody>`;
+
+  const rows = T.rows;
+  const keyRows = new Set(["unrate", "gap", "nfp", "nfp3", "claims"]);
+  const same = (a, b) => a && b && a.group === b.group && a.schedule === b.schedule;
+  rows.forEach((r, i) => {
+    h += `<tr class="${keyRows.has(r.key) ? "key" : ""}">`;
+    if (i === 0 || rows[i - 1].group !== r.group) {
+      h += `<td class="group" rowspan="${rows.filter(x => x.group === r.group).length}">${r.group}</td>`;
+    }
+    h += `<td class="label">${r.label}</td>`;
+    for (const c of r.cells[String(tableYear)]) {
+      h += c ? `<td class="${c.c || (c.v === "–" ? "muted" : "")}">${c.v}</td>` : `<td></td>`;
+    }
+    // 同群組、同發布排程的連續列合併「下次發布」
+    if (!same(rows[i - 1], r)) {
+      let span = 1;
+      while (same(rows[i + span], r)) span++;
+      const nx = nextRelease(r.schedule);
+      h += `<td class="next${nx.weekly ? " weekly" : ""}" rowspan="${span}">${nx.text}</td>`;
+    }
+    h += `</tr>`;
+  });
+  document.getElementById("data-table").innerHTML = h + `</tbody>`;
+}
+
 document.querySelectorAll(".toolbar button").forEach(btn => {
   btn.addEventListener("click", () => {
     years = Number(btn.dataset.years);
@@ -317,10 +440,14 @@ document.querySelectorAll(".toolbar button").forEach(btn => {
   });
 });
 
-fetch("data/labor.json", { cache: "no-store" })
-  .then(r => r.json())
-  .then(json => {
+Promise.all([
+  fetch("data/labor.json", { cache: "no-store" }).then(r => r.json()),
+  fetch("data/calendar.json", { cache: "no-store" }).then(r => r.json()).catch(() => null),
+])
+  .then(([json, cal]) => {
     DATA = json;
+    CAL = cal;
+    renderTable();
     for (const k of ["claims", "nfp", "unrate"]) charts[k] = echarts.init(document.getElementById("chart-" + k));
     renderAll();
     const t = new Date(DATA.updated.replace("Z", ":00Z"));
