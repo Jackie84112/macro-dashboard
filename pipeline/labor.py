@@ -41,13 +41,19 @@ def main() -> None:
     ustar = fred("UNRATEMDLR")
 
     data = {
-        "updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
         "claims4w": points(claims, 2),
         "nfp": points(nfp, 1),
         "nfp3": points(nfp3, 1),
         "unrate": points(unrate, 1),
         "ustar": points(ustar, 2),
     }
+    # 數據沒變就保留原本的更新時間，避免排程每次都產生空的提交
+    if OUT.exists():
+        prev = json.loads(OUT.read_text(encoding="utf-8"))
+        if {k: v for k, v in prev.items() if k != "updated"} == data:
+            print("資料無變動")
+            return
+    data = {"updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ"), **data}
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"寫入 {OUT}：初領至 {data['claims4w'][-1]}，非農至 {data['nfp'][-1]}，"
