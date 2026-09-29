@@ -74,6 +74,21 @@ body {
 main { max-width: 1080px; margin: 0 auto; padding: 32px 16px 48px; }
 header h1 { font-size: 28px; margin: 0 0 4px; font-weight: 700; }
 header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
+.signals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
+.signal {
+  display: flex; gap: 12px; align-items: flex-start; text-decoration: none; color: inherit;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
+}
+.signal:hover { border-color: var(--text-muted); }
+.signal .lamp { flex: none; width: 22px; height: 22px; border-radius: 50%; margin-top: 2px; box-shadow: 0 0 0 4px var(--lamp-halo); }
+.signal.green { --lamp: #0ca30c; --lamp-halo: rgba(12, 163, 12, 0.16); }
+.signal.yellow { --lamp: #fab219; --lamp-halo: rgba(250, 178, 25, 0.22); }
+.signal.red { --lamp: #d03b3b; --lamp-halo: rgba(208, 59, 59, 0.18); }
+.signal .lamp { background: var(--lamp); }
+.signal .name { font-size: 13px; color: var(--text-secondary); }
+.signal .state { font-size: 17px; font-weight: 700; margin: 1px 0 2px; }
+.signal .why { font-size: 12px; color: var(--text-muted); }
+@media (max-width: 720px) { .signals { grid-template-columns: 1fr; } }
 .toolbar { display: flex; gap: 8px; align-items: center; margin: 24px 0 16px; flex-wrap: wrap; }
 .toolbar span { color: var(--text-muted); font-size: 13px; margin-right: 4px; }
 .toolbar button {
@@ -137,6 +152,8 @@ footer a { color: inherit; }
     <p>三大就業惡化指標：初領失業金連升到 23–25 萬、非農三個月均值跌破損益兩平（1–3 萬）、失業率突破 u* 且持續上升。</p>
   </header>
 
+  <section class="signals" id="signals" aria-label="三大警示燈號"></section>
+
   <div class="toolbar" role="group" aria-label="時間範圍">
     <span>時間範圍</span>
     <button data-years="1">1 年</button>
@@ -194,8 +211,7 @@ footer a { color: inherit; }
     <div class="table-wrap"><table class="data" id="data-table"></table></div>
     <div class="notes">
       <p>[註1]：Warsh 強調關注趨勢和速度，非單一數據點。</p>
-      <p>[註2]：3 個就業情況惡化指標：（1）初領失業金四周均值連續 3–6 個月往上，達 23–25 萬；（2）非農三個月均值低於損益兩平（1–3 萬）；（3）失業率升破 u* 且持續上升。</p>
-      <p>[註3]：失業率穩定，主因需求和供給結構性減少。</p>
+      <p>[註2]：失業率穩定，主因需求和供給結構性減少。</p>
     </div>
   </section>
 
@@ -356,6 +372,46 @@ function renderAll() {
   renderClaims(); renderNfp(); renderUnrate(); applyRange();
 }
 
+// ---------- 三大警示燈號 ----------
+// 紅＝警示（條件全部成立）、黃＝注意（成立一部分）、綠＝正常
+function renderSignals() {
+  const STATE = { green: "正常", yellow: "注意", red: "警示" };
+  const out = [];
+
+  // ① 初領：月均連續上升 ≥3 個月，且最新四周均值 ≥ 23 萬
+  const byMonth = {};
+  for (const [d, v] of DATA.claims4w) (byMonth[d.slice(0, 7)] ||= []).push(v);
+  const avg = Object.keys(byMonth).sort().map(k => byMonth[k].reduce((a, b) => a + b) / byMonth[k].length);
+  let up = 0;
+  for (let i = avg.length - 1; i > 0 && avg[i] > avg[i - 1]; i--) up++;
+  const cl = DATA.claims4w[DATA.claims4w.length - 1][1];
+  const c1 = up >= 3, c2 = cl >= 23;
+  out.push({ id: "chart-claims", name: "① 初領失業金四周均值",
+    level: c1 && c2 ? "red" : (c1 || c2 ? "yellow" : "green"),
+    why: `${cl.toFixed(2)} 萬（警戒 23 萬）；月均連升 ${up} 個月（警戒 ≥3）` });
+
+  // ② 非農三個月均值：< 1 萬警示、1–3 萬注意
+  const n3 = DATA.nfp3[DATA.nfp3.length - 1];
+  out.push({ id: "chart-nfp", name: "② 非農三個月均值",
+    level: n3[1] < 1 ? "red" : (n3[1] <= 3 ? "yellow" : "green"),
+    why: `${fmtMonth(n3[0])} ${n3[1] > 0 ? "+" : ""}${n3[1].toFixed(1)} 萬（損益兩平 1–3 萬）` });
+
+  // ③ 失業率：高於 u* 且較上月上升＝警示；只成立一項＝注意
+  const u = DATA.unrate, [ud, uv] = u[u.length - 1], upv = u[u.length - 2][1];
+  let st = null;
+  for (const [d, x] of DATA.ustar) if (d <= ud.slice(0, 7) + "-31") st = x;
+  const gap = Math.round((uv - st) * 10) / 10, rising = uv > upv;
+  out.push({ id: "chart-unrate", name: "③ 失業率 vs u*",
+    level: gap > 0 && rising ? "red" : (gap > 0 || (gap === 0 && rising) ? "yellow" : "green"),
+    why: `${fmtMonth(ud)} ${uv.toFixed(1)}%，u* ${st}%，缺口 ${gap > 0 ? "+" : ""}${gap.toFixed(1)} pt；較上月${rising ? "上升" : (uv < upv ? "下降" : "持平")}` });
+
+  document.getElementById("signals").innerHTML = out.map(s =>
+    `<a class="signal ${s.level}" href="#${s.id}">
+       <span class="lamp" aria-hidden="true"></span>
+       <span><div class="name">${s.name}</div><div class="state">${STATE[s.level]}</div><div class="why">${s.why}</div></span>
+     </a>`).join("");
+}
+
 // ---------- 數據表 ----------
 let CAL = null;
 let tableYear = null;
@@ -447,6 +503,7 @@ Promise.all([
   .then(([json, cal]) => {
     DATA = json;
     CAL = cal;
+    renderSignals();
     renderTable();
     for (const k of ["claims", "nfp", "unrate"]) charts[k] = echarts.init(document.getElementById("chart-" + k));
     renderAll();
