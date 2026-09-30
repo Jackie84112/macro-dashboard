@@ -24,6 +24,8 @@
   --band-neutral: rgba(82, 81, 78, 0.10);
   --good: #0a7d0a;
   --bad: #c43131;
+  --demand-bg: #fdecef;
+  --group-rule: #b9b8b1;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -43,6 +45,8 @@
     --band-neutral: rgba(195, 194, 183, 0.12);
     --good: #4cc24c;
     --bad: #e66767;
+    --demand-bg: rgba(236, 120, 150, 0.14);
+    --group-rule: #5c5b56;
   }
 }
 :root[data-theme="dark"] {
@@ -62,6 +66,8 @@
   --band-neutral: rgba(195, 194, 183, 0.12);
   --good: #4cc24c;
   --bad: #e66767;
+  --demand-bg: rgba(236, 120, 150, 0.14);
+  --group-rule: #5c5b56;
 }
 * { box-sizing: border-box; }
 body {
@@ -140,6 +146,9 @@ table.data td.good { color: var(--good); font-weight: 700; }
 table.data td.bad { color: var(--bad); font-weight: 700; }
 table.data td.flat { color: var(--series-1); font-weight: 700; }
 table.data td.muted { color: var(--text-muted); }
+table.data tbody + tbody tr:first-child td { border-top: 2px solid var(--group-rule); }
+table.data tbody tr:last-child td { border-bottom: none; }
+table.data tbody.demand td { background: var(--demand-bg); }
 .notes { margin: 8px 0 12px; font-size: 12px; color: var(--text-secondary); }
 .notes p { margin: 2px 0; }
 footer { color: var(--text-muted); font-size: 12px; margin-top: 24px; }
@@ -470,12 +479,16 @@ function renderTable() {
   const nowCol = tableYear === T.latestYear ? T.latestMonth : 0;
   let h = `<thead><tr><th class="left"></th><th class="left">指標</th>`;
   for (let m = 1; m <= 12; m++) h += `<th class="${m === nowCol ? "now" : ""}">${m}月</th>`;
-  h += `<th>下次發布</th></tr></thead><tbody>`;
+  h += `<th>下次發布</th></tr></thead>`;
 
   const rows = T.rows;
   const keyRows = new Set(["unrate", "gap", "nfp", "nfp3", "claims"]);
   const same = (a, b) => a && b && a.group === b.group && a.schedule === b.schedule;
   rows.forEach((r, i) => {
+    // 每個群組一個 tbody，群組間以粗線分隔；企業需求端整塊淡粉底
+    if (i === 0 || rows[i - 1].group !== r.group) {
+      h += `${i ? "</tbody>" : ""}<tbody class="${r.group.includes("需求") ? "demand" : ""}">`;
+    }
     h += `<tr class="${keyRows.has(r.key) ? "key" : ""}">`;
     if (i === 0 || rows[i - 1].group !== r.group) {
       h += `<td class="group" rowspan="${rows.filter(x => x.group === r.group).length}">${r.group}</td>`;
