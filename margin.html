@@ -149,7 +149,8 @@
     </div>
     <div class="grp"><span class="lbl">下欄指標</span>
       <button class="tog" data-s="yoy" style="--dc:#1D7A46"><span class="dot"></span>融資年增率</button>
-      <button class="tog" data-s="nc" style="--dc:#E11D48"><span class="dot"></span>IBKR 暫估</button>
+      <button class="tog" data-s="ncNew" style="--dc:#E11D48"><span class="dot"></span>IBKR 暫估（最新）</button>
+      <button class="tog" data-s="ncHist" style="--dc:#E11D48"><span class="dot"></span>IBKR 暫估（歷史）</button>
     </div>
   </section>
 
@@ -249,7 +250,10 @@ const SERIES = [
 ];
 const M = RAW.months, N = M.length;
 const NCS = [].concat(RAW.nowcast || []);
-const state = {range:"all", show:{spx:true,ndx:true,sox:true,mar:true,yoy:true,nc:true,ratio:false}};
+// 該筆暫估是否顯示：FINRA 已出實際值＝歷史，未出＝最新
+const ncOn = nc => { const i = M.indexOf(nc.month);
+  return i>=0 && (RAW.yoy[i]!=null ? state.show.ncHist : state.show.ncNew); };
+const state = {range:"all", show:{spx:true,ndx:true,sox:true,mar:true,yoy:true,ncNew:true,ncHist:true,ratio:false}};
 const cv = document.getElementById("cv"), tip = document.getElementById("tip");
 const ctx = cv.getContext("2d");
 let LAY = null, hoverI = -1;
@@ -355,7 +359,7 @@ function draw(){
     const i = M.indexOf(nc.month); let a = -1;
     if(i>0){ for(let k=i-1;k>=0;k--) if(RAW.yoy[k]!=null){ a=k; break; } }
     return {nc, i, a};
-  }).filter(o => state.show.yoy && state.show.nc && o.i>=0 && o.a>=0 && o.i>=i0 && o.i<=i1);
+  }).filter(o => state.show.yoy && ncOn(o.nc) && o.i>=0 && o.a>=0 && o.i>=i0 && o.i<=i1);
 
   // x labels
   ctx.textAlign="center"; ctx.fillStyle="#8A9097";
@@ -442,13 +446,13 @@ function renderTip(ev){
     html+=`<div class="r"><i style="--dc:#22262B">融資餘額</i><b>${fmtMar(mar)}美元</b></div>`;
     if(prev!=null) html+=`<div class="r"><i style="--dc:#8A9097">月變動</i><b>${((mar/prev-1)*100).toFixed(1)}%</b></div>`;
     if(yoy!=null&&state.show.yoy) html+=`<div class="r"><i style="--dc:#1D7A46">年增率</i><b style="color:${yoy>=40?'#FF9384':'#B4E3C6'}">${yoy>=0?"+":""}${yoy.toFixed(1)}%</b></div>`;
-    if(ncHit&&state.show.yoy&&state.show.nc){ const e=ncHit.yoy-yoy;
+    if(ncHit&&state.show.yoy&&ncOn(ncHit)){ const e=ncHit.yoy-yoy;
       html+=`<div class="r"><i style="--dc:#E11D48">IBKR 暫估</i><b style="color:#FF9384">${ncHit.yoy.toFixed(1)}%（誤差 ${e>=0?"+":""}${e.toFixed(1)}pp）</b></div>`; }
     const rat=RAW.ratio[hoverI];
     if(rat!=null&&state.show.ratio) html+=`<div class="r"><i style="--dc:#D97706">融資/市值</i><b style="color:${rat>=2.5?'#FF9384':'#F5C36B'}">${rat.toFixed(2)}%</b></div>`;
   } else {
     html+=`<div class="r"><i style="--dc:#22262B">融資餘額</i><b>FINRA 未公佈</b></div>`;
-    if(ncHit&&state.show.yoy&&state.show.nc) html+=`<div class="r"><i style="--dc:#E11D48">IBKR 暫估</i><b style="color:#FF9384">${ncHit.yoy.toFixed(1)}%</b></div>`;
+    if(ncHit&&state.show.yoy&&ncOn(ncHit)) html+=`<div class="r"><i style="--dc:#E11D48">IBKR 暫估</i><b style="color:#FF9384">${ncHit.yoy.toFixed(1)}%</b></div>`;
   }
   const nm={spx:"S&P 500",ndx:"Nasdaq-100",sox:"SOX"};
   for(const k of ["spx","ndx","sox"]){ if(!state.show[k]) continue; const v=RAW[k][hoverI];
