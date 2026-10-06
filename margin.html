@@ -505,18 +505,21 @@ window.addEventListener("resize", draw);
   // ① 槓桿熱度：最新 FINRA 年增率；近 6 個月高點
   const v=RAW.yoy[li], hi6=Math.max(...RAW.yoy.slice(li-5,li+1).filter(x=>x!=null));
   out.push({name:"槓桿熱度：融資年增水位",
-    level: v>=40?"red":(hi6>=40?"yellow":"green"), why:"",
+    level: v>=40?"red":(hi6>=40?"yellow":"green"),
+    why:`${v.toFixed(1)}%（${ym}）｜近 6 個月高點 ${hi6.toFixed(1)}%`,
     rule:[["r","警示：≥ 40%"],["y","注意：近 6 個月曾 ≥ 40%、現已跌破"],["g","正常：近 6 個月 < 40%"]]});
   // ② 槓桿方向：與進程條同一套判定（含 IBKR 暫估月）
   const sk = STAGE_NOW.k;
   out.push({name:"槓桿方向：融資年增率"+(STAGE_NOW.i>=0&&RAW.yoy[STAGE_NOW.i]==null?"（暫估）":""),
-    level: (sk==="C"||sk==="D")?"red":(sk==="B"?"yellow":"green"), why:"",
+    level: (sk==="C"||sk==="D")?"red":(sk==="B"?"yellow":"green"),
+    why: STAGE_NOW.i<0 ? "" : (() => { const i=STAGE_NOW.i, est=RAW.yoy[i]==null, y=est?NCS.find(o=>o.month===M[i]).yoy:RAW.yoy[i];
+      return `${y.toFixed(1)}%（${M[i].replace("-","/")}${est?" IBKR 暫估":""}）｜${sk} ${{A:"累積",B:"風險出現",C:"背離",D:"轉負"}[sk]}`; })(),
     rule:[["r","警示：C 背離或 D 轉負"],["y","注意：B 風險出現"],["g","正常：A 累積"]]});
   // ③ Fed 救援空間：最近一次 FOMC 決議（fed.json 手動維護）
   const F=RAW.fed;
   out.push({name:"Fed 救援空間：最近一次 FOMC 決議",
     level: F.action==="升息"?"red":(F.action==="維持"?"yellow":"green"),
-    why:"",
+    why:`${F.date.slice(5).replace("-","/")} ${F.text}`,
     rule:[["r","警示：升息"],["y","注意：維持"],["g","正常：降息或量化寬鬆"]]});
   document.getElementById("signals").innerHTML=out.map(s=>
     `<div class="signal ${s.level}"><span class="lamp" aria-hidden="true"></span><span><div class="name">${s.name}</div><div class="state">${STATE[s.level]}</div>${s.why?`<div class="why">${s.why}</div>`:""}<ul class="rule">${s.rule.map(([c,t])=>`<li><i class="${c}"></i>${t}</li>`).join("")}</ul></span></div>`).join("");
