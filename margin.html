@@ -379,13 +379,12 @@ function draw(){
     for(let i=i0;i<=i1;i++){ const v=RAW.yoy[i]; if(v==null){continue;}
       const x=X(i), y=Y2(v); started?ctx.lineTo(x,y):(ctx.moveTo(x,y),started=true); }
     ctx.stroke();
-    // nowcast 紅色虛線段＋空心圓（不畫文字標籤，數值看 tooltip）
+    // nowcast 紅色虛線段（不畫圓點與文字標籤，數值看 tooltip）
     for(const {nc, i, a} of ncList){
       const xa=X(Math.max(a,i0)), ya=Y2(RAW.yoy[a]), xb=X(i), yb=Y2(nc.yoy);
       ctx.save();
       ctx.strokeStyle="#E11D48"; ctx.lineWidth=2; ctx.setLineDash([7,4]);
       ctx.beginPath(); ctx.moveTo(xa,ya); ctx.lineTo(xb,yb); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle="#FFFFFF"; ctx.beginPath(); ctx.arc(xb,yb,3.6,0,7); ctx.fill(); ctx.stroke();
       ctx.restore();
     }
   }
