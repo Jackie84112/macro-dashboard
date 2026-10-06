@@ -129,15 +129,19 @@ def build_table(src: dict, ustar: pd.Series, years: int = 3) -> dict:
     return {"years": year_list, "latestYear": latest.year, "latestMonth": latest.month, "rows": rows}
 
 
-def diff_changes(prev: dict, new: dict) -> list:
-    """比對上一版與這一版，列出本次新增／修正的數據（給頁尾「本次更新內容」）。"""
-    out = []
+def diff_changes(prev: dict, new: dict) -> tuple[list, dict]:
+    """比對上一版與這一版，列出本次新增／修正的數據。
+
+    回傳 (頁尾「本次更新內容」清單, 數據表要標底色的格子 {列 key: ["年-月", ...]})。
+    """
+    out, marks = [], {}
     # 初領：以週資料比對（月均那列每週都會變動，不另列）
     old_w = {d for d, _ in prev.get("claims4w", [])}
     added = [(d, v) for d, v in new["claims4w"] if d not in old_w]
     if added:
         items = "、".join(f"{int(d[5:7])}/{int(d[8:])} 當週 {v:.2f}" for d, v in added)
         out.append({"label": "初領四周均值（萬）", "items": [f"{items}（新）"]})
+        marks["claims"] = sorted({f"{int(d[:4])}-{int(d[5:7])}" for d, _ in added})
     prev_rows = {r["key"]: r for r in prev.get("table", {}).get("rows", [])}
     for row in new["table"]["rows"]:
         if row["key"] in ("claims", "gap"):
@@ -153,9 +157,13 @@ def diff_changes(prev: dict, new: dict) -> list:
                     continue
                 tag = f"{y}/{m}" if y != str(new["table"]["latestYear"]) else f"{m}月"
                 items.append(f"{tag} {v}（新）" if ov in (None, "–") else f"{tag} {ov} → {v}（修正）")
+                marks.setdefault(row["key"], []).append(f"{y}-{m}")
         if items:
             out.append({"label": row["label"], "items": items})
-    return out
+    # 缺口由失業率推算，失業率有更新的月份一併標示
+    if "unrate" in marks:
+        marks["gap"] = marks["unrate"]
+    return out, marks
 
 
 def main() -> None:
@@ -211,11 +219,12 @@ def main() -> None:
     }
     # 數據沒變就保留原本的更新時間，避免排程每次都產生空的提交
     prev = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else None
-    if prev and {k: v for k, v in prev.items() if k not in ("updated", "changes")} == data:
+    if prev and {k: v for k, v in prev.items() if k not in ("updated", "changes", "changedCells")} == data:
         print("資料無變動")
         return
-    changes = diff_changes(prev, data) if prev else []
-    data = {"updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ"), "changes": changes, **data}
+    changes, marks = diff_changes(prev, data) if prev else ([], {})
+    data = {"updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ"),
+            "changes": changes, "changedCells": marks, **data}
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"寫入 {OUT}：初領至 {data['claims4w'][-1]}，非農至 {data['nfp'][-1]}，"

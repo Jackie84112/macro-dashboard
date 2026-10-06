@@ -154,6 +154,7 @@ table.data td.flat { color: var(--series-1); font-weight: 700; }
 table.data td.muted { color: var(--text-muted); }
 table.data tbody.gap + tbody tr:first-child td { border-top: 2px solid var(--group-rule); }
 table.data tbody tr:last-child td { border-bottom: none; }
+table.data td.updated { background: var(--group-bg); }
 table.data tbody.gap td { height: 14px; padding: 0; border: none; background: transparent; }
 .notes { margin: 8px 0 12px; font-size: 12px; color: var(--text-secondary); }
 .notes p { margin: 2px 0; }
@@ -503,9 +504,12 @@ function renderTable() {
       h += `<td class="group" rowspan="${rows.filter(x => x.group === r.group).length}">${r.group}</td>`;
     }
     h += `<td class="label">${r.label}</td>`;
-    for (const c of r.cells[String(tableYear)]) {
-      h += c ? `<td class="${c.c || (c.v === "–" ? "muted" : "")}">${c.v}</td>` : `<td></td>`;
-    }
+    // 本次更新新增／修正的格子加底色（同群組名欄）
+    const upd = new Set((DATA.changedCells || {})[r.key] || []);
+    r.cells[String(tableYear)].forEach((c, m) => {
+      const cls = [c && (c.c || (c.v === "–" ? "muted" : "")), upd.has(`${tableYear}-${m + 1}`) && "updated"].filter(Boolean).join(" ");
+      h += c ? `<td class="${cls}">${c.v}</td>` : `<td></td>`;
+    });
     // 同群組、同發布排程的連續列合併「下次發布」
     if (!same(rows[i - 1], r)) {
       let span = 1;
