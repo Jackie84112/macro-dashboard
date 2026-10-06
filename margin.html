@@ -196,14 +196,14 @@
   </section>
 
   <section class="card">
-    <h2>IBKR 暫估：提早 3 週推算 FINRA</h2>
-    <p class="note" style="margin:0 0 10px">IBKR（盈透證券）每月 1 號公佈上月客戶融資餘額，比 FINRA 早約 3 週。只用它的<b>月變動（MoM）</b>推 FINRA，三步換算：</p>
+    <h2>IBKR 暫估 vs. 實際</h2>
+    <p class="note" style="margin:0 0 10px">IBKR（盈透證券）每月 1 號公佈上月客戶融資餘額，比 FINRA 早約 3 週。</p>
     <div class="tablewrap">
     <table>
-      <tr><th style="width:18%">步驟</th><th>算法</th><th style="width:30%">9 月套用</th></tr>
-      <tr><td><b>① 方向</b><br><span style="font-size:11px;color:#6B7178">最可靠</span></td><td style="text-align:left">IBKR MoM ≥ +3% → FINRA MoM 也為正；≤ −3% → 也為負（命中率 93%）<br>介於 ±1% 內 → 不判斷（命中率 53%）</td><td>IBKR <b>+4%</b> → FINRA 9 月 MoM <b>為正</b></td></tr>
-      <tr><td><b>② 幅度</b><br><span style="font-size:11px;color:#6B7178">僅參考，誤差 ±3.3pp</span></td><td style="text-align:left">FINRA MoM ≈ 0.10 + 0.49 × IBKR MoM</td><td>0.10 + 0.49 × 4 = <b>+2.1%</b></td></tr>
-      <tr><td><b>③ 年增率</b><br><span style="font-size:11px;color:#6B7178">純算術，無誤差</span></td><td style="text-align:left">YoY = 8 月總額 × (1 + MoM) ÷ 去年 9 月總額 − 1<br>= 1,453,832 × (1 + MoM) ÷ 1,126,494 − 1 = 29.1% + 1.291 × MoM</td><td>29.1% + 1.291 × 2.1% ≈ <b>31.8%</b><br>（區間 27.5–36.1%）</td></tr>
+      <tr><th style="width:14%">指標</th><th>算法</th><th style="width:22%">可靠度</th></tr>
+      <tr><td><b>1. MoM 方向</b></td><td style="text-align:left">IBKR MoM ≥ +3% 或 ≤ −3% → FINRA MoM 同方向變動<br>IBKR MoM ±1% 內 → FINRA MoM 不確定</td><td>最可靠</td></tr>
+      <tr><td><b>2. MoM 幅度</b></td><td style="text-align:left">FINRA MoM ≈ 0.10 + 0.49 × IBKR MoM</td><td>僅參考，誤差 ±3.3pp</td></tr>
+      <tr><td><b>3. YoY 幅度</b></td><td style="text-align:left">YoY = 8 月總額 × (1 + MoM) ÷ 去年 9 月總額 − 1<br>= 1,453,832 × (1 + MoM) ÷ 1,126,494 − 1 = 29.1% + 1.291 × MoM</td><td>純算術，無誤差</td></tr>
     </table>
     </div>
     <h2 style="font-size:15px;margin:16px 0 8px">暫估 vs 實際</h2>
