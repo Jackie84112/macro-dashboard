@@ -522,7 +522,7 @@ window.addEventListener("resize", draw);
   const stage = y<0?"D 轉負" : (y<40&&was40)?"C 交叉" : (y>=40&&y<p)?"B 見頂" : (y<40&&y>p)?"A 累積" : (y>=40?"紅區上升":"—");
   out.push({name:"槓桿方向：融資年增率",
     level: (stage[0]==="D"||stage[0]==="C")?"red":(stage[0]==="B"||stage==="紅區上升")?"yellow":"green",
-    why:`${y.toFixed(1)}%（${(nc?nc.month:M[li]).replace("-","/")}${nc?" IBKR 暫估":""}）｜${stage}`,
+    why:"",
     rule:[["r","警示：C 交叉或 D 轉負"],["y","注意：B 見頂"],["g","正常：A 累積"]]});
   // ③ Fed 救援空間：最近一次 FOMC 決議（fed.json 手動維護）
   const F=RAW.fed;
