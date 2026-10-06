@@ -129,6 +129,35 @@ def build_table(src: dict, ustar: pd.Series, years: int = 3) -> dict:
     return {"years": year_list, "latestYear": latest.year, "latestMonth": latest.month, "rows": rows}
 
 
+def diff_changes(prev: dict, new: dict) -> list:
+    """比對上一版與這一版，列出本次新增／修正的數據（給頁尾「本次更新內容」）。"""
+    out = []
+    # 初領：以週資料比對（月均那列每週都會變動，不另列）
+    old_w = {d for d, _ in prev.get("claims4w", [])}
+    added = [(d, v) for d, v in new["claims4w"] if d not in old_w]
+    if added:
+        items = "、".join(f"{int(d[5:7])}/{int(d[8:])} 當週 {v:.2f}" for d, v in added)
+        out.append({"label": "初領四周均值（萬）", "items": [f"{items}（新）"]})
+    prev_rows = {r["key"]: r for r in prev.get("table", {}).get("rows", [])}
+    for row in new["table"]["rows"]:
+        if row["key"] in ("claims", "gap"):
+            continue
+        old = prev_rows.get(row["key"], {}).get("cells", {})
+        items = []
+        for y, cells in row["cells"].items():
+            ocells = old.get(y, [None] * 12)
+            for m, (c, o) in enumerate(zip(cells, ocells), start=1):
+                v = c["v"] if c else None
+                ov = o["v"] if o else None
+                if v in (None, "–") or v == ov:
+                    continue
+                tag = f"{y}/{m}" if y != str(new["table"]["latestYear"]) else f"{m}月"
+                items.append(f"{tag} {v}（新）" if ov in (None, "–") else f"{tag} {ov} → {v}（修正）")
+        if items:
+            out.append({"label": row["label"], "items": items})
+    return out
+
+
 def main() -> None:
     # 1) 初領失業金四周均值（週，萬人）
     claims = fred("IC4WSA") / 1e4
@@ -181,12 +210,12 @@ def main() -> None:
         "ustar": points(ustar, 2),
     }
     # 數據沒變就保留原本的更新時間，避免排程每次都產生空的提交
-    if OUT.exists():
-        prev = json.loads(OUT.read_text(encoding="utf-8"))
-        if {k: v for k, v in prev.items() if k != "updated"} == data:
-            print("資料無變動")
-            return
-    data = {"updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ"), **data}
+    prev = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else None
+    if prev and {k: v for k, v in prev.items() if k not in ("updated", "changes")} == data:
+        print("資料無變動")
+        return
+    changes = diff_changes(prev, data) if prev else []
+    data = {"updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ"), "changes": changes, **data}
     OUT.parent.mkdir(parents=True, exist_ok=True)
     OUT.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"寫入 {OUT}：初領至 {data['claims4w'][-1]}，非農至 {data['nfp'][-1]}，"
