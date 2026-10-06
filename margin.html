@@ -79,7 +79,7 @@
   .signal.yellow{--lamp:#fab219;--lamp-halo:rgba(250,178,25,.22);}
   .signal.red{--lamp:#d03b3b;--lamp-halo:rgba(208,59,59,.18);}
   @keyframes lamp-blink{0%,100%{opacity:1;box-shadow:0 0 0 4px var(--lamp-halo);}50%{opacity:.65;box-shadow:0 0 0 6px transparent;}}
-  @media (prefers-reduced-motion:reduce){.signal .lamp{animation:none;}}
+  @media (prefers-reduced-motion:reduce){.signal .lamp,.step.cur .node{animation:none;}}
   .signal>span:last-child{flex:1;min-width:0;}
   .signal .name{font-size:17px;font-weight:700;line-height:1.3;}
   .signal .state{font-size:12px;color:var(--muted);margin:2px 0 4px;}
@@ -95,7 +95,7 @@
   .step .node{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;
     justify-content:center;font-weight:700;font-size:15px;border:2px solid #C9C6BF;color:#8A9097;background:#fff;}
   .step.done .node{background:#22262B;border-color:#22262B;color:#fff;}
-  .step.cur .node{background:#D94F3D;border-color:#D94F3D;color:#fff;box-shadow:0 0 0 6px rgba(217,79,61,.14);}
+  .step.cur .node{background:#d03b3b;border-color:#d03b3b;color:#fff;--lamp-halo:rgba(208,59,59,.18);box-shadow:0 0 0 4px var(--lamp-halo);animation:lamp-blink 2s ease-in-out infinite;}
   .step .lbl{font-size:13.5px;font-weight:700;margin-top:7px;}
   .step.cur .lbl{color:#B02E1F;}
   .step .st{font-size:11px;color:var(--muted);margin-top:3px;text-align:center;line-height:1.5;max-width:130px;}
@@ -107,7 +107,7 @@
   .conn.dash{background:none;border-top:2px dashed #C9C6BF;height:0;}
   .progress{display:flex;align-items:center;gap:18px;padding:10px 16px;}
   .progress h2{margin:0;font-size:15px;color:var(--muted);letter-spacing:2px;white-space:nowrap;}
-  .progress .stepper{margin:0;flex:1;padding:2px 0;}
+  .progress .stepper{margin:0;flex:1;padding:10px 10px;}
   .progress .step{min-width:96px;}
   .progress .step .node{width:30px;height:30px;font-size:13px;}
   .progress .conn{margin-top:15px;}
