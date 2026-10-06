@@ -528,7 +528,7 @@ window.addEventListener("resize", draw);
   const F=RAW.fed;
   out.push({name:"Fed 救援空間：最近一次 FOMC 決議",
     level: F.action==="升息"?"red":(F.action==="維持"?"yellow":"green"),
-    why:`${F.date.slice(5).replace("-","/")} ${F.text}`,
+    why:"",
     rule:[["r","警示：升息"],["y","注意：維持"],["g","正常：降息或量化寬鬆"]]});
   document.getElementById("signals").innerHTML=out.map(s=>
     `<div class="signal ${s.level}"><span class="lamp" aria-hidden="true"></span><span><div class="name">${s.name}</div><div class="state">${STATE[s.level]}</div>${s.why?`<div class="why">${s.why}</div>`:""}<ul class="rule">${s.rule.map(([c,t])=>`<li><i class="${c}"></i>${t}</li>`).join("")}</ul></span></div>`).join("");
