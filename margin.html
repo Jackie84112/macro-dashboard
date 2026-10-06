@@ -130,26 +130,14 @@
 
   <section class="card progress">
     <h2>槓桿方向進程</h2>
-    <div class="stepper">
-      <div class="step done">
-        <div class="node">A</div><div class="lbl">堆積</div>
-      </div>
-      <div class="conn done"></div>
-      <div class="step done">
-        <div class="node">B</div><div class="lbl">背離</div>
-      </div>
-      <div class="conn done"></div>
-      <div class="step cur">
-        <div class="node">C</div><div class="lbl">交叉</div>
-      </div>
+    <div class="stepper" id="stepper">
+      <div class="step" data-k="A"><div class="node">A</div><div class="lbl">堆積</div></div>
       <div class="conn"></div>
-      <div class="step">
-        <div class="node">D</div><div class="lbl">轉負</div>
-      </div>
-      <div class="conn dash"></div>
-      <div class="step">
-        <div class="node">R</div><div class="lbl">重置（出口）</div>
-      </div>
+      <div class="step" data-k="B"><div class="node">B</div><div class="lbl">背離</div></div>
+      <div class="conn"></div>
+      <div class="step" data-k="C"><div class="node">C</div><div class="lbl">交叉</div></div>
+      <div class="conn"></div>
+      <div class="step" data-k="D"><div class="node">D</div><div class="lbl">轉負</div></div>
     </div>
   </section>
 
@@ -241,11 +229,10 @@
     <div class="tablewrap">
     <table>
       <tr><th>階段</th><th>定義（可實時判定）</th><th>里程碑／確認器</th><th>歷史含義</th><th>可逆性與重置條件</th><th>本輪狀態</th></tr>
-      <tr><td><b>A 堆積</b></td><td>年增率突破 40% 且上行</td><td>融資與指數同創新高</td><td>行情還有數月到一年</td><td><b>完全可逆</b>：年增率自然降溫至 20–30% 且無事故 → 軟著陸（2025/10 實例），連 Fed 都不一定需要</td><td>✅ 2025/10–2026/6</td></tr>
-      <tr><td><b>B 背離</b></td><td>年增率見頂回落，價格仍創高</td><td><b>前震</b>（單月 -5%+ 且非崩盤月）出現＝確認升級</td><td>頂點進入 0–8 個月倒數</td><td><b>高度可逆</b>：融資回升重新加速 → 退回 A；或 Fed 轉鴿提前拆彈（1998 三次降息，進程作廢）</td><td>✅ 5 月見頂 53.7%</td></tr>
-      <tr><td><b>C 交叉</b></td><td>年增率跌破 40%</td><td>前震已現＋主題指數先弱 → 可信度大增</td><td>頂點窗口 ±0–2 個月（2007／2021）</td><td><b>窄門可逆</b>：僅兩把鑰匙——①新槓桿回流、年增率重新站上 40（代價：終局更重）②Fed 實質放鬆（前提：通膨收斂）。歷史上 C 段成功回頭的只有 Fed 救援型，2007／2021 都沒回頭</td><td>● <b>當前：2026/7 交叉、前震同月、SOX 先弱；FINRA 8 月 +2.6%、YoY 37.2% 續降 → 鑰匙①未出現（未站回 40%，9 月需 +8.5%）；鑰匙② 9/16 FOMC 升息一碼至 3.75–4.00%、點陣圖年底再一碼 → 正式關上。樣本外審計的「紅區×牛市晚期×Fed 緊縮」三元組合現已三項齊備（兩樣本 20 事件零反例）；9 月指數強彈（SOX +9%）反而抬高「2007/10 型回槓桿」風險；10/1 IBKR 9 月 +4% 強訊號，FINRA 9 月暫估 YoY 31.8%</b></td></tr>
+      <tr><td><b>A 堆積</b></td><td>年增率 &lt; 40% 且股價上漲</td><td>融資與指數同創新高</td><td>行情還有數月到一年</td><td><b>完全可逆</b>：年增率自然降溫至 20–30% 且無事故 → 軟著陸（2025/10 實例），連 Fed 都不一定需要</td><td>✅ 2025/10–2026/6</td></tr>
+      <tr><td><b>B 背離</b></td><td>年增率 &gt; 40% 且股價上漲</td><td><b>前震</b>（單月 -5%+ 且非崩盤月）出現＝確認升級</td><td>頂點進入 0–8 個月倒數</td><td><b>高度可逆</b>：融資回升重新加速 → 退回 A；或 Fed 轉鴿提前拆彈（1998 三次降息，進程作廢）</td><td>✅ 5 月見頂 53.7%</td></tr>
+      <tr><td><b>C 交叉</b></td><td>年增率超過 40% 後自高點回落，指數持平或仍上漲</td><td>前震已現＋主題指數先弱 → 可信度大增</td><td>頂點窗口 ±0–2 個月（2007／2021）</td><td><b>窄門可逆</b>：僅兩把鑰匙——①新槓桿回流、年增率重新站上 40（代價：終局更重）②Fed 實質放鬆（前提：通膨收斂）。歷史上 C 段成功回頭的只有 Fed 救援型，2007／2021 都沒回頭</td><td>● <b>當前：2026/7 交叉、前震同月、SOX 先弱；FINRA 8 月 +2.6%、YoY 37.2% 續降 → 鑰匙①未出現（未站回 40%，9 月需 +8.5%）；鑰匙② 9/16 FOMC 升息一碼至 3.75–4.00%、點陣圖年底再一碼 → 正式關上。樣本外審計的「紅區×牛市晚期×Fed 緊縮」三元組合現已三項齊備（兩樣本 20 事件零反例）；9 月指數強彈（SOX +9%）反而抬高「2007/10 型回槓桿」風險；10/1 IBKR 9 月 +4% 強訊號，FINRA 9 月暫估 YoY 31.8%</b></td></tr>
       <tr><td><b>D 轉負</b></td><td>年增率 &lt; 0%</td><td>配合價格跌破 10 月均線</td><td>主跌段確認</td><td><b>短期不可逆</b>：去槓桿螺旋自我強化，只能走完出清；例外是峰值淺的循環（2012 轉負僅橫盤）——殺傷力回頭看警示指標表的峰值深度</td><td>⚪ 未觸發（8 月 YoY 實際 37.2%，離 0 尚遠；若總額橫盤，基期效應約 2027/6 自動轉負）</td></tr>
-      <tr><td><b>R 重置</b></td><td>Fed 實質放鬆＋年增率止跌回穩</td><td>—</td><td>進程作廢，回到 A</td><td>可逆性的出口本身：發生在 B／C 段＝假警報善終（1998）；發生在 D 段之後＝熊市見底重建（2009、2023）——動作一樣，對持倉意義完全相反</td><td>⚪ 鑰匙①已由 FINRA 8 月正式數字排除（暫估與實際一致）；鑰匙② 9/16 升息一碼、點陣圖年底再一碼 → Fed 進入緊縮週期，重置出口本輪最遠；IBKR 9 月 +4% 屬回槓桿而非重置；下次檢視 FINRA 9 月（10 月下旬）</td></tr>
     </table>
     </div>
     <p class="note">可逆性遞減是本表核心：A 段自己能善終、B 段需要數據或 Fed 幫忙、C 段只剩兩把外生的鑰匙、D 段連鑰匙都沒有——越晚行動，選擇越少。「C 段＋前震同時出現」歷史上僅 2007 與 2022 年初，目前是第三次（n=2，樣本極小，誠實標注）。滑鼠停在頁首進程條各節點可看定義。</p>
@@ -263,6 +250,29 @@ const SERIES = [
 ];
 const M = RAW.months, N = M.length;
 const NCS = [].concat(RAW.nowcast || []);
+// 槓桿方向進程：股價＝SPX/NDX/SOX 各與 3 個月前比，> +3% 上漲、< −3% 下跌，≥ 2 個成立才算
+const priceUp = i => ["spx","ndx","sox"].filter(k => { const a=RAW[k][i], b=RAW[k][i-3];
+  return a!=null && b!=null && a/b-1 > 0.03; }).length >= 2;
+// 依序掃描全歷史（C 要記住本輪高點）；FINRA 未出的月份用 IBKR 暫估年增率。回傳每月階段 A/B/C/D 或 null
+function stageSeries(){
+  const nc = {}; NCS.forEach(o => nc[o.month] = o.yoy);
+  const out = []; let peak = null, prev = null;
+  for(let i=0;i<N;i++){
+    const y = RAW.yoy[i]!=null ? RAW.yoy[i] : (nc[M[i]]!=null ? nc[M[i]] : null);
+    if(y==null){ out.push(null); continue; }
+    let st;
+    if(y < 0){ st = "D"; peak = null; }
+    else if(peak!=null && y < peak) st = "C";
+    else if(y > 40 && priceUp(i)) st = "B";
+    else if(y < 40 && priceUp(i)) st = "A";
+    else st = prev;                       // 規則外情形沿用前一階段
+    if(y >= 40) peak = Math.max(peak ?? y, y);
+    out.push(st); prev = st;
+  }
+  return out;
+}
+const STAGES = stageSeries();
+const STAGE_NOW = (() => { for(let i=N-1;i>=0;i--) if(STAGES[i]) return {k:STAGES[i], i}; return {k:null, i:-1}; })();
 // 該筆暫估是否顯示：FINRA 已出實際值＝歷史，未出＝最新
 const ncOn = nc => { const i = M.indexOf(nc.month);
   return i>=0 && (RAW.yoy[i]!=null ? state.show.ncHist : state.show.ncNew); };
@@ -494,6 +504,13 @@ document.querySelectorAll("button.tog").forEach(b=>b.addEventListener("click",()
 }));
 window.addEventListener("resize", draw);
 
+// ---------- 槓桿方向進程條 ----------
+(function(){
+  const order = ["A","B","C","D"], cur = order.indexOf(STAGE_NOW.k);
+  const steps = document.querySelectorAll("#stepper .step"), conns = document.querySelectorAll("#stepper .conn");
+  steps.forEach((el,n) => el.classList.add(n<cur ? "done" : n===cur ? "cur" : "todo"));
+  conns.forEach((el,n) => { if(n<cur) el.classList.add("done"); });
+})();
 // ---------- 三大警示燈號 ----------
 (function(){
   const STATE={green:"正常",yellow:"注意",red:"警示"}, out=[];
@@ -504,16 +521,10 @@ window.addEventListener("resize", draw);
   out.push({name:"槓桿熱度：融資年增水位",
     level: v>=40?"red":(hi6>=40?"yellow":"green"), why:"",
     rule:[["r","警示：≥ 40%"],["y","注意：近 6 個月曾 ≥ 40%、現已跌破"],["g","正常：近 6 個月 < 40%"]]});
-  // ② 槓桿方向：年增率對應進程階段；FINRA 未出的月份用 IBKR 暫估
-  const nc=NCS.filter(o=>o.month>M[li]).pop();
-  const y=nc?nc.yoy:v, p=nc?v:RAW.yoy[li-1];
-  const win=RAW.yoy.slice(li-(nc?4:5),li+1).filter(x=>x!=null).concat(nc?[nc.yoy]:[]);
-  const was40=Math.max(...win)>=40;
-  // 優先序 D > C > B > A；三條規則以外的情形：≥40% 且上升＝黃、<40% 下降且近期未達 40%＝綠
-  const stage = y<0?"D 轉負" : (y<40&&was40)?"C 交叉" : (y>=40&&y<p)?"B 見頂" : (y<40&&y>p)?"A 累積" : (y>=40?"紅區上升":"—");
+  // ② 槓桿方向：與進程條同一套判定（含 IBKR 暫估月）
+  const sk = STAGE_NOW.k;
   out.push({name:"槓桿方向：融資年增率",
-    level: (stage[0]==="D"||stage[0]==="C")?"red":(stage[0]==="B"||stage==="紅區上升")?"yellow":"green",
-    why:"",
+    level: (sk==="C"||sk==="D")?"red":(sk==="B"?"yellow":"green"), why:"",
     rule:[["r","警示：C 交叉或 D 轉負"],["y","注意：B 見頂"],["g","正常：A 累積"]]});
   // ③ Fed 救援空間：最近一次 FOMC 決議（fed.json 手動維護）
   const F=RAW.fed;
