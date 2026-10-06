@@ -95,14 +95,9 @@
   .step .node{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;
     justify-content:center;font-weight:700;font-size:15px;border:2px solid #C9C6BF;color:#8A9097;background:#fff;}
   .step.done .node{background:#22262B;border-color:#22262B;color:#fff;}
-  /* 已走到的階段依階段上色：A 綠、B 黃、C/D 紅；當前階段加光暈（不閃）；未到的階段維持灰 */
-  .step.done[data-k="A"] .node,.step.cur[data-k="A"] .node{--sc:#0ca30c;--sh:rgba(12,163,12,.16);}
-  .step.done[data-k="B"] .node,.step.cur[data-k="B"] .node{--sc:#fab219;--sh:rgba(250,178,25,.22);}
-  .step.done[data-k="C"] .node,.step.cur[data-k="C"] .node,.step.done[data-k="D"] .node,.step.cur[data-k="D"] .node{--sc:#d03b3b;--sh:rgba(208,59,59,.18);}
-  .step.done .node,.step.cur .node{background:var(--sc);border-color:var(--sc);color:#fff;}
-  .step.cur .node{box-shadow:0 0 0 4px var(--sh);}
+  .step.cur .node{background:#d03b3b;border-color:#d03b3b;color:#fff;box-shadow:0 0 0 4px rgba(208,59,59,.18);}
   .step .lbl{font-size:13.5px;font-weight:700;margin-top:7px;}
-  .step.cur .lbl{color:var(--ink);}
+  .step.cur .lbl{color:#B02E1F;}
   .step .st{font-size:11px;color:var(--muted);margin-top:3px;text-align:center;line-height:1.5;max-width:130px;}
   .badge{display:inline-block;background:#FDECEA;color:#B02E1F;border:1px solid #F0C4BC;
     border-radius:999px;font-size:10.5px;padding:1px 8px;margin-top:4px;font-weight:600;}
