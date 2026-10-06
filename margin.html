@@ -196,31 +196,25 @@
   </section>
 
   <section class="card">
-    <h2>IBKR 領先指標（提前 3 週的 FINRA 確認器）</h2>
+    <h2>IBKR 暫估：提早 3 週推算 FINRA</h2>
+    <p class="note" style="margin:0 0 10px">IBKR（盈透證券）每月 1 號公佈上月客戶融資餘額，比 FINRA 早約 3 週。只用它的<b>月變動（MoM）</b>推 FINRA，三步換算：</p>
     <div class="tablewrap">
     <table>
-      <tr><th style="width:15%">項目</th><th>規則</th><th style="width:26%">可信度（回測 2017/2–2026/7，114 個月）</th></tr>
-      <tr><td><b>數據源</b></td><td style="text-align:left">IBKR（盈透證券）每月 1 號公佈上月客戶融資餘額，約佔 FINRA 母體 7%</td><td>7 月：IBKR 8/3 公佈 -7%，FINRA 8 月中旬 -5.6% ✓<br>8 月：IBKR 9/1 公佈 +1%（弱訊號帶），Robinhood 9/10 公佈 +4%，FINRA 9/16 +2.6%（同向、幅度介於兩者間）<br>9 月：IBKR 10/1 公佈 <b>+4%</b>（≥3% 強訊號帶），FINRA 9 月 10 月下旬出爐</td></tr>
-      <tr class="hit"><td><b>方向訊號</b></td><td style="text-align:left">|IBKR MoM| ≥ 3% → FINRA 同月<b>同方向</b></td><td>命中概率 <b>~93%</b>（樣本外 41/44）</td></tr>
-      <tr><td>無訊號區</td><td style="text-align:left">|IBKR MoM| &lt; 1% → 不解讀、不下結論</td><td>命中概率 53%</td></tr>
-      <tr><td>方向不對稱</td><td style="text-align:left"><b>大減最可靠</b></td><td>命中概率 90%（大減 9/10）</td></tr>
+      <tr><th style="width:18%">步驟</th><th>算法</th><th style="width:30%">9 月套用</th></tr>
+      <tr><td><b>① 方向</b><br><span style="font-size:11px;color:#6B7178">最可靠</span></td><td style="text-align:left">IBKR MoM ≥ +3% → FINRA MoM 也為正；≤ −3% → 也為負（命中率 93%）<br>介於 ±1% 內 → 不判斷（命中率 53%）</td><td>IBKR <b>+4%</b> → FINRA 9 月 MoM <b>為正</b></td></tr>
+      <tr><td><b>② 幅度</b><br><span style="font-size:11px;color:#6B7178">僅參考，誤差 ±3.3pp</span></td><td style="text-align:left">FINRA MoM ≈ 0.10 + 0.49 × IBKR MoM</td><td>0.10 + 0.49 × 4 = <b>+2.1%</b></td></tr>
+      <tr><td><b>③ 年增率</b><br><span style="font-size:11px;color:#6B7178">純算術，無誤差</span></td><td style="text-align:left">YoY = 8 月總額 × (1 + MoM) ÷ 去年 9 月總額 − 1<br>= 1,453,832 × (1 + MoM) ÷ 1,126,494 − 1 = 29.1% + 1.291 × MoM</td><td>29.1% + 1.291 × 2.1% ≈ <b>31.8%</b><br>（區間 27.5–36.1%）</td></tr>
     </table>
     </div>
-    <p class="note" style="margin-top:12px"><b>對帳：9/1 IBKR 8 月 +1% → 暫估 FINRA MoM ≈ +0.6%、YoY ≈ 34.5%（區間 30–39%）；FINRA 8 月正式數字（9/16 出爐）＝ $1.454 兆、MoM <b>+2.6%</b>、YoY <b>37.2%</b></b>。方向對（都是正）、幅度低估 2.0pp（在回測 ±3.3pp RMSE 內），YoY 暫估誤差 -2.7pp、落在區間內。這正是回測的已知盲點：IBKR 弱訊號帶「沒動」不代表市場沒動——FINRA 母體回補比 IBKR 客戶積極。結論不變：① 7 月去槓桿<b>沒有延續</b>；② 回補 +2.6% 仍<b>不夠回流</b>——站回 40% 需要 +4.7%，8 月只走了一半多，年增率續降。上圖年增率線的<b style="color:#E11D48">紅色虛線段</b>即為 IBKR 暫估路徑，與實線（實際）並列可見誤差。下表為 8/26 建的情境表，加註暫估與實際落點：</p>
+    <h2 style="font-size:15px;margin:16px 0 8px">暫估 vs 實際</h2>
     <div class="tablewrap">
     <table>
-      <tr><th>9/1 IBKR 公佈 8 月</th><th>FINRA 8月 MoM 預測</th><th>8月 YoY 暫估（±4.4pp）</th><th>40% 紅線判定</th></tr>
-      <tr><td>-7%（重演 7 月）</td><td class="neg">-3.3%</td><td>29.3%</td><td>續降，C 段惡化坐實</td></tr>
-      <tr><td>-3%</td><td class="neg">-1.4%</td><td>31.9%</td><td>續降</td></tr>
-      <tr><td>0%</td><td>+0.1%</td><td>33.9%</td><td>續降（基期效應鎖定）</td></tr>
-      <tr class="act"><td><b>IBKR 實際：+1%（9/1 公佈）</b></td><td class="pos"><b>≈ +0.6%</b></td><td><b>≈ 34.5%</b></td><td><b>續降；去槓桿暫停、未回流 → C 段維持、未升級</b></td></tr>
-      <tr class="hit"><td><b>FINRA 實際（9/16 出爐）</b></td><td class="pos"><b>+2.6%</b></td><td><b>37.2%</b>（暫估誤差 -2.7pp）</td><td><b>續降、未站回 40% → 暫估結論成立，C 段維持</b></td></tr>
-      <tr><td>+3%</td><td class="pos">+1.6%</td><td>35.8%</td><td>續降</td></tr>
-      <tr><td>+7%</td><td class="pos">+3.5%</td><td>38.5%</td><td>仍在線下</td></tr>
-      <tr class="hit"><td><b>站回 40% 門檻</b></td><td class="pos"><b>需 +4.7%</b></td><td>40.0%</td><td>對應 IBKR 約 +6~9%，歷史上只有瘋狂加槓桿月出現過；唯一前例 2007/10 回槓桿當月即為 SPX 大頂</td></tr>
+      <tr><th>月份</th><th>IBKR MoM</th><th>暫估 FINRA MoM</th><th>實際 FINRA MoM</th><th>暫估 YoY</th><th>實際 YoY</th><th>YoY 誤差</th></tr>
+      <tr><td>8 月</td><td class="pos">+1%</td><td>+0.6%</td><td class="pos">+2.6%</td><td>34.5%</td><td>37.2%</td><td>−2.7pp</td></tr>
+      <tr class="act"><td><b>9 月</b></td><td class="pos"><b>+4%</b></td><td><b>+2.1%</b></td><td>10 月下旬公佈</td><td><b>31.8%</b></td><td>—</td><td>—</td></tr>
     </table>
     </div>
-    <p class="note">定位：IBKR 是「同一份現實早 3 週看到」的確認器，不是更早的現實（2021 頂它反而晚 2 個月）；紅區與交叉判定一律以 FINRA 為準。YoY 恆等式（下月）：9月YoY = 29.1% + 1.291 × FINRA 9月MoM（8 月總額與去年 9 月基期皆為定數）→ 即使 9 月總額不變，基期效應也會把年增率壓到 29%；站回 40% 需單月 +8.5%（IBKR 約 +12% 以上），近乎不可能。裁決已落地：9/16 FOMC 以 12-0 升息一碼至 3.75–4.00%（2023/7 以來首次），聲明「通膨仍偏高」、點陣圖中位數年底再一碼 → 鑰匙②（Fed 實質放鬆）正式關上。<b>新的觀察點是鑰匙①</b>：升息後指數不跌反漲，9 月至 9/22 SOX +10%、NDX +4% 創新高、10 年期殖利率 4.98%——歷史上前震後大幅回槓桿的唯一前例是 2007/10（+5.0%、YoY 短暫回 40.8%），那個月正是 SPX 大頂；<b>10/1 IBKR 9 月公佈 +4%（$105.2B），落在 ≥3% 強訊號帶（FINRA 同月同向 ~93%）→ 依本段既定規則屬「回槓桿追價」型態，當升級而非解除看待</b>；量級參考 FINRA 9 月 MoM ≈ +2.1% → 代入恆等式 YoY ≈ 31.8%（區間 27–36%），仍遠低於 40%。下一個：FINRA 9 月正式數字 10 月下旬、IBKR 10 月數據 11/2。</p>
+    <p class="note"><b>解讀</b>：9 月 MoM 轉正＝槓桿回流，依進程定義屬「回槓桿追價」，當升級看；但 YoY 受去年基數壓制仍續降，要站回 40% 需單月 +8.5%。<b>注意</b>：IBKR 自己的 YoY 被客戶數成長灌水，不能用；紅區與交叉判定一律以 FINRA 為準。下次：FINRA 9 月（10 月下旬）、IBKR 10 月（11/2）。</p>
   </section>
 
   <section class="card">
