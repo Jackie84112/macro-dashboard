@@ -508,21 +508,22 @@ window.addEventListener("resize", draw);
   const STATE={green:"正常",yellow:"注意",red:"警示"}, out=[];
   let li=N-1; while(li>0 && RAW.mar[li]==null) li--;
   const ym=M[li].replace("-","/");
-  // ① 槓桿熱度：最新 FINRA 年增率；近 12 個月高點
-  const v=RAW.yoy[li], hi12=Math.max(...RAW.yoy.slice(li-11,li+1).filter(x=>x!=null));
+  // ① 槓桿熱度：最新 FINRA 年增率；近 6 個月高點
+  const v=RAW.yoy[li], hi6=Math.max(...RAW.yoy.slice(li-5,li+1).filter(x=>x!=null));
   out.push({name:"槓桿熱度：融資年增水位",
-    level: v>=40?"red":(hi12>=40?"yellow":"green"),
-    why:`${v.toFixed(1)}%（${ym}）｜近 12 個月高點 ${hi12.toFixed(1)}%`,
-    rule:[["r","警示：≥ 40%"],["y","注意：近 12 個月曾 ≥ 40%、現已跌破"],["g","正常：近 12 個月 < 40%"]]});
-  // ② 槓桿動作：FINRA 未出的月份用 IBKR 暫估 MoM
-  const nc=NCS.filter(o=>o.month>M[li]&&o.mom!=null).pop();
-  const mom=nc?nc.mom:(RAW.mar[li]/RAW.mar[li-1]-1)*100;
-  const src=nc?`${nc.month.replace("-","/")} IBKR 暫估`:`${ym} FINRA`;
-  const a=Math.abs(mom);
-  out.push({name:"槓桿動作：融資月變動",
-    level: a>=5?"red":(a>=3?"yellow":"green"),
-    why:`${mom>=0?"+":""}${mom.toFixed(1)}%（${src}）`,
-    rule:[["r","警示：|MoM| ≥ 5%"],["y","注意：|MoM| 3–5%"],["g","正常：|MoM| < 3%"]]});
+    level: v>=40?"red":(hi6>=40?"yellow":"green"), why:"",
+    rule:[["r","警示：≥ 40%"],["y","注意：近 6 個月曾 ≥ 40%、現已跌破"],["g","正常：近 6 個月 < 40%"]]});
+  // ② 槓桿方向：年增率對應進程階段；FINRA 未出的月份用 IBKR 暫估
+  const nc=NCS.filter(o=>o.month>M[li]).pop();
+  const y=nc?nc.yoy:v, p=nc?v:RAW.yoy[li-1];
+  const win=RAW.yoy.slice(li-(nc?4:5),li+1).filter(x=>x!=null).concat(nc?[nc.yoy]:[]);
+  const was40=Math.max(...win)>=40;
+  // 優先序 D > C > B > A；三條規則以外的情形：≥40% 且上升＝黃、<40% 下降且近期未達 40%＝綠
+  const stage = y<0?"D 轉負" : (y<40&&was40)?"C 交叉" : (y>=40&&y<p)?"B 見頂" : (y<40&&y>p)?"A 累積" : (y>=40?"紅區上升":"—");
+  out.push({name:"槓桿方向：融資年增率",
+    level: (stage[0]==="D"||stage[0]==="C")?"red":(stage[0]==="B"||stage==="紅區上升")?"yellow":"green",
+    why:`${y.toFixed(1)}%（${(nc?nc.month:M[li]).replace("-","/")}${nc?" IBKR 暫估":""}）｜${stage}`,
+    rule:[["r","警示：C 交叉或 D 轉負"],["y","注意：B 見頂"],["g","正常：A 累積"]]});
   // ③ Fed 救援空間：最近一次 FOMC 決議（fed.json 手動維護）
   const F=RAW.fed;
   out.push({name:"Fed 救援空間：最近一次 FOMC 決議",
@@ -530,7 +531,7 @@ window.addEventListener("resize", draw);
     why:`${F.date.slice(5).replace("-","/")} ${F.text}`,
     rule:[["r","警示：升息"],["y","注意：維持"],["g","正常：降息或量化寬鬆"]]});
   document.getElementById("signals").innerHTML=out.map(s=>
-    `<div class="signal ${s.level}"><span class="lamp" aria-hidden="true"></span><span><div class="name">${s.name}</div><div class="state">${STATE[s.level]}</div><div class="why">${s.why}</div><ul class="rule">${s.rule.map(([c,t])=>`<li><i class="${c}"></i>${t}</li>`).join("")}</ul></span></div>`).join("");
+    `<div class="signal ${s.level}"><span class="lamp" aria-hidden="true"></span><span><div class="name">${s.name}</div><div class="state">${STATE[s.level]}</div>${s.why?`<div class="why">${s.why}</div>`:""}<ul class="rule">${s.rule.map(([c,t])=>`<li><i class="${c}"></i>${t}</li>`).join("")}</ul></span></div>`).join("");
 })();
 draw();
 </script>
