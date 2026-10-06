@@ -63,6 +63,11 @@
   .note{font-size:12px;color:var(--muted);line-height:1.7;margin-top:8px;}
   .tablewrap{overflow-x:auto;}
   th.gl,td.gl{border-left:2px solid #C9C6BF;}
+  .sub-h{font-size:15px;margin:4px 0 6px;color:var(--ink);}
+  table.big{font-size:15px;}
+  table.big th{font-size:13.5px;padding:9px 10px;}
+  table.big td{padding:10px;font-weight:600;}
+  table.big tr.act td{background:#FFF1D6;}
   footer{font-size:11.5px;color:var(--muted);text-align:right;padding-right:4px;}
   .stepper{display:flex;align-items:flex-start;margin:10px 0 18px;overflow-x:auto;padding:4px 0;}
   .step{display:flex;flex-direction:column;align-items:center;min-width:118px;}
@@ -161,6 +166,29 @@
   </section>
 
   <section class="card">
+    <h2>前置指標</h2>
+    <h3 class="sub-h">IBKR 暫估 vs. 實際</h3>
+    <p class="note" style="margin:0 0 10px">IBKR（盈透證券）每月 1 號公佈上月客戶融資餘額，比 FINRA 早約 3 週。</p>
+    <div class="tablewrap">
+    <table class="big">
+      <tr><th>月份</th><th>IBKR MoM</th><th>暫估 FINRA MoM</th><th>實際 FINRA MoM</th><th>暫估 YoY</th><th>實際 YoY</th><th>YoY 誤差</th></tr>
+      <tr><td>8 月</td><td class="pos">+1%</td><td>+0.6%</td><td class="pos">+2.6%</td><td>34.5%</td><td>37.2%</td><td>−2.7pp</td></tr>
+      <tr class="act"><td><b>9 月</b></td><td class="pos"><b>+4%</b></td><td><b>+2.1%</b></td><td>10 月下旬公佈</td><td><b>31.8%</b></td><td>—</td><td>—</td></tr>
+    </table>
+    </div>
+    <p class="note"><b>解讀</b>：9 月 MoM 轉正＝槓桿回流，依進程定義屬「回槓桿追價」，當升級看；但 YoY 受去年基數壓制仍續降，要站回 40% 需單月 +8.5%。<b>注意</b>：IBKR 自己的 YoY 被客戶數成長灌水，不能用；紅區與交叉判定一律以 FINRA 為準。下次：FINRA 9 月（10 月下旬）、IBKR 10 月（11/2）。</p>
+    <h3 class="sub-h" style="margin-top:18px">換算方式</h3>
+    <div class="tablewrap">
+    <table>
+      <tr><th style="width:14%">指標</th><th>算法</th><th style="width:22%">可靠度</th></tr>
+      <tr><td><b>1. MoM 方向</b></td><td style="text-align:left">IBKR MoM ≥ +3% 或 ≤ −3% → FINRA MoM 同方向變動<br>IBKR MoM ±1% 內 → FINRA MoM 不確定</td><td>最可靠</td></tr>
+      <tr><td><b>2. MoM 幅度</b></td><td style="text-align:left">FINRA MoM ≈ 0.10 + 0.49 × IBKR MoM</td><td>僅參考，誤差 ±3.3pp</td></tr>
+      <tr><td><b>3. YoY 幅度</b></td><td style="text-align:left">YoY = 8 月總額 × (1 + MoM) ÷ 去年 9 月總額 − 1<br>= 1,453,832 × (1 + MoM) ÷ 1,126,494 − 1 = 29.1% + 1.291 × MoM</td><td>純算術，無誤差</td></tr>
+    </table>
+    </div>
+  </section>
+
+  <section class="card">
     <h2>歷史回測（融資年增率 ≥ 40% 事件，T = 年增率峰值月）</h2>
     <div class="tablewrap">
     <table>
@@ -193,28 +221,6 @@
     </table>
     </div>
     <p class="note">兩條規律時間對齊後的發現：假警報之所以善終，全部發生在「Fed 正在或隨即放鬆」的背景下（1998、2010、2025/10）；致命案例全部是「Fed 無法及時放鬆」（2000 太遲、2007 太遲且危機太深、2021 被通膨沒收）。<b>當前組合是歷史首見：峰值未達 60% 斷頭線（唯一緩衝），但 Fed 被通膨綁住、無救援空間（致命組的特徵）</b>——兩條規律指向相反，這正是 45–55% 空白區這次將被如何填上的關鍵變數。</p>
-  </section>
-
-  <section class="card">
-    <h2>IBKR 暫估 vs. 實際</h2>
-    <p class="note" style="margin:0 0 10px">IBKR（盈透證券）每月 1 號公佈上月客戶融資餘額，比 FINRA 早約 3 週。</p>
-    <div class="tablewrap">
-    <table>
-      <tr><th style="width:14%">指標</th><th>算法</th><th style="width:22%">可靠度</th></tr>
-      <tr><td><b>1. MoM 方向</b></td><td style="text-align:left">IBKR MoM ≥ +3% 或 ≤ −3% → FINRA MoM 同方向變動<br>IBKR MoM ±1% 內 → FINRA MoM 不確定</td><td>最可靠</td></tr>
-      <tr><td><b>2. MoM 幅度</b></td><td style="text-align:left">FINRA MoM ≈ 0.10 + 0.49 × IBKR MoM</td><td>僅參考，誤差 ±3.3pp</td></tr>
-      <tr><td><b>3. YoY 幅度</b></td><td style="text-align:left">YoY = 8 月總額 × (1 + MoM) ÷ 去年 9 月總額 − 1<br>= 1,453,832 × (1 + MoM) ÷ 1,126,494 − 1 = 29.1% + 1.291 × MoM</td><td>純算術，無誤差</td></tr>
-    </table>
-    </div>
-    <h2 style="font-size:15px;margin:16px 0 8px">暫估 vs 實際</h2>
-    <div class="tablewrap">
-    <table>
-      <tr><th>月份</th><th>IBKR MoM</th><th>暫估 FINRA MoM</th><th>實際 FINRA MoM</th><th>暫估 YoY</th><th>實際 YoY</th><th>YoY 誤差</th></tr>
-      <tr><td>8 月</td><td class="pos">+1%</td><td>+0.6%</td><td class="pos">+2.6%</td><td>34.5%</td><td>37.2%</td><td>−2.7pp</td></tr>
-      <tr class="act"><td><b>9 月</b></td><td class="pos"><b>+4%</b></td><td><b>+2.1%</b></td><td>10 月下旬公佈</td><td><b>31.8%</b></td><td>—</td><td>—</td></tr>
-    </table>
-    </div>
-    <p class="note"><b>解讀</b>：9 月 MoM 轉正＝槓桿回流，依進程定義屬「回槓桿追價」，當升級看；但 YoY 受去年基數壓制仍續降，要站回 40% 需單月 +8.5%。<b>注意</b>：IBKR 自己的 YoY 被客戶數成長灌水，不能用；紅區與交叉判定一律以 FINRA 為準。下次：FINRA 9 月（10 月下旬）、IBKR 10 月（11/2）。</p>
   </section>
 
   <section class="card">
