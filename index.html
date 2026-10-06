@@ -91,8 +91,8 @@ header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
 .signal.yellow { --lamp: #fab219; --lamp-halo: rgba(250, 178, 25, 0.22); }
 .signal.red { --lamp: #d03b3b; --lamp-halo: rgba(208, 59, 59, 0.18); }
 .signal .lamp { background: var(--lamp); }
-@keyframes lamp-blink { 0%, 100% { opacity: 1; box-shadow: 0 0 0 4px var(--lamp-halo); } 50% { opacity: 0.7; box-shadow: 0 0 0 6px transparent; } }
-.signal .lamp { animation: lamp-blink 2.5s ease-in-out infinite; }
+@keyframes lamp-blink { 0%, 100% { opacity: 1; box-shadow: 0 0 0 4px var(--lamp-halo); } 50% { opacity: 0.65; box-shadow: 0 0 0 6px transparent; } }
+.signal .lamp { animation: lamp-blink 2s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .signal .lamp { animation: none; } }
 .changes { margin: 6px 0 10px; padding-left: 18px; }
 .changes li { margin: 2px 0; }
