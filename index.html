@@ -373,7 +373,8 @@ function renderUnrate() {
       { name: "失業率 U-3", type: "line", data: u, showSymbol: false, symbolSize: 8, z: 3,
         lineStyle: { width: 2, color: css("--series-1") }, itemStyle: { color: css("--series-1") } },
       { name: "Fed 長期失業率預估 u*", type: "line", data: us, step: "end", showSymbol: false, z: 2,
-        lineStyle: { width: 2, color: css("--warn-line") }, itemStyle: { color: css("--warn-line") } },
+        lineStyle: { width: 2, color: css("--warn-line") }, itemStyle: { color: css("--warn-line") },
+        endLabel: endLabel((p) => "u* " + p.value[1] + "%") },   // 只標 u*（衡量基準）；失業率最新值看滑鼠提示
     ],
   }), true);
 }
