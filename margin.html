@@ -89,6 +89,12 @@
   .signal .rule i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;}
   .signal .rule .r{background:#d03b3b;} .signal .rule .y{background:#fab219;} .signal .rule .g{background:#0ca30c;}
   @media (max-width:720px){.signals{grid-template-columns:1fr;}}
+  .signal[data-to]{cursor:pointer;transition:border-color .15s,box-shadow .15s;}
+  .signal[data-to]:hover,.signal[data-to]:focus-visible{border-color:var(--lamp);box-shadow:0 2px 10px rgba(0,0,0,.08);outline:none;}
+  .jump{scroll-margin-top:68px;}
+  .jump.flash{animation:jump-flash 1.6s ease-out;}
+  @keyframes jump-flash{0%,30%{box-shadow:0 0 0 3px rgba(208,59,59,.35);}100%{box-shadow:0 0 0 3px transparent;}}
+  .h-sub{font-size:13px;font-weight:400;color:var(--muted);margin-left:6px;}
   footer{font-size:11.5px;color:var(--muted);text-align:right;padding-right:4px;}
   .stepper{display:flex;align-items:flex-start;margin:10px 0 18px;overflow-x:auto;padding:4px 0;}
   .step{display:flex;flex-direction:column;align-items:center;min-width:118px;}
@@ -166,8 +172,8 @@
     <div id="tip"></div>
   </section>
 
-  <section class="card">
-    <h2 class="lead-h">前置指標</h2>
+  <section class="card jump" id="t-dir">
+    <h2 class="lead-h">槓桿方向：融資年增率</h2>
     <h3 class="sub-h">IBKR 暫估 vs. 實際</h3>
     <div class="tablewrap">
     <table class="big">
@@ -189,8 +195,8 @@
     </div>
   </section>
 
-  <section class="card">
-    <h2>歷史回測（融資年增率 ≥ 40% 事件，T = 年增率峰值月）</h2>
+  <section class="card jump" id="t-heat">
+    <h2>槓桿熱度：融資年增水位 <span class="h-sub">歷史回測（融資年增率 ≥ 40% 事件，T = 年增率峰值月）</span></h2>
     <div class="tablewrap">
     <table>
       <tr><th rowspan="2">紅區期間</th><th rowspan="2">峰值</th><th colspan="4" class="gl" style="color:#2563EB">S&amp;P 500</th><th colspan="4" class="gl" style="color:#7C3AED">Nasdaq-100</th><th colspan="4" class="gl" style="color:#DC2626">SOX 半導體</th><th rowspan="2">判定</th></tr>
@@ -207,8 +213,8 @@
     <p class="note">使用規則：① 深紅區（峰值 &gt;60%）歷史三戰三勝，淺觸（40–45%）兩次皆假警報；② 訊號領先指數頂點 0–8 個月 → 紅區＝停止加倉、調降槓桿的「風險預算調節器」，不是賣出按鈕；③ 最鋒利的訊號＝「峰值 &gt;50% 後年增率跌破 40%」——2007/11 跌破（SPX 頂 2007/10）、2021/11 跌破（NDX 頂當月）；<b>2026/7 年增率自 49% 跌破 40%（38.6%），融資總額單月 -5.6%，此交叉已觸發；2026/8 總額回升 +2.6% 但年增率續降至 37.2%，未站回 40%</b>。＊＝事件進行中，回撤僅計算至 2026/10（10 月為 10/5 月中值）；T+n 為 T 後第 n 個月月收對 T 月月收。局限：FINRA 數據滯後 4–7 週；未涵蓋選擇權／期貨／私募信貸等新型槓桿。</p>
   </section>
 
-  <section class="card">
-    <h2>融資年增速警示指標</h2>
+  <section class="card jump" id="t-fed">
+    <h2>Fed 救援空間</h2>
     <div class="tablewrap">
     <table>
       <tr><th>融資年增速</th><th>時間</th><th>峰值</th><th>回撤排序（峰值月後 24 個月）</th><th>Fed 背景（救援空間）</th></tr>
@@ -504,25 +510,31 @@ window.addEventListener("resize", draw);
   const ym=M[li].replace("-","/");
   // ① 槓桿熱度：最新 FINRA 年增率；近 6 個月高點
   const v=RAW.yoy[li], hi6=Math.max(...RAW.yoy.slice(li-5,li+1).filter(x=>x!=null));
-  out.push({name:"槓桿熱度：融資年增水位",
+  out.push({name:"槓桿熱度：融資年增水位", to:"t-heat",
     level: v>=40?"red":(hi6>=40?"yellow":"green"),
     why:`${v.toFixed(1)}%（${ym}）｜近 6 個月高點 ${hi6.toFixed(1)}%`,
     rule:[["r","警示：≥ 40%"],["y","注意：近 6 個月曾 ≥ 40%、現已跌破"],["g","正常：近 6 個月 < 40%"]]});
   // ② 槓桿方向：與進程條同一套判定（含 IBKR 暫估月）
   const sk = STAGE_NOW.k;
-  out.push({name:"槓桿方向：融資年增率"+(STAGE_NOW.i>=0&&RAW.yoy[STAGE_NOW.i]==null?"（暫估）":""),
+  out.push({to:"t-dir", name:"槓桿方向：融資年增率"+(STAGE_NOW.i>=0&&RAW.yoy[STAGE_NOW.i]==null?"（暫估）":""),
     level: (sk==="C"||sk==="D")?"red":(sk==="B"?"yellow":"green"),
     why: STAGE_NOW.i<0 ? "" : (() => { const i=STAGE_NOW.i, est=RAW.yoy[i]==null, y=est?NCS.find(o=>o.month===M[i]).yoy:RAW.yoy[i];
       return `${y.toFixed(1)}%（${M[i].replace("-","/")}${est?" IBKR 暫估":""}）｜${sk} ${{A:"累積",B:"風險出現",C:"背離",D:"轉負"}[sk]}`; })(),
     rule:[["r","警示：C 背離或 D 轉負"],["y","注意：B 風險出現"],["g","正常：A 累積"]]});
   // ③ Fed 救援空間：最近一次 FOMC 決議（fed.json 手動維護）
   const F=RAW.fed;
-  out.push({name:"Fed 救援空間：最近一次 FOMC 決議",
+  out.push({name:"Fed 救援空間：最近一次 FOMC 決議", to:"t-fed",
     level: F.action==="升息"?"red":(F.action==="維持"?"yellow":"green"),
     why:`${F.date.slice(5).replace("-","/")} ${F.text}`,
     rule:[["r","警示：升息"],["y","注意：維持"],["g","正常：降息或量化寬鬆"]]});
   document.getElementById("signals").innerHTML=out.map(s=>
-    `<div class="signal ${s.level}"><span class="lamp" aria-hidden="true"></span><span><div class="name">${s.name}</div><div class="state">${STATE[s.level]}</div>${s.why?`<div class="why">${s.why}</div>`:""}<ul class="rule">${s.rule.map(([c,t])=>`<li><i class="${c}"></i>${t}</li>`).join("")}</ul></span></div>`).join("");
+    `<div class="signal ${s.level}" data-to="${s.to}" role="link" tabindex="0" title="點擊跳到對應表格"><span class="lamp" aria-hidden="true"></span><span><div class="name">${s.name}</div><div class="state">${STATE[s.level]}</div>${s.why?`<div class="why">${s.why}</div>`:""}<ul class="rule">${s.rule.map(([c,t])=>`<li><i class="${c}"></i>${t}</li>`).join("")}</ul></span></div>`).join("");
+  const go=el=>{const t=document.getElementById(el.dataset.to); if(!t) return;
+    t.scrollIntoView({behavior:"smooth",block:"start"});
+    t.classList.remove("flash"); void t.offsetWidth; t.classList.add("flash");};
+  document.querySelectorAll(".signal[data-to]").forEach(el=>{
+    el.addEventListener("click",()=>go(el));
+    el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go(el);}});});
 })();
 draw();
 </script>
