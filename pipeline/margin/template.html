@@ -1,0 +1,533 @@
+<title>美國融資槓桿監測</title>
+<style>
+  :root{
+    --bg:#F6F5F2; --card:#FFFFFF; --ink:#22262B; --muted:#6B7178;
+    --line:#E4E2DC; --accent:#B04A2F;
+    --spx:#2563EB; --ndx:#7C3AED; --sox:#DC2626; --mar:#22262B;
+    --hot:#FDECEA; --hotline:#D94F3D;
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);
+    font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,sans-serif;
+    margin:0;padding:20px 16px 40px;}
+  .wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:14px;}
+  header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;padding:4px 4px 0;}
+  h1{font-size:28px;margin:0;letter-spacing:.5px;}
+  .sub{color:var(--muted);font-size:13px;margin:0;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto;}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;
+    padding:5px 12px;font-size:12.5px;color:var(--muted);}
+  .chip b{color:var(--ink);font-variant-numeric:tabular-nums;}
+  .chip.warn{background:var(--hot);border-color:#F0C4BC;color:#8A3B2B;}
+  .chip.warn b{color:#8A3B2B;}
+  .chip.new{background:#FFF7E6;border-color:#F0D9A8;color:#7A5A12;}
+  .chip.new b{color:#7A5A12;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
+  .controls{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;}
+  .grp{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .grp .lbl{font-size:12px;color:var(--muted);letter-spacing:1px;margin-right:2px;}
+  button.rng{border:1px solid var(--line);background:transparent;color:var(--muted);
+    border-radius:7px;padding:5px 11px;font-size:13px;cursor:pointer;font-family:inherit;}
+  button.rng:hover{border-color:#C9C6BF;}
+  button.rng.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+  button.tog{display:flex;align-items:center;gap:7px;border:1px solid var(--line);
+    background:transparent;border-radius:7px;padding:5px 11px;font-size:13px;cursor:pointer;
+    color:var(--ink);font-family:inherit;}
+  button.tog .dot{width:14px;height:4px;border-radius:2px;background:var(--dc);}
+  button.tog.off{color:#B8BCC1;}
+  button.tog.off .dot{background:#D8DADD;}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .chartbox{position:relative;}
+  canvas{display:block;width:100%;height:600px;}
+  .hint{position:absolute;top:10px;right:16px;font-size:11.5px;color:var(--muted);
+    background:rgba(255,255,255,.85);padding:2px 8px;border-radius:6px;pointer-events:none;}
+  #tip{position:absolute;pointer-events:none;background:rgba(34,38,43,.94);color:#F2F1EE;
+    border-radius:8px;padding:9px 12px;font-size:12.5px;line-height:1.55;display:none;
+    min-width:190px;z-index:5;font-variant-numeric:tabular-nums;}
+  #tip .t{color:#B9BEC4;margin-bottom:3px;}
+  #tip .r{display:flex;justify-content:space-between;gap:14px;}
+  #tip .r i{font-style:normal;display:flex;align-items:center;gap:6px;}
+  #tip .r i::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--dc);}
+  h2{font-size:19px;margin:2px 0 12px;}
+  table{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums;}
+  th,td{border:1px solid var(--line);padding:6px 8px;text-align:center;}
+  th{background:#F1EFEA;font-weight:600;}
+  td.neg{color:#B02E1F;} td.pos{color:#1D7A46;}
+  tr.hit td{background:var(--hot);}
+  tr.act td{background:#FFF7E6;}
+  .note{font-size:12px;color:var(--muted);line-height:1.7;margin-top:8px;}
+  .tablewrap{overflow-x:auto;}
+  th.gl,td.gl{border-left:2px solid #C9C6BF;}
+  h2.lead-h{font-size:24px;margin:2px 0 14px;}
+  .sub-h{font-size:18px;margin:6px 0 6px;color:var(--ink);}
+  .note.lead{font-size:14px;line-height:1.7;}
+  .sub-h ~ .tablewrap table:not(.big){font-size:14px;}
+  .sub-h ~ .tablewrap table:not(.big) td{padding:8px 10px;}
+  table.big{font-size:15px;}
+  table.big th{font-size:13.5px;padding:9px 10px;}
+  table.big td{padding:10px;font-weight:600;}
+  table.big tr.act td{background:#FFF1D6;}
+  .signals{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;line-height:1.5;}
+  .signal{display:flex;gap:12px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;}
+  .signal .lamp{flex:none;width:22px;height:22px;border-radius:50%;margin-top:2px;background:var(--lamp);box-shadow:0 0 0 4px var(--lamp-halo);animation:lamp-blink 2s ease-in-out infinite;}
+  .signal.green{--lamp:#0ca30c;--lamp-halo:rgba(12,163,12,.16);}
+  .signal.yellow{--lamp:#fab219;--lamp-halo:rgba(250,178,25,.22);}
+  .signal.red{--lamp:#d03b3b;--lamp-halo:rgba(208,59,59,.18);}
+  @keyframes lamp-blink{0%,100%{opacity:1;box-shadow:0 0 0 4px var(--lamp-halo);}50%{opacity:.65;box-shadow:0 0 0 6px transparent;}}
+  @media (prefers-reduced-motion:reduce){.signal .lamp{animation:none;}}
+  .signal>span:last-child{flex:1;min-width:0;}
+  .signal .name{font-size:17px;font-weight:700;line-height:1.3;}
+  .signal .state{font-size:12px;color:var(--muted);margin:2px 0 4px;}
+  .signal .why{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;}
+  .signal .rule{list-style:none;margin:8px 0 0;padding:8px 0 0;border-top:1px dashed var(--line);font-size:11.5px;color:var(--muted);}
+  .signal .rule li{margin:1px 0;}
+  .signal .rule i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;}
+  .signal .rule .r{background:#d03b3b;} .signal .rule .y{background:#fab219;} .signal .rule .g{background:#0ca30c;}
+  @media (max-width:720px){.signals{grid-template-columns:1fr;}}
+  .signal[data-to]{cursor:pointer;transition:border-color .15s,box-shadow .15s;}
+  .signal[data-to]:hover,.signal[data-to]:focus-visible{border-color:var(--lamp);box-shadow:0 2px 10px rgba(0,0,0,.08);outline:none;}
+  .jump{scroll-margin-top:68px;}
+  .jump.flash{animation:jump-flash 1.6s ease-out;}
+  @keyframes jump-flash{0%,30%{box-shadow:0 0 0 3px rgba(208,59,59,.35);}100%{box-shadow:0 0 0 3px transparent;}}
+  .rs{display:inline-flex;align-items:center;gap:6px;font-weight:600;}
+  .rs i{flex:none;width:9px;height:9px;border-radius:50%;}
+  .rs.g i{background:#0ca30c;} .rs.y i{background:#fab219;} .rs.r i{background:#d03b3b;}
+  td.tl{text-align:left;}
+  .auto-note{margin:8px 0 0;padding:6px 12px;border-radius:8px;background:#FFF7E6;border:1px solid #F0D9A8;color:#7A5A12;font-size:13px;font-weight:600;}
+  .h-sub{font-size:13px;font-weight:400;color:var(--muted);margin-left:6px;}
+  footer{font-size:11.5px;color:var(--muted);text-align:left;padding-left:4px;line-height:1.7;}
+  .stepper{display:flex;align-items:flex-start;margin:10px 0 18px;overflow-x:auto;padding:4px 0;}
+  .step{display:flex;flex-direction:column;align-items:center;min-width:118px;}
+  .step .node{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;
+    justify-content:center;font-weight:700;font-size:15px;border:2px solid #C9C6BF;color:#8A9097;background:#fff;}
+  .step.done .node{background:#22262B;border-color:#22262B;color:#fff;}
+  .step.cur .node{background:#d03b3b;border-color:#d03b3b;color:#fff;box-shadow:0 0 0 4px rgba(208,59,59,.18);}
+  .step .lbl{font-size:13.5px;font-weight:700;margin-top:7px;}
+  .step.cur .lbl{color:#B02E1F;}
+  .step .st{font-size:11px;color:var(--muted);margin-top:3px;text-align:center;line-height:1.5;max-width:130px;}
+  .badge{display:inline-block;background:#FDECEA;color:#B02E1F;border:1px solid #F0C4BC;
+    border-radius:999px;font-size:10.5px;padding:1px 8px;margin-top:4px;font-weight:600;}
+  .badge.amber{background:#FFF7E6;color:#7A5A12;border-color:#F0D9A8;}
+  .conn{height:2px;background:#D8DADD;flex:1;margin-top:18px;min-width:20px;}
+  .conn.done{background:#22262B;}
+  .conn.dash{background:none;border-top:2px dashed #C9C6BF;height:0;}
+  .progress{display:flex;align-items:center;gap:18px;padding:10px 16px;}
+  .progress h2{margin:0;font-size:15px;color:var(--muted);letter-spacing:2px;white-space:nowrap;}
+  .progress .stepper{margin:0;flex:1;padding:10px 10px;}
+  .progress .step{min-width:96px;}
+  .progress .step .node{width:30px;height:30px;font-size:13px;}
+  .progress .conn{margin-top:15px;}
+  .progress .step .lbl{font-size:12.5px;margin-top:5px;}
+  .progress .step .st{font-size:10.5px;}
+</style>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>美國融資槓桿監測</h1>
+      <p class="sub">FINRA 融資餘額 × S&amp;P 500 / Nasdaq-100 / 費城半導體 ｜ 1997/1 – __LAST_MONTH__</p>__AUTO_NOTE__
+    </div>
+  </header>
+
+  <section class="signals" id="signals" aria-label="三大警示燈號"></section>
+
+  <section class="card progress">
+    <h2>槓桿方向進程</h2>
+    <div class="stepper" id="stepper">
+      <div class="step" data-k="A"><div class="node">A</div><div class="lbl">累積</div><div class="st">年增率 &lt; 40%<br>股價上漲</div></div>
+      <div class="conn"></div>
+      <div class="step" data-k="B"><div class="node">B</div><div class="lbl">風險出現</div><div class="st">年增率 &gt; 40%<br>股價上漲</div></div>
+      <div class="conn"></div>
+      <div class="step" data-k="C"><div class="node">C</div><div class="lbl">背離</div><div class="st">年增率自高點回落<br>股價持平或上漲</div></div>
+      <div class="conn"></div>
+      <div class="step" data-k="D"><div class="node">D</div><div class="lbl">轉負</div><div class="st">年增率 &lt; 0</div></div>
+    </div>
+  </section>
+
+  <section class="card controls">
+    <div class="grp"><span class="lbl">區間</span>
+      <button class="rng" data-r="12">1Y</button><button class="rng" data-r="24">2Y</button>
+      <button class="rng" data-r="36">3Y</button><button class="rng" data-r="60">5Y</button>
+      <button class="rng" data-r="120">10Y</button><button class="rng" data-r="180">15Y</button>
+      <button class="rng on" data-r="all">ALL</button>
+    </div>
+    <div class="grp"><span class="lbl">疊圖線</span>
+      <button class="tog" data-s="spx" style="--dc:var(--spx)"><span class="dot"></span>S&amp;P 500</button>
+      <button class="tog" data-s="ndx" style="--dc:var(--ndx)"><span class="dot"></span>Nasdaq-100</button>
+      <button class="tog" data-s="sox" style="--dc:var(--sox)"><span class="dot"></span>SOX 半導體</button>
+      <button class="tog" data-s="mar" style="--dc:var(--mar)"><span class="dot"></span>融資餘額</button>
+    </div>
+    <div class="grp"><span class="lbl">下欄指標</span>
+      <button class="tog" data-s="yoy" style="--dc:#1D7A46"><span class="dot"></span>融資年增率</button>
+      <button class="tog" data-s="ncNew" style="--dc:#E11D48"><span class="dot"></span>IBKR 暫估（最新）</button>
+      <button class="tog" data-s="ncHist" style="--dc:#E11D48"><span class="dot"></span>IBKR 暫估（歷史）</button>
+    </div>
+  </section>
+
+  <section class="card chartbox">
+    <canvas id="cv"></canvas>
+    <div id="tip"></div>
+  </section>
+
+  <section class="card jump" id="t-dir">
+    <h2 class="lead-h">槓桿方向：融資年增率</h2>
+    <h3 class="sub-h">IBKR 暫估 vs. 實際</h3>
+    <div class="tablewrap">
+    <table class="big">
+      <tr><th>月份</th><th>IBKR MoM</th><th>暫估 FINRA MoM</th><th>實際 FINRA MoM</th><th>暫估 YoY</th><th>實際 YoY</th><th>YoY 誤差</th></tr>
+      <tr><td>8 月</td><td class="pos">+1%</td><td>+0.6%</td><td class="pos">+2.6%</td><td>34.5%</td><td>37.2%</td><td>−2.7pp</td></tr>
+      <tr class="act"><td><b>9 月</b></td><td class="pos"><b>+4%</b></td><td><b>+2.1%</b></td><td>10 月下旬公佈</td><td><b>31.8%</b></td><td>—</td><td>—</td></tr>
+    </table>
+    </div>
+    <p class="note lead" style="margin-bottom:0">[註1]：IBKR（盈透證券）每月 1 號公佈上月客戶融資餘額，比 FINRA 早約 3 週。</p>
+    <p class="note lead" style="margin-top:2px">[註2]：9 月 YoY 要與 8 月持平（37.2%），FINRA 9 月 MoM 需 +6.3%，約對應 IBKR MoM +12.7%。</p>
+    <h3 class="sub-h" style="margin-top:18px">換算方式</h3>
+    <div class="tablewrap">
+    <table>
+      <tr><th style="width:14%">指標</th><th>算法</th><th style="width:22%">可靠度</th></tr>
+      <tr><td><b>MoM 方向</b></td><td style="text-align:left">IBKR MoM ≥ +3% 或 ≤ −3% → FINRA MoM 同方向變動<br>IBKR MoM ±1% 內 → FINRA MoM 不確定</td><td>最可靠</td></tr>
+      <tr><td><b>MoM 幅度</b></td><td style="text-align:left">FINRA MoM ≈ 0.10 + 0.49 × IBKR MoM</td><td>僅參考，誤差 ±3.3pp</td></tr>
+      <tr><td><b>YoY 幅度</b></td><td style="text-align:left">YoY = 8 月總額 × (1 + MoM) ÷ 去年 9 月總額 − 1</td><td>純算術，無誤差</td></tr>
+    </table>
+    </div>
+  </section>
+
+  <section class="card jump" id="t-heat">
+    <h2 class="lead-h">槓桿熱度：融資年增水位 <span class="h-sub">歷史回測（融資年增率 ≥ 40% 事件，T = 年增率峰值月）</span></h2>
+    <div class="tablewrap">
+    <table>
+      <tr><th rowspan="2">時間</th><th rowspan="2">峰值</th><th rowspan="2">判定</th><th colspan="4" class="gl" style="color:#2563EB">S&amp;P 500</th><th colspan="4" class="gl" style="color:#7C3AED">Nasdaq-100</th><th colspan="4" class="gl" style="color:#DC2626">SOX 半導體</th></tr>
+      <tr><th class="gl">T+3月</th><th>T+6月</th><th>T+12月</th><th>後24月最大回撤</th><th class="gl">T+3月</th><th>T+6月</th><th>T+12月</th><th>後24月最大回撤</th><th class="gl">T+3月</th><th>T+6月</th><th>T+12月</th><th>後24月最大回撤</th></tr>
+__BACKTEST_ROWS__
+    </table>
+    </div>
+    <p class="note lead" style="margin-bottom:0">[註1]：數值標註＊號指事件進行中，回撤僅計算至 __LAST_MONTH__。</p>
+    <p class="note lead" style="margin-top:2px">[註2]：未涵蓋選擇權、期貨、私募信貸等新型槓桿。</p>
+  </section>
+
+  <section class="card jump" id="t-fed">
+    <h2 class="lead-h">Fed 救援空間</h2>
+    <div class="tablewrap">
+    <table>
+      <tr><th>時間</th><th>峰值</th><th>判定</th><th>峰值月利率</th><th>CPI 年增<br>（峰值月 → 12 個月後）</th><th>峰值後 12 個月 Fed 動作</th><th>救援空間</th></tr>
+      <tr><td>1998/4</td><td>42.5%</td><td>淺觸</td><td>5.45%</td><td>1.4% → 2.3%</td><td class="tl">9–11 月連降 3 碼（LTCM 危機）</td><td class="tl"><span class="rs g"><i></i>有：高利率＋低通膨</span></td></tr>
+      <tr><td>2010/4</td><td>42.1%</td><td>淺觸</td><td>0.20%</td><td>2.2% → 3.1%</td><td class="tl">零利率不變，11 月啟動 QE2</td><td class="tl"><span class="rs g"><i></i>有：利率到底但通膨低，可用 QE</span></td></tr>
+      <tr><td>2025/10</td><td>45.2%</td><td>淺觸</td><td>4.09%</td><td>3.0% → 3.4%＊</td><td class="tl">10、12 月各降 1 碼後暫停，2026/9 升息</td><td class="tl"><span class="rs g"><i></i>有：正在降息</span></td></tr>
+      <tr class="hit"><td>1999/10–2000/9</td><td><b>80.5%</b></td><td>命中</td><td>5.85%</td><td>3.8% → 3.0%</td><td class="tl">5 月再升 2 碼至 6.5%，2001/1 才降息</td><td class="tl"><span class="rs r"><i></i>無：通膨偏高，被迫續升息</span></td></tr>
+      <tr class="hit"><td>2007/5–10</td><td><b>62.6%</b></td><td>命中</td><td>5.26%</td><td>2.3% → 5.5%</td><td class="tl">9 月起連降，8 個月降 13 碼至 2%</td><td class="tl"><span class="rs y"><i></i>有但失效：降息擋不住信用危機</span></td></tr>
+      <tr class="hit"><td>2021/1–10</td><td><b>71.6%</b></td><td>命中</td><td>0.07%</td><td>2.7% → 8.6%</td><td class="tl">零利率＋QE 不變，11 月起縮減購債，2022/3 升息</td><td class="tl"><span class="rs r"><i></i>無：利率到底＋通膨失控</span></td></tr>
+      <tr class="act"><td><b>2026/4–6</b></td><td><b>53.7%</b></td><td><b>當前事件</b></td><td>3.63%</td><td>4.2% → 3.4%＊</td><td class="tl">維持 4 個月後，9/16 升息 1 碼至 3.75–4.00%</td><td class="tl"><span class="rs r"><i></i>無：通膨偏高，反向升息</span></td></tr>
+    </table>
+    </div>
+    <p class="note lead" style="margin-bottom:0">[註1]：利率為聯邦基金有效利率，CPI 為 CPI-U 年增率，皆取融資年增率峰值月（2000/3、2007/7、2021/3、2026/5，其餘同時間欄），資料來源 FRED。</p>
+    <p class="note lead" style="margin:2px 0 0">[註2]：2025/10 CPI 因政府停擺未公布，改用 9 月；數值標註＊號指未滿 12 個月，取最新 2026/8。</p>
+    <p class="note lead" style="margin-top:2px">[註3]：樣本僅 7 次，且 2007 為反例（降息 13 碼仍崩跌），本表為背景參考，非交易規則。</p>
+  </section>
+
+  <footer><div>資料：FINRA Margin Statistics（滯後約 1 個月）｜Yahoo Finance 指數月收｜IBKR Monthly Brokerage Metrics（次月 1 號）</div><div>最後更新 __UPDATED__（融資數據至 __LAST_FIN__，指數月線至 __LAST_MONTH____IDX_NOTE__，IBKR 至 2026/9；紅色虛線段 = IBKR 暫估路徑，保留供對帳）</div></footer>
+</div>
+<script>
+const RAW = __DATA__;
+const SERIES = [
+  {k:"spx", name:"S&P 500",   color:"#2563EB", dash:[]},
+  {k:"ndx", name:"Nasdaq-100",color:"#7C3AED", dash:[]},
+  {k:"sox", name:"SOX",       color:"#DC2626", dash:[]},
+  {k:"mar", name:"融資餘額",  color:"#22262B", dash:[6,4]},
+];
+const M = RAW.months, N = M.length;
+const NCS = [].concat(RAW.nowcast || []);
+// 槓桿方向進程：股價＝SPX/NDX/SOX 各與 3 個月前比，> +3% 上漲、< −3% 下跌，≥ 2 個成立才算
+const priceUp = i => ["spx","ndx","sox"].filter(k => { const a=RAW[k][i], b=RAW[k][i-3];
+  return a!=null && b!=null && a/b-1 > 0.03; }).length >= 2;
+// 依序掃描全歷史（C 要記住本輪高點）；FINRA 未出的月份用 IBKR 暫估年增率。回傳每月階段 A/B/C/D 或 null
+function stageSeries(){
+  const nc = {}; NCS.forEach(o => nc[o.month] = o.yoy);
+  const out = []; let peak = null, prev = null;
+  for(let i=0;i<N;i++){
+    const y = RAW.yoy[i]!=null ? RAW.yoy[i] : (nc[M[i]]!=null ? nc[M[i]] : null);
+    if(y==null){ out.push(null); continue; }
+    let st;
+    if(y < 0){ st = "D"; peak = null; }
+    else if(peak!=null && y < peak) st = "C";
+    else if(y > 40 && priceUp(i)) st = "B";
+    else if(y < 40 && priceUp(i)) st = "A";
+    else st = prev;                       // 規則外情形沿用前一階段
+    if(y >= 40) peak = Math.max(peak ?? y, y);
+    out.push(st); prev = st;
+  }
+  return out;
+}
+const STAGES = stageSeries();
+const STAGE_NOW = (() => { for(let i=N-1;i>=0;i--) if(STAGES[i]) return {k:STAGES[i], i}; return {k:null, i:-1}; })();
+// 該筆暫估是否顯示：FINRA 已出實際值＝歷史，未出＝最新
+const ncOn = nc => { const i = M.indexOf(nc.month);
+  return i>=0 && (RAW.yoy[i]!=null ? state.show.ncHist : state.show.ncNew); };
+const state = {range:"all", show:{spx:true,ndx:true,sox:true,mar:true,yoy:true,ncNew:true,ncHist:true,ratio:false}};
+const cv = document.getElementById("cv"), tip = document.getElementById("tip");
+const ctx = cv.getContext("2d");
+let LAY = null, hoverI = -1;
+
+function fmtMar(v){ return v>=1e6 ? (v/1e6).toFixed(2)+" 兆" : (v/100).toFixed(0)+" 億"; }
+function visRange(){
+  if(state.range==="all") return [0, N-1];
+  const n = +state.range; return [Math.max(0, N-1-n), N-1];
+}
+function niceLogTicks(lo, hi){
+  const out=[]; const e0=Math.floor(Math.log10(lo)), e1=Math.ceil(Math.log10(hi));
+  for(let e=e0;e<=e1;e++) for(const m of [1,2,5]){ const v=m*Math.pow(10,e); if(v>=lo*0.999&&v<=hi*1.001) out.push(v); }
+  if(out.length<3){ const step=(hi-lo)/4; for(let i=0;i<=4;i++) out.push(lo+step*i); }
+  return out;
+}
+function niceLinTicks(lo, hi){
+  const span=hi-lo, raw=span/5, mag=Math.pow(10,Math.floor(Math.log10(raw)));
+  const step=[1,2,2.5,5,10].map(x=>x*mag).find(s=>span/s<=6)||mag*10;
+  const out=[]; for(let v=Math.ceil(lo/step)*step; v<=hi+1e-9; v+=step) out.push(v);
+  return out;
+}
+function draw(){
+  const dpr = window.devicePixelRatio||1;
+  const W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = W*dpr; cv.height = H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+  const padL=62, padR=state.show.ratio?48:14, gap=30;
+  const h1t=10, h1b=Math.round(H*0.60), h2t=h1b+gap, h2b=H-30;
+  const [i0,i1] = visRange(); const nvis=i1-i0;
+  const X = i => padL + (i-i0)/(nvis||1)*(W-padL-padR);
+
+  // rebase
+  const reb={};
+  for(const s of SERIES){
+    const arr=RAW[s.k]; let bi=i0; while(bi<=i1 && arr[bi]==null) bi++;
+    const base=arr[bi]; reb[s.k]=arr.map((v,i)=> v==null||!base?null:v/base*100);
+  }
+  let lo=Infinity, hi=-Infinity;
+  for(const s of SERIES){ if(!state.show[s.k]) continue;
+    for(let i=i0;i<=i1;i++){ const v=reb[s.k][i]; if(v!=null){ lo=Math.min(lo,v); hi=Math.max(hi,v);} } }
+  if(!isFinite(lo)){ lo=90; hi=110; }
+  lo*=0.95; hi*=1.05;
+  const Y1 = v => h1b - (Math.log10(v)-Math.log10(lo))/(Math.log10(hi)-Math.log10(lo))*(h1b-h1t);
+
+  let ylo=0, yhi=45;
+  for(let i=i0;i<=i1;i++){ const v=RAW.yoy[i]; if(v!=null){ ylo=Math.min(ylo,v); yhi=Math.max(yhi,v);} }
+  ylo=Math.floor(ylo/10)*10-5; yhi=Math.ceil(yhi/10)*10+5;
+  const Y2 = v => h2b - (v-ylo)/(yhi-ylo)*(h2b-h2t);
+  let rlo=Infinity, rhi=-Infinity;
+  for(let i=i0;i<=i1;i++){ const v=RAW.ratio[i]; if(v!=null){ rlo=Math.min(rlo,v); rhi=Math.max(rhi,v);} }
+  if(!isFinite(rlo)){ rlo=1.2; rhi=2.6; }
+  rlo=Math.min(rlo,1.45)-0.08; rhi=Math.max(rhi,2.55)+0.08;
+  const Y3 = v => h2b - (v-rlo)/(rhi-rlo)*(h2b-h2t);
+
+  // hot zones (yoy>=40)
+  ctx.save();
+  for(let i=i0;i<=i1;i++){
+    if(RAW.yoy[i]!=null && RAW.yoy[i]>=40){
+      const x0=X(Math.max(i-0.5,i0)), x1=X(Math.min(i+0.5,i1));
+      ctx.fillStyle="rgba(217,79,61,0.10)";
+      ctx.fillRect(x0,h1t,x1-x0,h1b-h1t); ctx.fillRect(x0,h2t,x1-x0,h2b-h2t);
+    }
+  }
+  ctx.restore();
+
+  // grid + ticks panel1
+  ctx.font="11px 'Microsoft JhengHei',sans-serif"; ctx.fillStyle="#8A9097";
+  for(const t of niceLogTicks(lo,hi)){
+    const y=Y1(t); if(y<h1t||y>h1b) continue;
+    ctx.strokeStyle="rgba(0,0,0,0.06)"; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+    ctx.textAlign="right"; ctx.fillText(t>=1000?(t/1000)+"k":Math.round(t), padL-8, y+3.5);
+  }
+  // grid panel2：年增率開啟時左軸為主格線；僅開比率時以右軸畫格線
+  if(state.show.yoy){
+    for(const t of niceLinTicks(ylo,yhi)){
+      const y=Y2(t);
+      ctx.strokeStyle = t===0 ? "rgba(0,0,0,0.35)" : "rgba(0,0,0,0.06)";
+      ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+      ctx.textAlign="right"; ctx.fillStyle="#8A9097"; ctx.fillText(Math.round(t)+"%", padL-8, y+3.5);
+    }
+  }
+  if(state.show.ratio){
+    for(const t of niceLinTicks(rlo,rhi)){
+      const y=Y3(t); if(y<h2t-1||y>h2b+1) continue;
+      if(!state.show.yoy){ ctx.strokeStyle="rgba(0,0,0,0.06)";
+        ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); }
+      ctx.textAlign="left"; ctx.fillStyle="#C08030"; ctx.fillText((Math.round(t*100)/100)+"%", W-padR+6, y+3.5);
+    }
+    // 常態帶 1.5–2.2%＋2.5% 過度槓桿參考線
+    ctx.fillStyle="rgba(217,119,6,0.06)";
+    ctx.fillRect(padL, Y3(2.2), W-padL-padR, Y3(1.5)-Y3(2.2));
+    ctx.strokeStyle="rgba(217,119,6,0.55)"; ctx.setLineDash([5,4]); ctx.beginPath();
+    ctx.moveTo(padL,Y3(2.5)); ctx.lineTo(W-padR,Y3(2.5)); ctx.stroke(); ctx.setLineDash([]);
+  }
+  // 40% line
+  if(state.show.yoy){
+    ctx.strokeStyle="#D94F3D"; ctx.setLineDash([3,4]); ctx.beginPath();
+    ctx.moveTo(padL,Y2(40)); ctx.lineTo(W-padR,Y2(40)); ctx.stroke(); ctx.setLineDash([]);
+  }
+  // IBKR nowcast：紅色虛線自「暫估月的前一個實際月」延伸到暫估值（實際出爐後仍保留，作對帳）
+  // 多筆暫估並存：每筆自「暫估月的前一個實際月」畫到暫估值
+  const ncList = NCS.map(nc => {
+    const i = M.indexOf(nc.month); let a = -1;
+    if(i>0){ for(let k=i-1;k>=0;k--) if(RAW.yoy[k]!=null){ a=k; break; } }
+    return {nc, i, a};
+  }).filter(o => state.show.yoy && ncOn(o.nc) && o.i>=0 && o.a>=0 && o.i>=i0 && o.i<=i1);
+
+  // x labels
+  ctx.textAlign="center"; ctx.fillStyle="#8A9097";
+  const step=Math.max(1,Math.round(nvis/8/12))*12;
+  const shortRange = nvis<=36;
+  for(let i=i0;i<=i1;i++){
+    const [yy,mm]=M[i].split("-");
+    const hit = shortRange ? (mm==="01"||mm==="07") : (mm==="01" && (+yy)%Math.max(1,Math.round(step/12))===0);
+    if(hit){ ctx.fillText(shortRange?yy+"/"+(+mm):yy, X(i), H-10); }
+  }
+
+  if(state.show.yoy){
+    // yoy area fills
+    ctx.beginPath(); let started=false;
+    for(let i=i0;i<=i1;i++){ const v=RAW.yoy[i]; if(v==null) continue;
+      const x=X(i), y=Y2(Math.min(v,0));
+      if(!started){ ctx.moveTo(x,Y2(0)); started=true; } ctx.lineTo(x,y); }
+    if(started){ ctx.lineTo(X(i1),Y2(0)); ctx.closePath(); ctx.fillStyle="rgba(29,122,70,0.15)"; ctx.fill(); }
+    // yoy line
+    ctx.strokeStyle="#1D7A46"; ctx.lineWidth=1.6; ctx.beginPath(); started=false;
+    for(let i=i0;i<=i1;i++){ const v=RAW.yoy[i]; if(v==null){continue;}
+      const x=X(i), y=Y2(v); started?ctx.lineTo(x,y):(ctx.moveTo(x,y),started=true); }
+    ctx.stroke();
+    // nowcast 紅色虛線段（不畫圓點與文字標籤，數值看 tooltip）
+    for(const {nc, i, a} of ncList){
+      const xa=X(Math.max(a,i0)), ya=Y2(RAW.yoy[a]), xb=X(i), yb=Y2(nc.yoy);
+      ctx.save();
+      ctx.strokeStyle="#E11D48"; ctx.lineWidth=2; ctx.setLineDash([7,4]);
+      ctx.beginPath(); ctx.moveTo(xa,ya); ctx.lineTo(xb,yb); ctx.stroke(); ctx.setLineDash([]);
+      ctx.restore();
+    }
+  }
+  if(state.show.ratio){
+    // 融資/市值比 line
+    ctx.strokeStyle="#D97706"; ctx.lineWidth=1.7; ctx.beginPath(); let rst=false;
+    for(let i=i0;i<=i1;i++){ const v=RAW.ratio[i]; if(v==null) continue;
+      const x=X(i), y=Y3(v); rst?ctx.lineTo(x,y):(ctx.moveTo(x,y),rst=true); }
+    ctx.stroke();
+  }
+
+  // series lines
+  for(const s of SERIES){ if(!state.show[s.k]) continue;
+    ctx.strokeStyle=s.color; ctx.lineWidth=s.k==="mar"?1.8:1.5; ctx.setLineDash(s.dash);
+    ctx.beginPath(); let st=false;
+    for(let i=i0;i<=i1;i++){ const v=reb[s.k][i]; if(v==null) continue;
+      const x=X(i), y=Y1(v); st?ctx.lineTo(x,y):(ctx.moveTo(x,y),st=true); }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  // panel titles
+  ctx.textAlign="left"; ctx.fillStyle="#6B7178"; ctx.font="11.5px 'Microsoft JhengHei',sans-serif";
+  const t2=[];
+  if(state.show.yoy) t2.push("融資餘額年增率 %（左軸，紅點線 = 40% 警戒，紅虛線段 = IBKR 暫估）");
+  if(state.show.ratio) t2.push("融資／市值比 %（右軸，琥珀帶 = 1.5–2.2% 常態，虛線 = 2.5%）");
+  ctx.fillText(t2.join("　×　"), padL, h2t-8);
+
+  // crosshair
+  if(hoverI>=i0 && hoverI<=i1){
+    const x=X(hoverI);
+    ctx.strokeStyle="rgba(34,38,43,0.35)"; ctx.setLineDash([2,3]);
+    ctx.beginPath(); ctx.moveTo(x,h1t); ctx.lineTo(x,h2b); ctx.stroke(); ctx.setLineDash([]);
+    for(const s of SERIES){ if(!state.show[s.k]) continue; const v=reb[s.k][hoverI];
+      if(v!=null){ ctx.fillStyle=s.color; ctx.beginPath(); ctx.arc(x,Y1(v),3.2,0,7); ctx.fill(); } }
+    if(state.show.yoy){ const v=RAW.yoy[hoverI]; if(v!=null){ ctx.fillStyle="#1D7A46"; ctx.beginPath(); ctx.arc(x,Y2(v),3.2,0,7); ctx.fill(); } }
+    if(state.show.ratio){ const v=RAW.ratio[hoverI]; if(v!=null){ ctx.fillStyle="#D97706"; ctx.beginPath(); ctx.arc(x,Y3(v),3.2,0,7); ctx.fill(); } }
+  }
+  LAY={padL,padR,W,H,i0,i1,X,reb};
+}
+let tipOn=false;
+function idxFromEvent(ev){
+  if(!LAY) return -1;
+  const r=cv.getBoundingClientRect(), mx=ev.clientX-r.left;
+  const {padL,W,padR,i0,i1}=LAY;
+  if(mx<padL||mx>W-padR) return -1;
+  return Math.round(i0+(mx-padL)/(W-padL-padR)*(i1-i0));
+}
+function renderTip(ev){
+  const m=M[hoverI]; if(!m){ tip.style.display="none"; return; }
+  const mar=RAW.mar[hoverI], yoy=RAW.yoy[hoverI];
+  const prev=hoverI>0?RAW.mar[hoverI-1]:null;
+  const ncHit=NCS.find(o=>o.month===m);
+  let html=`<div class="t">${m.replace("-","/")}</div>`;
+  if(mar!=null){
+    html+=`<div class="r"><i style="--dc:#22262B">融資餘額</i><b>${fmtMar(mar)}美元</b></div>`;
+    if(prev!=null) html+=`<div class="r"><i style="--dc:#8A9097">月變動</i><b>${((mar/prev-1)*100).toFixed(1)}%</b></div>`;
+    if(yoy!=null&&state.show.yoy) html+=`<div class="r"><i style="--dc:#1D7A46">年增率</i><b style="color:${yoy>=40?'#FF9384':'#B4E3C6'}">${yoy>=0?"+":""}${yoy.toFixed(1)}%</b></div>`;
+    if(ncHit&&state.show.yoy&&ncOn(ncHit)){ const e=ncHit.yoy-yoy;
+      html+=`<div class="r"><i style="--dc:#E11D48">IBKR 暫估</i><b style="color:#FF9384">${ncHit.yoy.toFixed(1)}%（誤差 ${e>=0?"+":""}${e.toFixed(1)}pp）</b></div>`; }
+    const rat=RAW.ratio[hoverI];
+    if(rat!=null&&state.show.ratio) html+=`<div class="r"><i style="--dc:#D97706">融資/市值</i><b style="color:${rat>=2.5?'#FF9384':'#F5C36B'}">${rat.toFixed(2)}%</b></div>`;
+  } else {
+    html+=`<div class="r"><i style="--dc:#22262B">融資餘額</i><b>FINRA 未公佈</b></div>`;
+    if(ncHit&&state.show.yoy&&ncOn(ncHit)) html+=`<div class="r"><i style="--dc:#E11D48">IBKR 暫估</i><b style="color:#FF9384">${ncHit.yoy.toFixed(1)}%</b></div>`;
+  }
+  const nm={spx:"S&P 500",ndx:"Nasdaq-100",sox:"SOX"};
+  for(const k of ["spx","ndx","sox"]){ if(!state.show[k]) continue; const v=RAW[k][hoverI];
+    if(v!=null){ const c={spx:"#2563EB",ndx:"#7C3AED",sox:"#DC2626"}[k];
+      html+=`<div class="r"><i style="--dc:${c}">${nm[k]}</i><b>${v.toLocaleString(undefined,{maximumFractionDigits:0})}</b></div>`; } }
+  tip.innerHTML=html; tip.style.display="block";
+  const r=cv.getBoundingClientRect(), mx=ev.clientX-r.left, bw=tip.offsetWidth;
+  tip.style.left=Math.min(Math.max(mx-bw/2,8), cv.clientWidth-bw-8)+"px";
+  tip.style.top=(ev.clientY-r.top<200? ev.clientY-r.top+26 : ev.clientY-r.top-tip.offsetHeight-18)+"px";
+}
+cv.addEventListener("pointermove", ev=>{
+  hoverI=idxFromEvent(ev); draw();
+  if(tipOn && hoverI>=0) renderTip(ev); else tip.style.display="none";
+});
+cv.addEventListener("pointerleave", ()=>{ hoverI=-1; tip.style.display="none"; draw(); });
+cv.addEventListener("click", ev=>{
+  tipOn=!tipOn;
+  hoverI=idxFromEvent(ev); draw();
+  if(tipOn && hoverI>=0) renderTip(ev); else tip.style.display="none";
+});
+document.querySelectorAll("button.rng").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("button.rng").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); state.range=b.dataset.r; draw();
+}));
+document.querySelectorAll("button.tog").forEach(b=>b.addEventListener("click",()=>{
+  const k=b.dataset.s; state.show[k]=!state.show[k]; b.classList.toggle("off",!state.show[k]); draw();
+}));
+window.addEventListener("resize", draw);
+
+// ---------- 槓桿方向進程條 ----------
+(function(){
+  const order = ["A","B","C","D"], cur = order.indexOf(STAGE_NOW.k);
+  const steps = document.querySelectorAll("#stepper .step"), conns = document.querySelectorAll("#stepper .conn");
+  steps.forEach((el,n) => el.classList.add(n<cur ? "done" : n===cur ? "cur" : "todo"));
+  conns.forEach((el,n) => { if(n<cur) el.classList.add("done"); });
+})();
+// ---------- 三大警示燈號 ----------
+(function(){
+  const STATE={green:"正常",yellow:"注意",red:"警示"}, out=[];
+  let li=N-1; while(li>0 && RAW.mar[li]==null) li--;
+  const ym=M[li].replace("-","/");
+  // ① 槓桿熱度：最新 FINRA 年增率；近 6 個月高點
+  const v=RAW.yoy[li], hi6=Math.max(...RAW.yoy.slice(li-5,li+1).filter(x=>x!=null));
+  out.push({name:"槓桿熱度：融資年增水位", to:"t-heat",
+    level: v>=40?"red":(hi6>=40?"yellow":"green"),
+    why:`${v.toFixed(1)}%（${ym}）｜近 6 個月高點 ${hi6.toFixed(1)}%`,
+    rule:[["r","警示：≥ 40%"],["y","注意：近 6 個月曾 ≥ 40%、現已跌破"],["g","正常：近 6 個月 < 40%"]]});
+  // ② 槓桿方向：與進程條同一套判定（含 IBKR 暫估月）
+  const sk = STAGE_NOW.k;
+  out.push({to:"t-dir", name:"槓桿方向：融資年增率",
+    level: (sk==="C"||sk==="D")?"red":(sk==="B"?"yellow":"green"),
+    why: STAGE_NOW.i<0 ? "" : (() => { const i=STAGE_NOW.i, est=RAW.yoy[i]==null, y=est?NCS.find(o=>o.month===M[i]).yoy:RAW.yoy[i];
+      return `${y.toFixed(1)}%（${M[i].replace("-","/")}${est?" IBKR 暫估":""}）｜${sk} ${{A:"累積",B:"風險出現",C:"背離",D:"轉負"}[sk]}`; })(),
+    rule:[["r","警示：C 背離或 D 轉負"],["y","注意：B 風險出現"],["g","正常：A 累積"]]});
+  // ③ Fed 救援空間：最近一次 FOMC 決議（fed.json 手動維護）
+  const F=RAW.fed;
+  out.push({name:"Fed 救援空間：最近一次 FOMC 決議", to:"t-fed",
+    level: F.action==="升息"?"red":(F.action==="維持"?"yellow":"green"),
+    why:`${F.date.slice(5).replace("-","/")} ${F.text}`,
+    rule:[["r","警示：升息"],["y","注意：維持"],["g","正常：降息或量化寬鬆"]]});
+  document.getElementById("signals").innerHTML=out.map(s=>
+    `<div class="signal ${s.level}" data-to="${s.to}" role="link" tabindex="0" title="點擊跳到對應表格"><span class="lamp" aria-hidden="true"></span><span><div class="name">${s.name}</div><div class="state">${STATE[s.level]}</div>${s.why?`<div class="why">${s.why}</div>`:""}<ul class="rule">${s.rule.map(([c,t])=>`<li><i class="${c}"></i>${t}</li>`).join("")}</ul></span></div>`).join("");
+  const go=el=>{const t=document.getElementById(el.dataset.to); if(!t) return;
+    t.scrollIntoView({behavior:"smooth",block:"start"});
+    t.classList.remove("flash"); void t.offsetWidth; t.classList.add("flash");};
+  document.querySelectorAll(".signal[data-to]").forEach(el=>{
+    el.addEventListener("click",()=>go(el));
+    el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go(el);}});});
+})();
+draw();
+</script>

@@ -98,6 +98,7 @@
   .rs i{flex:none;width:9px;height:9px;border-radius:50%;}
   .rs.g i{background:#0ca30c;} .rs.y i{background:#fab219;} .rs.r i{background:#d03b3b;}
   td.tl{text-align:left;}
+  .auto-note{margin:8px 0 0;padding:6px 12px;border-radius:8px;background:#FFF7E6;border:1px solid #F0D9A8;color:#7A5A12;font-size:13px;font-weight:600;}
   .h-sub{font-size:13px;font-weight:400;color:var(--muted);margin-left:6px;}
   footer{font-size:11.5px;color:var(--muted);text-align:left;padding-left:4px;line-height:1.7;}
   .stepper{display:flex;align-items:flex-start;margin:10px 0 18px;overflow-x:auto;padding:4px 0;}
@@ -523,7 +524,7 @@ window.addEventListener("resize", draw);
     rule:[["r","警示：≥ 40%"],["y","注意：近 6 個月曾 ≥ 40%、現已跌破"],["g","正常：近 6 個月 < 40%"]]});
   // ② 槓桿方向：與進程條同一套判定（含 IBKR 暫估月）
   const sk = STAGE_NOW.k;
-  out.push({to:"t-dir", name:"槓桿方向：融資年增率"+(STAGE_NOW.i>=0&&RAW.yoy[STAGE_NOW.i]==null?"（暫估）":""),
+  out.push({to:"t-dir", name:"槓桿方向：融資年增率",
     level: (sk==="C"||sk==="D")?"red":(sk==="B"?"yellow":"green"),
     why: STAGE_NOW.i<0 ? "" : (() => { const i=STAGE_NOW.i, est=RAW.yoy[i]==null, y=est?NCS.find(o=>o.month===M[i]).yoy:RAW.yoy[i];
       return `${y.toFixed(1)}%（${M[i].replace("-","/")}${est?" IBKR 暫估":""}）｜${sk} ${{A:"累積",B:"風險出現",C:"背離",D:"轉負"}[sk]}`; })(),

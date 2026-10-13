@@ -1,0 +1,48 @@
+name: 融資槓桿自動更新
+
+on:
+  schedule:
+    # 台灣時間週一至週六 07:30（美東前一個交易日收盤後）；FINRA 每月約第 3 週公布上月融資餘額
+    - cron: "30 23 * * 0-5"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "只測試抓取與建置，不提交"
+        type: boolean
+        default: true
+      force:
+        description: "沒有新月份也重建（測試用）"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pandas requests openpyxl
+      - id: build
+        run: python pipeline/margin/auto.py ${{ inputs.force && '--force' || '' }}
+      - name: 變動預覽
+        run: git diff --stat
+      - name: FINRA 有新月份才提交並開 issue 通知
+        if: steps.build.outputs.new == 'true' && !inputs.dry_run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add margin.html pipeline/margin/
+          git commit -m "融資槓桿自動更新：FINRA ${{ steps.build.outputs.month }}"
+          git pull --rebase
+          git push
+          gh issue create \
+            --title "融資槓桿頁已自動更新 FINRA ${{ steps.build.outputs.month }}，文字說明待補" \
+            --body "圖表、槓桿熱度表與前兩個燈號已自動更新，頁首掛著黃色提示條。請跟 Claude 說「更新融資槓桿圖」補上：IBKR 表與註解、Fed 救援空間表、fed.json／nowcast.json，完成後提示條會消失。"
