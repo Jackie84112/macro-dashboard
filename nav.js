@@ -1,4 +1,5 @@
 // 宏觀監控儀表板：共用頂部目錄欄。新增子頁面時在 PAGES 加一列即可。
+// 改了本檔要同步把各頁 <script src="nav.js?v=…"> 的版本號改新（GitHub Pages 快取 10 分鐘，舊 nav.js 會配到新頁面）
 // 另含共用「點燈號跳轉」：燈號元素寫 class="signal" data-to="目標 id" role="link" tabindex="0"，
 // 點擊（或 Enter／空白鍵）平滑捲到目標所在的 .card（無 .card 則目標本身），並閃一下紅框。
 (() => {
