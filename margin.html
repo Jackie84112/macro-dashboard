@@ -94,6 +94,10 @@
   .jump{scroll-margin-top:68px;}
   .jump.flash{animation:jump-flash 1.6s ease-out;}
   @keyframes jump-flash{0%,30%{box-shadow:0 0 0 3px rgba(208,59,59,.35);}100%{box-shadow:0 0 0 3px transparent;}}
+  .rs{display:inline-flex;align-items:center;gap:6px;font-weight:600;}
+  .rs i{flex:none;width:9px;height:9px;border-radius:50%;}
+  .rs.g i{background:#0ca30c;} .rs.y i{background:#fab219;} .rs.r i{background:#d03b3b;}
+  td.tl{text-align:left;}
   .h-sub{font-size:13px;font-weight:400;color:var(--muted);margin-left:6px;}
   footer{font-size:11.5px;color:var(--muted);text-align:right;padding-right:4px;}
   .stepper{display:flex;align-items:flex-start;margin:10px 0 18px;overflow-x:auto;padding:4px 0;}
@@ -218,17 +222,20 @@
     <h2 class="lead-h">Fed 救援空間</h2>
     <div class="tablewrap">
     <table>
-      <tr><th>融資年增速</th><th>時間</th><th>峰值</th><th>回撤排序（峰值月後 24 個月）</th><th>Fed 背景（救援空間）</th></tr>
-      <tr><td rowspan="3">&gt;60%</td><td>2000/3</td><td>80.5%</td><td>NDX -73% ＞ SOX -68% ＞ SPX -31%</td><td>升息週期</td></tr>
-      <tr><td>2007/7</td><td>62.6%</td><td>SOX -60% ＞ SPX -53% ≈ NDX -50%</td><td>升息後暫停 13 個月（5.25%），2007/9 才降息</td></tr>
-      <tr><td>2021/3</td><td>71.6%</td><td>SOX -41% ＞ NDX -33% ＞ SPX -25%</td><td>零利率＋QE</td></tr>
-      <tr><td rowspan="2">40–45%</td><td>1998/4</td><td>42.5%</td><td>T+12：NDX +71% ＞ SPX +20% ＞ SOX +17%</td><td>降息（LTCM）</td></tr>
-      <tr><td>2010/4</td><td>42.1%</td><td>T+12：NDX +20% ＞ SOX +20% ＞ SPX +15%</td><td>QE1 → QE2</td></tr>
-      <tr><td rowspan="2">45–55%</td><td>2025/10</td><td>45.2%</td><td>T+6：SOX +45% ＞ NDX +6% ＞ SPX +5%</td><td>降息週期</td></tr>
-      <tr class="act"><td>2026/5</td><td>53.7%</td><td>7 月：SOX -21% ＞ NDX -7% ＞ SPX 0%<br>8 月：NDX +4% ＞ SPX +3% ＞ SOX +2%<br>9 月：SOX +9% ＞ NDX +3% ＞ SPX -0.5%<br>10 月：SOX +4% ＞ NDX +2% ＞ SPX +2%（至 10/5，NDX、SPX 創新高）</td><td>暫停 8 個月後 9/16 升息一碼至 3.75–4.00%（2023/7 以來首次，12-0），點陣圖年底再一碼</td></tr>
+      <tr><th>時間</th><th>峰值</th><th>判定</th><th>峰值月利率</th><th>CPI 年增<br>（峰值月 → 12 個月後）</th><th>峰值後 12 個月 Fed 動作</th><th>救援空間</th></tr>
+      <tr><td>1998/4</td><td>42.5%</td><td>淺觸</td><td>5.45%</td><td>1.4% → 2.3%</td><td class="tl">9–11 月連降 3 碼（LTCM 危機）</td><td class="tl"><span class="rs g"><i></i>有：高利率＋低通膨</span></td></tr>
+      <tr><td>2010/4</td><td>42.1%</td><td>淺觸</td><td>0.20%</td><td>2.2% → 3.1%</td><td class="tl">零利率不變，11 月啟動 QE2</td><td class="tl"><span class="rs g"><i></i>有：利率到底但通膨低，可用 QE</span></td></tr>
+      <tr><td>2025/10</td><td>45.2%</td><td>淺觸</td><td>4.09%</td><td>3.0% → 3.4%＊</td><td class="tl">10、12 月各降 1 碼後暫停，2026/9 升息</td><td class="tl"><span class="rs g"><i></i>有：正在降息</span></td></tr>
+      <tr class="hit"><td>1999/10–2000/9</td><td><b>80.5%</b></td><td>命中</td><td>5.85%</td><td>3.8% → 3.0%</td><td class="tl">5 月再升 2 碼至 6.5%，2001/1 才降息</td><td class="tl"><span class="rs r"><i></i>無：通膨偏高，被迫續升息</span></td></tr>
+      <tr class="hit"><td>2007/5–10</td><td><b>62.6%</b></td><td>命中</td><td>5.26%</td><td>2.3% → 5.5%</td><td class="tl">9 月起連降，8 個月降 13 碼至 2%</td><td class="tl"><span class="rs y"><i></i>有但失效：降息擋不住信用危機</span></td></tr>
+      <tr class="hit"><td>2021/1–10</td><td><b>71.6%</b></td><td>命中</td><td>0.07%</td><td>2.7% → 8.6%</td><td class="tl">零利率＋QE 不變，11 月起縮減購債，2022/3 升息</td><td class="tl"><span class="rs r"><i></i>無：利率到底＋通膨失控</span></td></tr>
+      <tr><td><b>2026/4–6</b></td><td><b>53.7%</b></td><td><b>當前事件</b></td><td>3.63%</td><td>4.2% → 3.4%＊</td><td class="tl">維持 4 個月後，9/16 升息 1 碼至 3.75–4.00%</td><td class="tl"><span class="rs r"><i></i>無：通膨偏高，反向升息</span></td></tr>
     </table>
     </div>
-    <p class="note">兩條規律時間對齊後的發現：假警報之所以善終，全部發生在「Fed 正在或隨即放鬆」的背景下（1998、2010、2025/10）；致命案例全部是「Fed 無法及時放鬆」（2000 太遲、2007 太遲且危機太深、2021 被通膨沒收）。<b>當前組合是歷史首見：峰值未達 60% 斷頭線（唯一緩衝），但 Fed 被通膨綁住、無救援空間（致命組的特徵）</b>——兩條規律指向相反，這正是 45–55% 空白區這次將被如何填上的關鍵變數。</p>
+    <p class="note lead" style="margin-bottom:0">[註1]：利率為聯邦基金有效利率，CPI 為 CPI-U 年增率，皆取融資年增率峰值月（2000/3、2007/7、2021/3、2026/5，其餘同時間欄），資料來源 FRED。</p>
+    <p class="note lead" style="margin:2px 0 0">[註2]：2025/10 CPI 因政府停擺未公布，改用 9 月；數值標註＊號指未滿 12 個月，取最新 2026/8。</p>
+    <p class="note lead" style="margin:2px 0 0">[註3]：當前峰值未達 60%，但救援空間與命中組相同（無）。</p>
+    <p class="note lead" style="margin-top:2px">[註4]：樣本僅 7 次，且 2007 為反例（降息 13 碼仍崩跌），本表為背景參考，非交易規則。</p>
   </section>
 
   <footer>資料：FINRA Margin Statistics（月，滯後約 1 個月）｜Yahoo Finance 指數月收｜IBKR Monthly Brokerage Metrics（次月 1 號）｜最後更新 2026/10/06（融資數據至 2026/8，指數月線至 2026/10 為 10/5 月中值，IBKR 至 2026/9、Robinhood 至 2026/8；紅色虛線段 = IBKR 暫估路徑，保留供對帳）</footer>
