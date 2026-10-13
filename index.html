@@ -85,7 +85,6 @@ header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
   display: flex; gap: 12px; align-items: flex-start; text-decoration: none; color: inherit;
   background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
 }
-.signal:hover { border-color: var(--text-muted); }
 .signal .lamp { flex: none; width: 22px; height: 22px; border-radius: 50%; margin-top: 2px; box-shadow: 0 0 0 4px var(--lamp-halo); }
 .signal.green { --lamp: #0ca30c; --lamp-halo: rgba(12, 163, 12, 0.16); }
 .signal.yellow { --lamp: #fab219; --lamp-halo: rgba(250, 178, 25, 0.22); }
@@ -434,10 +433,10 @@ function renderSignals() {
     rule: [["r", "警示：高於 u*，且連續 2 個月上升"], ["y", "注意：兩項成立其一"], ["g", "正常：兩項皆不成立"]] });
 
   document.getElementById("signals").innerHTML = out.map(s =>
-    `<a class="signal ${s.level}" href="#${s.id}">
+    `<div class="signal ${s.level}" data-to="${s.id}" role="link" tabindex="0" title="點擊跳到對應圖表">
        <span class="lamp" aria-hidden="true"></span>
        <span><div class="name">${s.name}</div><div class="state">${STATE[s.level]}</div><div class="why">${s.why}</div><ul class="rule">${s.rule.map(([c, t]) => `<li><i class="${c}"></i>${t}</li>`).join("")}</ul></span>
-     </a>`).join("");
+     </div>`).join("");
 }
 
 // ---------- 數據表 ----------

@@ -89,11 +89,6 @@
   .signal .rule i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;}
   .signal .rule .r{background:#d03b3b;} .signal .rule .y{background:#fab219;} .signal .rule .g{background:#0ca30c;}
   @media (max-width:720px){.signals{grid-template-columns:1fr;}}
-  .signal[data-to]{cursor:pointer;transition:border-color .15s,box-shadow .15s;}
-  .signal[data-to]:hover,.signal[data-to]:focus-visible{border-color:var(--lamp);box-shadow:0 2px 10px rgba(0,0,0,.08);outline:none;}
-  .jump{scroll-margin-top:68px;}
-  .jump.flash{animation:jump-flash 1.6s ease-out;}
-  @keyframes jump-flash{0%,30%{box-shadow:0 0 0 3px rgba(208,59,59,.35);}100%{box-shadow:0 0 0 3px transparent;}}
   .rs{display:inline-flex;align-items:center;gap:6px;font-weight:600;}
   .rs i{flex:none;width:9px;height:9px;border-radius:50%;}
   .rs.g i{background:#0ca30c;} .rs.y i{background:#fab219;} .rs.r i{background:#d03b3b;}
@@ -537,12 +532,6 @@ window.addEventListener("resize", draw);
     rule:[["r","警示：升息"],["y","注意：維持"],["g","正常：降息或量化寬鬆"]]});
   document.getElementById("signals").innerHTML=out.map(s=>
     `<div class="signal ${s.level}" data-to="${s.to}" role="link" tabindex="0" title="點擊跳到對應表格"><span class="lamp" aria-hidden="true"></span><span><div class="name">${s.name}</div><div class="state">${STATE[s.level]}</div>${s.why?`<div class="why">${s.why}</div>`:""}<ul class="rule">${s.rule.map(([c,t])=>`<li><i class="${c}"></i>${t}</li>`).join("")}</ul></span></div>`).join("");
-  const go=el=>{const t=document.getElementById(el.dataset.to); if(!t) return;
-    t.scrollIntoView({behavior:"smooth",block:"start"});
-    t.classList.remove("flash"); void t.offsetWidth; t.classList.add("flash");};
-  document.querySelectorAll(".signal[data-to]").forEach(el=>{
-    el.addEventListener("click",()=>go(el));
-    el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go(el);}});});
 })();
 draw();
 </script>
