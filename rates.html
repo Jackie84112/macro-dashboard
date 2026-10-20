@@ -411,21 +411,23 @@ function deltaHtml(cur, prev, upIsBad, unit, digits, scale = 1) {
   return `<div class="delta ${cls}">${word} ${sign(d)}${d.toFixed(digits)}${unit}</div>`;
 }
 
-// 日資料：取最新一筆與一週前的一筆
+// 一週前＝今天（台灣時間）往前 7 天，所有日資料圖共用同一天
+const WEEK_AGO = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(new Date(Date.now() - 7 * 864e5));
+
+// 日資料：取最新一筆，與一週前當天（或之前最近一個交易日）的一筆
 function weekPair(s) {
   const [d, v] = s[s.length - 1];
-  const cut = new Date(new Date(d).getTime() - 7 * 864e5).toISOString().slice(0, 10);
   let prev = s[0];
-  for (const x of s) if (x[0] <= cut) prev = x;
+  for (const x of s) if (x[0] <= WEEK_AGO) prev = x;
   return { d, v, pd: prev[0], pv: prev[1] };
 }
 
-// 一週前的直虛線（同 PPT），日期與右上角「較一週前」相同
-function weekLine(t) {
-  return { silent: true, symbol: "none", lineStyle: { color: css("--text-secondary"), type: "dashed", width: 1.5 },
-    label: { show: true, position: "end", color: css("--text-secondary"), fontSize: 11,
-      formatter: `一週前 ${Number(t.pd.slice(5, 7))}/${Number(t.pd.slice(8, 10))}` },
-    data: [{ xAxis: t.pd }] };
+// 一週前的直虛線（同 PPT），與右上角「較一週前」同一天
+function weekLine() {
+  return { silent: true, symbol: "none", lineStyle: { color: css("--text-muted"), type: "dashed", width: 1, opacity: 0.55 },
+    label: { show: true, position: "end", color: css("--text-muted"), fontSize: 11,
+      formatter: `一週前 ${Number(WEEK_AGO.slice(5, 7))}/${Number(WEEK_AGO.slice(8, 10))}` },
+    data: [{ xAxis: WEEK_AGO }] };
 }
 
 // ---------- 通膨 ----------
@@ -611,7 +613,7 @@ function renderYields() {
       line("2 年期", a, css("--series-1"), {
         markArea: { silent: true, itemStyle: { color: css("--band-neutral") },
           label: { show: false }, data: band } }),
-      line("10 年期", b, css("--series-2"), { markLine: weekLine(t) }),
+      line("10 年期", b, css("--series-2"), { markLine: weekLine() }),
     ],
   }), true);
 }
@@ -654,7 +656,7 @@ function renderCurve() {
     } },
     series: [
       { name: "10Y−2Y 利差", type: "bar", data: sp.map(x => ({ value: x, itemStyle: { color: x[1] >= 0 ? pos : neg } })),
-        barMaxWidth: 6, xAxisIndex: 0, yAxisIndex: 0, markLine: weekLine(t) },
+        barMaxWidth: 6, xAxisIndex: 0, yAxisIndex: 0, markLine: weekLine() },
       { name: "那斯達克綜合指數", type: "line", data: nq, showSymbol: false, xAxisIndex: 1, yAxisIndex: 1,
         lineStyle: { width: 2, color: css("--text-secondary") }, itemStyle: { color: css("--text-secondary") },
         endLabel: endLabel((p) => Math.round(p.value[1]).toLocaleString("en-US")) },
@@ -673,7 +675,7 @@ function renderHy() {
     series: [
       line("BB 級", DATA.hy_bb, col[0]),
       line("B 級", DATA.hy_b, col[1]),
-      line("CCC 級以下", DATA.hy_ccc, col[2], { markLine: weekLine(t) }),
+      line("CCC 級以下", DATA.hy_ccc, col[2], { markLine: weekLine() }),
     ],
   }), true);
 }
@@ -684,7 +686,7 @@ function renderOil() {
     `<div class="value">${t.v.toFixed(2)}</div>${deltaHtml(t.v, t.pv, true, " 美元", 2)}<div class="meta">${fmtDay(t.d)}（較一週前）</div>`;
   charts.oil.setOption(base({
     tooltip: { ...base().tooltip, formatter: (p) => `${fmtDay(p[0].value[0])}<br><b>${p[0].value[1].toFixed(2)} 美元</b>` },
-    series: [line("WTI", DATA.wti, css("--series-1"), { markLine: weekLine(t) })],
+    series: [line("WTI", DATA.wti, css("--series-1"), { markLine: weekLine() })],
   }), true);
 }
 

@@ -126,11 +126,13 @@ def build_table(src: dict, ffr_upper: pd.Series, cal: dict, years: int = 3) -> d
 
 
 def build_snapshot(daily: dict) -> list:
+    # 前值＝台灣今天往前 7 天（或之前最近一個交易日），與網頁圖上的一週前虛線同一天
+    week_ago = pd.Timestamp.now(tz="Asia/Taipei").tz_localize(None).normalize() - pd.Timedelta(days=7)
     out = []
     for label, key, kind, sched in SNAP:
         s = daily[key].dropna()
         d, v = s.index[-1], float(s.iloc[-1])
-        prior = s[s.index <= d - pd.Timedelta(days=7)]
+        prior = s[s.index <= week_ago]
         pd_, pv = prior.index[-1], float(prior.iloc[-1])
         out.append({"label": label, "key": key, "schedule": sched,
                     "prev": fmt(pv, kind), "prevDate": pd_.strftime("%Y-%m-%d"),
