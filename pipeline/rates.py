@@ -1,15 +1,55 @@
 """貨幣成本看板資料管線：從 FRED 抓資料 → 計算 → 寫 data/rates.json。
 
+FRED 的公債殖利率晚 1–2 個交易日、WTI 現貨（EIA）晚約一週，所以：
+- 2 年／10 年殖利率：FRED 歷史 + 美國財政部每日殖利率補最近幾天（FRED DGS 即源自財政部）
+- WTI：改用 Yahoo Finance NYMEX WTI 近月期貨 CL=F（同 PPT 的財經M平方圖）
 點陣圖、FedWatch、CDS 沒有免費資料源，放在 data/rates-manual.json 手動維護，網頁直接讀。
 沿用 labor.py 的 FRED 抓取與四捨五入工具。
 """
+import io
 import json
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 
 import pandas as pd
+import requests
 
-from labor import fred, half_up, monthly, points
+from labor import START, fred, half_up, monthly, points
+
+UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36"}
+
+
+def yahoo(symbol: str) -> pd.Series:
+    """Yahoo Finance 日收盤（交易所當地日期）。當天盤中為最新成交價。"""
+    p1 = int(pd.Timestamp(START).timestamp())
+    p2 = int(time.time()) + 86400
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?period1={p1}&period2={p2}&interval=1d"
+    r = requests.get(url, headers=UA, timeout=60)
+    r.raise_for_status()
+    res = r.json()["chart"]["result"][0]
+    tz = res["meta"]["exchangeTimezoneName"]
+    idx = pd.to_datetime(res["timestamp"], unit="s", utc=True).tz_convert(tz).tz_localize(None).normalize()
+    s = pd.Series(res["indicators"]["quote"][0]["close"], index=idx, dtype="float64").dropna()
+    return s.groupby(level=0).last()
+
+
+def treasury_recent() -> pd.DataFrame:
+    """財政部每日殖利率曲線（今年；1 月初再加去年），欄位 2 Yr、10 Yr。"""
+    year = pd.Timestamp.now().year
+    frames = []
+    for y in ([year - 1] if pd.Timestamp.now().month == 1 else []) + [year]:
+        url = ("https://home.treasury.gov/resource-center/data-chart-center/interest-rates/"
+               f"daily-treasury-rates.csv/{y}/all?type=daily_treasury_yield_curve&field_tdr_date_value={y}&page&_format=csv")
+        r = requests.get(url, headers=UA, timeout=60)
+        r.raise_for_status()
+        frames.append(pd.read_csv(io.StringIO(r.text), index_col=0, parse_dates=True)[["2 Yr", "10 Yr"]])
+    return pd.concat(frames).sort_index()
+
+
+def with_recent(hist: pd.Series, recent: pd.Series) -> pd.Series:
+    """FRED 歷史接上較新的來源；重疊日期以較新來源為準。"""
+    return pd.concat([hist[hist.index < recent.index.min()], recent.dropna()]).sort_index()
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "data" / "rates.json"
@@ -185,10 +225,12 @@ def main() -> None:
 
     # 2) 日資料：政策利率、公債、高收益債、油價、那斯達克
     ffr_u, ffr_l = fred("DFEDTARU"), fred("DFEDTARL")
+    ust = treasury_recent()
+    dgs2, dgs10 = with_recent(fred("DGS2"), ust["2 Yr"]), with_recent(fred("DGS10"), ust["10 Yr"])
     daily = {
-        "dgs2": fred("DGS2"), "dgs10": fred("DGS10"), "t10y2y": fred("T10Y2Y"),
+        "dgs2": dgs2, "dgs10": dgs10, "t10y2y": (dgs10 - dgs2).dropna().round(2),
         "hy_bb": fred("BAMLH0A1HYBBEY"), "hy_b": fred("BAMLH0A2HYBEY"), "hy_ccc": fred("BAMLH0A3HYCEY"),
-        "wti": fred("DCOILWTICO"),
+        "wti": yahoo("CL=F"),
     }
     # 那斯達克只畫趨勢，改週資料（週五收盤）縮小檔案
     nasdaq = fred("NASDAQCOM").resample("W-FRI").last().dropna()
