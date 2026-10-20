@@ -4,10 +4,10 @@
 // 點擊（或 Enter／空白鍵）平滑捲到目標所在的 .card（無 .card 則目標本身），並閃一下紅框。
 (() => {
   const PAGES = [
+    { href: "rates.html", label: "貨幣成本" },
     { href: "index.html", label: "就業狀況" },
     { href: "margin.html", label: "融資槓桿" },
     { href: "datacenter.html", label: "資料中心成本" },
-    { href: "rates.html", label: "貨幣成本" },
   ];
   const here = location.pathname.split("/").pop() || "index.html";
   const css = `

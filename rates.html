@@ -173,7 +173,7 @@ footer a { color: inherit; }
 </style>
 </head>
 <body>
-<script src="nav.js?v=20261020"></script>
+<script src="nav.js?v=20261020b"></script>
 <main>
   <header>
     <h1>美國貨幣成本</h1>
@@ -420,6 +420,14 @@ function weekPair(s) {
   return { d, v, pd: prev[0], pv: prev[1] };
 }
 
+// 一週前的直虛線（同 PPT），日期與右上角「較一週前」相同
+function weekLine(t) {
+  return { silent: true, symbol: "none", lineStyle: { color: css("--text-secondary"), type: "dashed", width: 1.5 },
+    label: { show: true, position: "end", color: css("--text-secondary"), fontSize: 11,
+      formatter: `一週前 ${Number(t.pd.slice(5, 7))}/${Number(t.pd.slice(8, 10))}` },
+    data: [{ xAxis: t.pd }] };
+}
+
 // ---------- 通膨 ----------
 const INFL = {
   cpi: [["cpi", "CPI"], ["core_cpi", "Core CPI"]],
@@ -603,7 +611,7 @@ function renderYields() {
       line("2 年期", a, css("--series-1"), {
         markArea: { silent: true, itemStyle: { color: css("--band-neutral") },
           label: { show: false }, data: band } }),
-      line("10 年期", b, css("--series-2")),
+      line("10 年期", b, css("--series-2"), { markLine: weekLine(t) }),
     ],
   }), true);
 }
@@ -646,7 +654,7 @@ function renderCurve() {
     } },
     series: [
       { name: "10Y−2Y 利差", type: "bar", data: sp.map(x => ({ value: x, itemStyle: { color: x[1] >= 0 ? pos : neg } })),
-        barMaxWidth: 6, xAxisIndex: 0, yAxisIndex: 0 },
+        barMaxWidth: 6, xAxisIndex: 0, yAxisIndex: 0, markLine: weekLine(t) },
       { name: "那斯達克綜合指數", type: "line", data: nq, showSymbol: false, xAxisIndex: 1, yAxisIndex: 1,
         lineStyle: { width: 2, color: css("--text-secondary") }, itemStyle: { color: css("--text-secondary") },
         endLabel: endLabel((p) => Math.round(p.value[1]).toLocaleString("en-US")) },
@@ -665,7 +673,7 @@ function renderHy() {
     series: [
       line("BB 級", DATA.hy_bb, col[0]),
       line("B 級", DATA.hy_b, col[1]),
-      line("CCC 級以下", DATA.hy_ccc, col[2]),
+      line("CCC 級以下", DATA.hy_ccc, col[2], { markLine: weekLine(t) }),
     ],
   }), true);
 }
@@ -676,7 +684,7 @@ function renderOil() {
     `<div class="value">${t.v.toFixed(2)}</div>${deltaHtml(t.v, t.pv, true, " 美元", 2)}<div class="meta">${fmtDay(t.d)}（較一週前）</div>`;
   charts.oil.setOption(base({
     tooltip: { ...base().tooltip, formatter: (p) => `${fmtDay(p[0].value[0])}<br><b>${p[0].value[1].toFixed(2)} 美元</b>` },
-    series: [line("WTI", DATA.wti, css("--series-1"))],
+    series: [line("WTI", DATA.wti, css("--series-1"), { markLine: weekLine(t) })],
   }), true);
 }
 
