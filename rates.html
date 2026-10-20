@@ -96,8 +96,8 @@ header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
   border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer;
 }
 .toolbar button[aria-pressed="true"], .tabs button[aria-pressed="true"] { background: var(--text-primary); color: var(--surface); border-color: var(--text-primary); }
-h2.sec { font-size: 15px; font-weight: 700; color: var(--text-secondary); margin: 28px 0 10px; letter-spacing: 1px; }
-h2.sec small { font-weight: 400; color: var(--text-muted); letter-spacing: 0; margin-left: 8px; font-size: 12px; }
+h2.sec { font-size: 22px; font-weight: 700; color: var(--text-primary); margin: 36px 0 12px; letter-spacing: 1px; }
+h2.sec small { font-weight: 400; color: var(--text-muted); letter-spacing: 0; margin-left: 10px; font-size: 13px; }
 .card {
   background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
   padding: 20px 20px 8px; margin-bottom: 16px;
@@ -511,7 +511,7 @@ function renderPath() {
       { type: "value", min: -0.5, max: cols.length - 0.5, show: false },
     ],
     // 同 SEP 原圖：每 0.25 一條點線，整數另畫實線（見 markLine）
-    yAxis: { type: "value", min: 0, max: 6, interval: 0.5, position: "right", axisLine: { show: false }, axisTick: { show: false },
+    yAxis: { type: "value", min: 0, max: 6, interval: 0.5, position: "left", axisLine: { show: false }, axisTick: { show: false },
       axisLabel: { color: muted, formatter: (v) => v.toFixed(1) },
       minorTick: { show: false, splitNumber: 2 },
       splitLine: { lineStyle: { color: muted, type: "dotted", width: 1 } },
@@ -686,8 +686,11 @@ function renderOil() {
   document.getElementById("stat-oil").innerHTML =
     `<div class="value">${t.v.toFixed(2)}</div>${deltaHtml(t.v, t.pv, true, " 美元", 2)}<div class="meta">${fmtDay(t.d)}（較一週前）</div>`;
   charts.oil.setOption(base({
+    // 數值軸放右邊（同 PPT 原圖），最新值已在右上角，不再畫線尾標籤
+    grid: { left: 8, right: 8, top: 36, bottom: 28, containLabel: true },
+    yAxis: { ...base().yAxis, position: "right" },
     tooltip: { ...base().tooltip, formatter: (p) => `${fmtDay(p[0].value[0])}<br><b>${p[0].value[1].toFixed(2)} 美元</b>` },
-    series: [line("WTI", DATA.wti, css("--series-1"), { markLine: weekLine() })],
+    series: [line("WTI", DATA.wti, css("--series-1"), { markLine: weekLine(), endLabel: { show: false } })],
   }), true);
 }
 
