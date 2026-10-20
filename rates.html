@@ -139,14 +139,25 @@ table.data tbody tr:last-child td { border-bottom: none; }
 table.data td.updated { background: var(--group-bg); }
 table.data tbody.gap td { height: 14px; padding: 0; border: none; background: transparent; }
 table.data.snap { min-width: 640px; }
-table.fw { min-width: 640px; }
-table.fw td.hi { background: var(--tint-1); font-weight: 700; }
-table.fw td.mid { background: var(--tint-2); }
-table.fw td.zero { color: var(--text-muted); }
-table.fw td small { display: block; font-size: 11px; font-weight: 400; color: var(--text-muted); }
-table.fw td small.up { color: var(--bad); }
-table.fw td small.down { color: var(--good); }
-table.fw td.exp { font-weight: 700; border-left: 1px solid var(--grid); }
+/* FedWatch：照 PPT 版面，每週一列＝週別｜下次會議長條圖｜各次會議機率表 */
+.fw-week { display: grid; grid-template-columns: 48px minmax(0, 0.8fr) minmax(0, 1.3fr); gap: 12px; align-items: center; padding: 14px 0; }
+.fw-week + .fw-week { border-top: 1px solid var(--grid); }
+.fw-week .wk { font-size: 20px; font-weight: 700; }
+.fw-bar { height: 280px; min-width: 0; }
+.fw-tbl { overflow-x: auto; }
+table.fwt { border-collapse: collapse; width: 100%; min-width: 440px; font-size: 12px; font-variant-numeric: tabular-nums; }
+table.fwt th, table.fwt td { border: 1px solid var(--border); padding: 4px 5px; text-align: right; white-space: nowrap; }
+table.fwt th { font-weight: 700; color: var(--text-primary); text-align: center; font-size: 12px; }
+table.fwt td:first-child { text-align: right; }
+table.fwt th.blank { border: none; }
+table.fwt td.hi { background: var(--tint-1); }
+table.fwt td.mid { background: var(--tint-2); }
+/* 今年剩餘會議加框（同 PPT） */
+table.fwt tr.bx td:first-child { border-left: 2px solid var(--series-1); }
+table.fwt tr.bx td:last-child { border-right: 2px solid var(--series-1); }
+table.fwt tr.bx-top td { border-top: 2px solid var(--series-1); }
+table.fwt tr.bx-bot td { border-bottom: 2px solid var(--series-1); }
+@media (max-width: 860px) { .fw-week { grid-template-columns: 1fr; } }
 .notes { margin: 8px 0 12px; font-size: 12px; color: var(--text-secondary); }
 .notes p { margin: 2px 0; }
 footer { color: var(--text-muted); font-size: 12px; margin-top: 24px; }
@@ -236,14 +247,10 @@ footer a { color: inherit; }
     <div class="card-head">
       <div>
         <h3>CME FedWatch 各次會議機率</h3>
-        <p class="desc" id="fw-desc"></p>
-      </div>
-      <div class="legend-chips" aria-label="顏色說明">
-        <span><i style="background:var(--tint-1)"></i>最高機率</span>
-        <span><i style="background:var(--tint-2)"></i>次高</span>
+        <p class="desc">資料來源：芝加哥商品交易所（CME）FedWatch，芝商所 30 天期聯邦基金期貨交易反映出的隱含機率。<span id="fw-desc"></span></p>
       </div>
     </div>
-    <div class="table-wrap"><table class="data fw" id="fw-table"></table></div>
+    <div id="fw-weeks"></div>
     <div class="notes" data-notes="policy"></div>
   </section>
 
@@ -492,9 +499,12 @@ function renderPath() {
         axisLabel: { color: css("--text-secondary"), fontSize: 13 } },
       { type: "value", min: -0.5, max: cols.length - 0.5, show: false },
     ],
+    // 同 SEP 原圖：每 0.25 一條點線，整數另畫實線（見 markLine）
     yAxis: { type: "value", min: 0, max: 6, interval: 0.5, position: "right", axisLine: { show: false }, axisTick: { show: false },
       axisLabel: { color: muted, formatter: (v) => v.toFixed(1) },
-      splitLine: { lineStyle: { color: grid, type: "dotted" } } },
+      minorTick: { show: false, splitNumber: 2 },
+      splitLine: { lineStyle: { color: muted, type: "dotted", width: 1 } },
+      minorSplitLine: { show: true, lineStyle: { color: muted, type: "dotted", width: 1 } } },
     tooltip: {
       trigger: "item", backgroundColor: css("--surface"), borderColor: css("--border"),
       textStyle: { color: css("--text-primary"), fontSize: 13 },
@@ -503,36 +513,71 @@ function renderPath() {
     series: [{
       name: "委員預估", type: "scatter", data: dots, symbolSize: 8, xAxisIndex: 1,
       itemStyle: { color: css("--series-1"), borderColor: css("--surface"), borderWidth: 1 },
-      markLine: lr > 0 ? { silent: true, symbol: "none", label: { show: false },
-        lineStyle: { color: muted, type: "dashed", width: 1 }, data: [{ xAxis: lr - 0.5 }] } : undefined,
+      markLine: { silent: true, symbol: "none", label: { show: false },
+        lineStyle: { color: css("--text-secondary"), type: "solid", width: 1 },
+        data: [
+          ...[0, 1, 2, 3, 4, 5, 6].map(v => ({ yAxis: v })),
+          ...(lr > 0 ? [{ xAxis: lr - 0.5, lineStyle: { color: muted, type: "dashed", width: 1 } }] : []),
+        ] },
     }],
   }, true);
 }
 
+// FedWatch 照 PPT：本週在上、上週在下；左為下次會議長條圖，右為各次會議機率表
+const usDate = (d) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}/${d.slice(0, 4)}`;
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 function renderFedwatch() {
-  const [cur, prev] = MAN.fedwatch.weeks;
-  const ranges = [...new Set(MAN.fedwatch.weeks.flatMap(w => w.meetings.flatMap(m => Object.keys(m.p))))]
+  const weeks = MAN.fedwatch.weeks;
+  const ranges = [...new Set(weeks.flatMap(w => w.meetings.flatMap(m => Object.keys(m.p))))]
     .sort((a, b) => parseInt(a) - parseInt(b));
-  const prevBy = Object.fromEntries((prev ? prev.meetings : []).map(m => [m.date, m]));
-  document.getElementById("fw-desc").textContent =
-    `${MAN.report}｜目前利率區間 ${MAN.fedwatch.current.replace("-", "–")} bps。每格下方小字為較上週變動（百分點）。`;
-  let h = `<thead><tr><th class="left">會議日</th>${ranges.map(r => `<th>${r.replace("-", "–")}</th>`).join("")}<th>預期利率</th></tr></thead><tbody>`;
-  for (const m of cur.meetings) {
-    const pm = prevBy[m.date];
-    const ranked = Object.entries(m.p).sort((a, b) => b[1] - a[1]);
-    h += `<tr><td class="label">${fmtDay(m.date)}</td>`;
-    for (const r of ranges) {
-      const v = m.p[r] || 0, pv = pm ? (pm.p[r] || 0) : null;
-      const cls = r === ranked[0][0] ? "hi" : (ranked[1] && r === ranked[1][0] && v >= 1 ? "mid" : (v === 0 ? "zero" : ""));
-      const d = pv === null ? null : v - pv;
-      const sub = d === null || Math.abs(d) < 0.005 ? "" : `<small class="${d > 0 ? "up" : "down"}">${sign(d)}${d.toFixed(2)}</small>`;
-      h += `<td class="${cls}">${v.toFixed(2)}%${sub}</td>`;
-    }
-    const e = expRate(m), pe = pm ? expRate(pm) : null;
-    const de = pe === null ? "" : `<small class="${e > pe ? "up" : (e < pe ? "down" : "")}">${sign(e - pe)}${((e - pe) * 100).toFixed(1)} bp</small>`;
-    h += `<td class="exp">${e.toFixed(3)}%${de}</td></tr>`;
-  }
-  document.getElementById("fw-table").innerHTML = h + "</tbody>";
+  const year = weeks[0].meetings[0].date.slice(0, 4);
+  document.getElementById("fw-desc").textContent = `（${MAN.report}）`;
+  document.getElementById("fw-weeks").innerHTML = weeks.map((w, i) => {
+    const thisYear = w.meetings.filter(m => m.date.startsWith(year)).length;
+    let h = `<thead><tr><th class="blank"></th><th colspan="${ranges.length}">CME FEDWATCH TOOL - AGGREGATED MEETING PROBABILITIES</th></tr>` +
+      `<tr><th>MEETING DATE</th>${ranges.map(r => `<th>${r}</th>`).join("")}</tr></thead><tbody>`;
+    w.meetings.forEach((m, j) => {
+      const top = Object.entries(m.p).sort((a, b) => b[1] - a[1])[0][0];
+      const bx = j < thisYear ? ["bx", j === 0 && "bx-top", j === thisYear - 1 && "bx-bot"].filter(Boolean).join(" ") : "";
+      h += `<tr class="${bx}"><td>${usDate(m.date)}</td>` + ranges.map(r => {
+        const v = m.p[r] || 0;
+        return `<td class="${r === top ? "hi" : (v > 0 ? "mid" : "")}">${v.toFixed(2)} %</td>`;
+      }).join("") + `</tr>`;
+    });
+    return `<div class="fw-week"><div class="wk">${w.label}</div>` +
+      `<div class="fw-bar" id="chart-fw${i}" role="img" aria-label="${w.label}下次會議機率長條圖"></div>` +
+      `<div class="fw-tbl"><table class="fwt">${h}</tbody></table></div></div>`;
+  }).join("");
+}
+
+function renderFwBars() {
+  MAN.fedwatch.weeks.forEach((w, i) => {
+    const m = w.meetings[0], d = m.date;
+    const bars = Object.entries(m.p).filter(([, v]) => v > 0).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+    const muted = css("--text-muted");
+    charts["fw" + i].setOption({
+      animation: false,
+      textStyle: { fontFamily: getComputedStyle(document.body).fontFamily },
+      title: [
+        { text: `${Number(d.slice(8, 10))} ${MON[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)} Fed Meeting`, left: 0, top: 0,
+          textStyle: { fontSize: 14, fontWeight: 600, color: css("--text-primary") } },
+        { text: `Current target rate is ${MAN.fedwatch.current}`, left: "center", top: 24,
+          textStyle: { fontSize: 12, fontWeight: 400, color: css("--text-secondary") } },
+      ],
+      grid: { left: 8, right: 8, top: 64, bottom: 40, containLabel: true },
+      xAxis: { type: "category", data: bars.map(b => b[0]), name: "Target Rate (in bps)", nameLocation: "middle", nameGap: 26,
+        nameTextStyle: { color: muted, fontSize: 12 }, axisTick: { show: false },
+        axisLine: { lineStyle: { color: css("--border") } }, axisLabel: { color: css("--text-secondary") } },
+      yAxis: { type: "value", min: 0, max: 100, axisLabel: { show: false },
+        splitLine: { lineStyle: { color: css("--grid"), type: "dotted" } } },
+      tooltip: { trigger: "item", backgroundColor: css("--surface"), borderColor: css("--border"),
+        textStyle: { color: css("--text-primary"), fontSize: 13 }, formatter: (p) => `${p.name} bps<br><b>${p.value.toFixed(2)}%</b>` },
+      series: [{ type: "bar", data: bars.map(b => b[1]), barMaxWidth: 64,
+        itemStyle: { color: css("--series-1"), borderRadius: [4, 4, 0, 0] },
+        label: { show: true, position: "top", color: css("--text-primary"), formatter: (p) => p.value.toFixed(1) + "%" } }],
+    }, true);
+  });
 }
 
 // ---------- 市場利率 ----------
@@ -649,7 +694,7 @@ function applyRange() {
 }
 
 function renderAll() {
-  renderInfl(); renderFedview(); renderPath(); renderYields(); renderCurve();
+  renderInfl(); renderFedview(); renderPath(); renderFwBars(); renderYields(); renderCurve();
   renderHy(); renderOil(); applyRange();
 }
 
@@ -779,7 +824,7 @@ Promise.all([
     renderSnapshot();
     renderFedwatch();
     renderNotes();
-    for (const k of ["infl", "fedview", "path", "yields", "curve", "hy", "oil"]) charts[k] = echarts.init(document.getElementById("chart-" + k));
+    for (const k of ["infl", "fedview", "path", "fw0", "fw1", "yields", "curve", "hy", "oil"].filter(k => document.getElementById("chart-" + k))) charts[k] = echarts.init(document.getElementById("chart-" + k));
     renderAll();
     const t = new Date(DATA.updated.replace("Z", ":00Z"));
     document.getElementById("updated").textContent =
