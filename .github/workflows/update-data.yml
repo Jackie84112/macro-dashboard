@@ -21,6 +21,7 @@ jobs:
           python-version: "3.12"
       - run: pip install pandas requests
       - run: python pipeline/labor.py
+      - run: python pipeline/rates.py
       - name: 有變動才提交
         run: |
           git config user.name "github-actions[bot]"

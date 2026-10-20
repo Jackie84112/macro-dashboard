@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>貨幣成本｜宏觀監控儀表板</title>
+<meta name="description" content="美國貨幣成本：通膨、Fed 點陣圖與市場預期、公債殖利率、高收益債與 CDS、油價。資料來源 FRED、CME FedWatch，每日自動更新。">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f5f5f3;
+  --surface: #fcfcfb;
+  --border: #e4e3de;
+  --grid: #ecebe7;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #7a7973;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --bar-neutral: #c9c8c2;
+  --band-critical: rgba(208, 59, 59, 0.17);
+  --warn-line: #d03b3b;
+  --band-neutral: rgba(82, 81, 78, 0.10);
+  --good: #0a7d0a;
+  --bad: #c43131;
+  --group-bg: #f3f2ee;
+  --group-rule: #b9b8b1;
+  --tint-1: rgba(42, 120, 214, 0.16);
+  --tint-2: rgba(237, 161, 0, 0.20);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211;
+    --surface: #1a1a19;
+    --border: #2e2e2b;
+    --grid: #2a2a28;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8f8e86;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --bar-neutral: #55544f;
+    --band-critical: rgba(230, 103, 103, 0.22);
+    --warn-line: #e66767;
+    --band-neutral: rgba(195, 194, 183, 0.12);
+    --good: #4cc24c;
+    --bad: #e66767;
+    --group-bg: rgba(255, 255, 255, 0.05);
+    --group-rule: #5c5b56;
+    --tint-1: rgba(57, 135, 229, 0.26);
+    --tint-2: rgba(201, 133, 0, 0.28);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211;
+  --surface: #1a1a19;
+  --border: #2e2e2b;
+  --grid: #2a2a28;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #8f8e86;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --bar-neutral: #55544f;
+  --band-critical: rgba(230, 103, 103, 0.22);
+  --warn-line: #e66767;
+  --band-neutral: rgba(195, 194, 183, 0.12);
+  --good: #4cc24c;
+  --bad: #e66767;
+  --group-bg: rgba(255, 255, 255, 0.05);
+  --group-rule: #5c5b56;
+  --tint-1: rgba(57, 135, 229, 0.26);
+  --tint-2: rgba(201, 133, 0, 0.28);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif;
+  line-height: 1.5;
+}
+main { max-width: 1080px; margin: 0 auto; padding: 32px 16px 48px; }
+header h1 { font-size: 28px; margin: 0 0 4px; font-weight: 700; }
+header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
+.toolbar { display: flex; gap: 8px; align-items: center; margin: 24px 0 8px; flex-wrap: wrap; }
+.toolbar span { color: var(--text-muted); font-size: 13px; margin-right: 4px; }
+.toolbar button, .tabs button {
+  font: inherit; font-size: 13px; padding: 4px 12px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer;
+}
+.toolbar button[aria-pressed="true"], .tabs button[aria-pressed="true"] { background: var(--text-primary); color: var(--surface); border-color: var(--text-primary); }
+h2.sec { font-size: 15px; font-weight: 700; color: var(--text-secondary); margin: 28px 0 10px; letter-spacing: 1px; }
+h2.sec small { font-weight: 400; color: var(--text-muted); letter-spacing: 0; margin-left: 8px; font-size: 12px; }
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px 20px 8px; margin-bottom: 16px;
+}
+.card-head { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+.card h3 { font-size: 18px; margin: 0; font-weight: 700; }
+.card .desc { margin: 2px 0 0; color: var(--text-secondary); font-size: 13px; }
+.stat { text-align: right; }
+.stat .value { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat .meta { font-size: 12px; color: var(--text-muted); }
+.stat .delta { font-size: 13px; font-weight: 600; }
+.delta.good { color: var(--good); }
+.delta.bad { color: var(--bad); }
+.delta.flat { color: var(--series-1); }
+.tabs { display: flex; gap: 6px; margin: 12px 0 0; flex-wrap: wrap; }
+.tabs button { font-size: 12px; padding: 2px 10px; }
+.chart { width: 100%; height: 340px; }
+.chart.tall { height: 420px; }
+.legend-chips { display: flex; gap: 12px; font-size: 12px; color: var(--text-secondary); align-items: center; }
+.legend-chips i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.table-wrap { overflow-x: auto; margin: 0 -20px; padding: 0 20px 12px; }
+table.data { border-collapse: collapse; width: 100%; min-width: 860px; font-size: 13px; font-variant-numeric: tabular-nums; }
+table.data th, table.data td { padding: 6px 5px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+table.data thead th { font-weight: 600; color: var(--text-secondary); text-align: right; border-bottom: 1px solid var(--border); }
+table.data thead th.left { text-align: left; }
+table.data thead th.now { color: var(--text-primary); box-shadow: inset 0 0 0 2px var(--series-1); border-radius: 4px; }
+table.data td { text-align: right; color: var(--text-primary); }
+table.data td.group { white-space: normal; width: 96px; min-width: 96px; text-align: left; color: var(--text-primary); font-size: 14px; font-weight: 700; vertical-align: middle; background: var(--group-bg); border-left: 4px solid var(--group-rule); border-right: 1px solid var(--grid); padding-left: 10px; }
+table.data td.label { text-align: left; }
+table.data td.next { text-align: center; color: var(--text-secondary); border-left: 1px solid var(--grid); vertical-align: middle; }
+table.data td.next.weekly { color: var(--bad); font-weight: 600; }
+table.data tr.key td.label { font-weight: 600; }
+table.data td.good { color: var(--good); font-weight: 700; }
+table.data td.bad { color: var(--bad); font-weight: 700; }
+table.data td.flat { color: var(--series-1); font-weight: 700; }
+table.data td.muted { color: var(--text-muted); }
+table.data tbody.gap + tbody tr:first-child td { border-top: 2px solid var(--group-rule); }
+table.data tbody tr:last-child td { border-bottom: none; }
+table.data td.updated { background: var(--group-bg); }
+table.data tbody.gap td { height: 14px; padding: 0; border: none; background: transparent; }
+table.data.snap { min-width: 640px; }
+table.fw { min-width: 640px; }
+table.fw td.hi { background: var(--tint-1); font-weight: 700; }
+table.fw td.mid { background: var(--tint-2); }
+table.fw td.zero { color: var(--text-muted); }
+table.fw td small { display: block; font-size: 11px; font-weight: 400; color: var(--text-muted); }
+table.fw td small.up { color: var(--bad); }
+table.fw td small.down { color: var(--good); }
+table.fw td.exp { font-weight: 700; border-left: 1px solid var(--grid); }
+.notes { margin: 8px 0 12px; font-size: 12px; color: var(--text-secondary); }
+.notes p { margin: 2px 0; }
+footer { color: var(--text-muted); font-size: 12px; margin-top: 24px; }
+footer a { color: inherit; }
+.changes { margin: 6px 0 10px; padding-left: 18px; }
+.changes li { margin: 2px 0; }
+.changes b { font-weight: 600; color: var(--text-secondary); }
+@media (max-width: 600px) {
+  .stat { text-align: left; }
+  .chart { height: 280px; }
+  .chart.tall { height: 360px; }
+}
+</style>
+</head>
+<body>
+<script src="nav.js?v=20261020"></script>
+<main>
+  <header>
+    <h1>美國貨幣成本</h1>
+    <p>L1 貨幣成本：通膨是否壓得住、Fed 與市場對利率路徑的分歧、公債與信用市場的融資成本。</p>
+  </header>
+
+  <div class="toolbar" role="group" aria-label="時間範圍">
+    <span>時間範圍</span>
+    <button data-years="1">1 年</button>
+    <button data-years="3" aria-pressed="true">3 年</button>
+    <button data-years="5">5 年</button>
+    <button data-years="0">全部</button>
+  </div>
+
+  <h2 class="sec">通膨<small>CPI／PPI 月中、PCE 月底發布</small></h2>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h3>物價年增率</h3>
+        <p class="desc">月資料，單位 %。紅色虛線為 Fed 目標 2%。</p>
+      </div>
+      <div class="stat" id="stat-infl"></div>
+    </div>
+    <div class="tabs" role="group" aria-label="物價指標" id="infl-tabs">
+      <button data-g="cpi" aria-pressed="true">CPI</button>
+      <button data-g="pce">PCE</button>
+      <button data-g="ppi">PPI</button>
+    </div>
+    <div class="chart" id="chart-infl" role="img" aria-label="物價年增率折線圖"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h3>Fed 委員觀察指標：Warsh vs Waller</h3>
+        <p class="desc">月資料，單位 %。Warsh 看 PCE 6 個月年化、Waller 看 Core PCE 3 個月年化。</p>
+      </div>
+      <div class="stat" id="stat-fedview"></div>
+    </div>
+    <div class="chart" id="chart-fedview" role="img" aria-label="PCE 6 個月年化與 Core PCE 3 個月年化折線圖"></div>
+    <div class="notes" data-notes="inflation"></div>
+  </section>
+
+  <h2 class="sec">政策利率<small>FOMC 會議、SEP 點陣圖、CME FedWatch</small></h2>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h3>利率路徑：點陣圖 vs 市場預期</h3>
+        <p class="desc">藍點為 FOMC 委員對各年底利率的預估（每點一位委員），黑橫線為中位數；折線為 FedWatch 機率加權的預期利率。</p>
+      </div>
+      <div class="stat" id="stat-path"></div>
+    </div>
+    <div class="chart tall" id="chart-path" role="img" aria-label="點陣圖與市場預期利率路徑"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h3>CME FedWatch 各次會議機率</h3>
+        <p class="desc" id="fw-desc"></p>
+      </div>
+      <div class="legend-chips" aria-label="顏色說明">
+        <span><i style="background:var(--tint-1)"></i>最高機率</span>
+        <span><i style="background:var(--tint-2)"></i>次高</span>
+      </div>
+    </div>
+    <div class="table-wrap"><table class="data fw" id="fw-table"></table></div>
+    <div class="notes" data-notes="policy"></div>
+  </section>
+
+  <h2 class="sec">市場利率<small>公債殖利率，日資料</small></h2>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h3>2 年 vs 10 年期公債殖利率</h3>
+        <p class="desc">日資料，單位 %。灰色帶為聯準利率目標區間。</p>
+      </div>
+      <div class="stat" id="stat-yields"></div>
+    </div>
+    <div class="chart" id="chart-yields" role="img" aria-label="2 年與 10 年期公債殖利率折線圖"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h3>10 年減 2 年利差 vs 那斯達克指數</h3>
+        <p class="desc">上：利差（週資料，單位 %），藍柱為正、橘柱為倒掛。下：那斯達克綜合指數（週收盤）。</p>
+      </div>
+      <div class="stat" id="stat-curve"></div>
+    </div>
+    <div class="chart tall" id="chart-curve" role="img" aria-label="10 年減 2 年利差與那斯達克指數"></div>
+    <div class="notes" data-notes="yields"></div>
+  </section>
+
+  <h2 class="sec">信用與油價</h2>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h3>高收益公司債有效殖利率</h3>
+        <p class="desc">日資料，單位 %。ICE 美銀美林 BB／B／CCC 級以下（FRED 只提供近 3 年）。</p>
+      </div>
+      <div class="stat" id="stat-hy"></div>
+    </div>
+    <div class="chart" id="chart-hy" role="img" aria-label="高收益公司債殖利率折線圖"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h3>美國 5 年期 CDS</h3>
+        <p class="desc">週資料，單位 bp。手動記錄（無免費資料源），從 2026/10 開始累積。</p>
+      </div>
+      <div class="stat" id="stat-cds"></div>
+    </div>
+    <div class="chart" id="chart-cds" role="img" aria-label="美國 5 年期 CDS 折線圖"></div>
+    <div class="notes" data-notes="credit"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h3>原油價格</h3>
+        <p class="desc">日資料，美元／桶。WTI 與 Brent 現貨。</p>
+      </div>
+      <div class="stat" id="stat-oil"></div>
+    </div>
+    <div class="chart" id="chart-oil" role="img" aria-label="WTI 與 Brent 原油價格折線圖"></div>
+    <div class="notes" data-notes="oil"></div>
+  </section>
+
+  <h2 class="sec">數據表</h2>
+
+  <section class="card" id="table-card">
+    <div class="card-head">
+      <div>
+        <h3>貨幣成本數據表</h3>
+        <p class="desc">上圖的數據源。每列最新一期與上一期比較上色；藍框月份為最新 CPI 月份。</p>
+      </div>
+      <div class="legend-chips" aria-label="顏色說明">
+        <span><i style="background:var(--good)"></i>好轉</span>
+        <span><i style="background:var(--bad)"></i>惡化</span>
+        <span><i style="background:var(--series-1)"></i>持平</span>
+      </div>
+    </div>
+    <div class="tabs" role="group" aria-label="年度" id="year-tabs"></div>
+    <div class="table-wrap" style="margin-top:10px"><table class="data" id="data-table"></table></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h3>市場利率與信用快照</h3>
+        <p class="desc">前值為一週前的收盤；殖利率與 CDS 變動以 bp 表示，上升為惡化。</p>
+      </div>
+    </div>
+    <div class="table-wrap" style="margin-top:10px"><table class="data snap" id="snap-table"></table></div>
+  </section>
+
+  <footer>
+    <div id="updated"></div>
+    <div id="changes"></div>
+    <div>資料來源：<a href="https://fred.stlouisfed.org/" target="_blank" rel="noopener">FRED</a>（CPIAUCNS、CPILFENS、CPILFESL、PCEPI、PCEPILFE、PCETRIM12M159SFRBDAL、PPIFID、PPIFES、DFEDTARU、DFEDTARL、FEDTARMD、FEDTARMDLR、DGS2、DGS10、T10Y2Y、NASDAQCOM、BAMLH0A1HYBBEY、BAMLH0A2HYBEY、BAMLH0A3HYCEY、DCOILWTICO、DCOILBRENTEU）；<a href="https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm" target="_blank" rel="noopener">Fed SEP</a>；<a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" rel="noopener">CME FedWatch</a>（手動）；CDS：財經M平方（手動）；發布日：BLS、BEA、Fed。每個工作日自動更新。</div>
+  </footer>
+</main>
+
+<script>
+const charts = {};
+let DATA = null, MAN = null, CAL = null;
+let years = 3;
+let inflGroup = "cpi";
+
+const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+const fmtMonth = (d) => d.slice(0, 7).replace("-", "/");
+const fmtDay = (d) => d.replace(/-/g, "/");
+const sign = (v) => (v > 0 ? "+" : "");
+
+function startDate(allSeries) {
+  const last = allSeries.map(s => s[s.length - 1][0]).sort().pop();
+  if (!years) return null;
+  const d = new Date(last);
+  d.setFullYear(d.getFullYear() - years);
+  return d.toISOString().slice(0, 10);
+}
+
+function base(extra) {
+  const text2 = css("--text-secondary"), grid = css("--grid"), muted = css("--text-muted");
+  return {
+    animation: false,
+    textStyle: { fontFamily: getComputedStyle(document.body).fontFamily },
+    grid: { left: 8, right: 64, top: 36, bottom: 28, containLabel: true },
+    xAxis: {
+      type: "time",
+      axisLine: { lineStyle: { color: grid } },
+      axisTick: { show: false },
+      axisLabel: { color: muted, hideOverlap: true,
+        formatter: { year: "{yyyy}", month: "{M}月", day: "" } },
+      splitLine: { show: false },
+    },
+    yAxis: {
+      type: "value", scale: true,
+      axisLabel: { color: muted, formatter: (v) => Number.isInteger(v) ? String(v) : v.toFixed(1) },
+      splitLine: { lineStyle: { color: grid, width: 1 } },
+    },
+    tooltip: {
+      trigger: "axis",
+      axisPointer: { type: "line", lineStyle: { color: text2, width: 1 } },
+      backgroundColor: css("--surface"), borderColor: css("--border"),
+      textStyle: { color: css("--text-primary"), fontSize: 13 },
+    },
+    dataZoom: [{ type: "inside", filterMode: "weakFilter", zoomOnMouseWheel: false, moveOnMouseMove: false }],
+    ...extra,
+  };
+}
+
+function legend() {
+  return { top: 0, right: 0, itemWidth: 16, itemHeight: 2, icon: "rect",
+    textStyle: { color: css("--text-secondary"), fontSize: 12 } };
+}
+
+function endLabel(fmt) {
+  return { show: true, color: css("--text-primary"), fontWeight: 600, fontSize: 12, formatter: fmt };
+}
+
+function line(name, data, color, extra) {
+  return { name, type: "line", data, showSymbol: false, symbolSize: 8,
+    lineStyle: { width: 2, color }, itemStyle: { color },
+    endLabel: endLabel((p) => p.value[1].toFixed(2)), ...extra };
+}
+
+function targetLine(text, y) {
+  return { silent: true, symbol: "none", lineStyle: { color: css("--warn-line"), type: "dashed", width: 1.5 },
+    label: { color: css("--text-secondary"), fontSize: 11, position: "insideStartTop", formatter: text },
+    data: [{ yAxis: y }] };
+}
+
+// 多序列 tooltip：日期＋每條線數值
+function multiTip(fmtDate, unit, digits) {
+  return (p) => `${fmtDate(p[0].value[0])}<br>` + p.filter(x => x.value && x.value[1] != null)
+    .map(x => `${x.marker}${x.seriesName} <b>${x.value[1].toFixed(digits)}${unit}</b>`).join("<br>");
+}
+
+function deltaHtml(cur, prev, upIsBad, unit, digits, scale = 1) {
+  const d = (cur - prev) * scale;
+  const cls = Math.abs(d) < 1e-9 ? "flat" : (upIsBad === null ? "flat" : ((d > 0) === upIsBad ? "bad" : "good"));
+  const word = cls === "flat" ? (Math.abs(d) < 1e-9 ? "持平" : "變動") : (cls === "bad" ? "惡化" : "好轉");
+  return `<div class="delta ${cls}">${word} ${sign(d)}${d.toFixed(digits)}${unit}</div>`;
+}
+
+// 日資料：取最新一筆與一週前的一筆
+function weekPair(s) {
+  const [d, v] = s[s.length - 1];
+  const cut = new Date(new Date(d).getTime() - 7 * 864e5).toISOString().slice(0, 10);
+  let prev = s[0];
+  for (const x of s) if (x[0] <= cut) prev = x;
+  return { d, v, pd: prev[0], pv: prev[1] };
+}
+
+// ---------- 通膨 ----------
+const INFL = {
+  cpi: [["cpi", "CPI"], ["core_cpi", "Core CPI"]],
+  pce: [["pce", "PCE"], ["core_pce", "Core PCE"], ["trim", "Trimmed Mean PCE"]],
+  ppi: [["ppi", "PPI"], ["core_ppi", "Core PPI"]],
+};
+const SERIES_COLORS = () => [css("--series-1"), css("--series-2"), css("--series-3")];
+
+function renderInfl() {
+  const g = INFL[inflGroup], col = SERIES_COLORS();
+  const s0 = DATA.infl[g[0][0]], n = s0.length;
+  document.getElementById("stat-infl").innerHTML =
+    `<div class="value">${s0[n - 1][1].toFixed(1)}%</div>${deltaHtml(s0[n - 1][1], s0[n - 2][1], true, " pt", 1)}<div class="meta">${g[0][1]}，${fmtMonth(s0[n - 1][0])}</div>`;
+  charts.infl.setOption(base({
+    legend: legend(),
+    tooltip: { ...base().tooltip, formatter: multiTip(fmtMonth, "%", 1) },
+    series: g.map(([k, name], i) => line(name, DATA.infl[k], col[i], {
+      endLabel: endLabel((p) => p.value[1].toFixed(1) + "%"),
+      ...(i === 0 ? { markLine: targetLine("Fed 目標 2%", 2) } : {}),
+    })),
+  }), true);
+}
+
+function renderFedview() {
+  const a = DATA.pce6, b = DATA.core_pce3, na = a.length, nb = b.length;
+  document.getElementById("stat-fedview").innerHTML =
+    `<div class="value">${a[na - 1][1].toFixed(1)}% ／ ${b[nb - 1][1].toFixed(1)}%</div>` +
+    `<div class="meta">Warsh ${sign(a[na - 1][1] - a[na - 2][1])}${(a[na - 1][1] - a[na - 2][1]).toFixed(1)} pt ・ Waller ${sign(b[nb - 1][1] - b[nb - 2][1])}${(b[nb - 1][1] - b[nb - 2][1]).toFixed(1)} pt</div>` +
+    `<div class="meta">${fmtMonth(a[na - 1][0])}</div>`;
+  charts.fedview.setOption(base({
+    legend: legend(),
+    tooltip: { ...base().tooltip, formatter: multiTip(fmtMonth, "%", 1) },
+    series: [
+      line("PCE 6 個月年化（Warsh）", a, css("--series-1"), {
+        endLabel: endLabel((p) => p.value[1].toFixed(1) + "%"), markLine: targetLine("Fed 目標 2%", 2) }),
+      line("Core PCE 3 個月年化（Waller）", b, css("--series-2"), {
+        endLabel: endLabel((p) => p.value[1].toFixed(1) + "%") }),
+    ],
+  }), true);
+}
+
+// ---------- 政策利率：點陣圖 vs FedWatch ----------
+// x 軸以「年底」為整數刻度：2026 = 2026 年底；長期放在 2030
+const LR_X = 2030;
+function yearPos(date) {
+  const d = new Date(date + "T00:00:00Z"), y = d.getUTCFullYear();
+  const s = Date.UTC(y, 0, 1), e = Date.UTC(y + 1, 0, 1);
+  return y - 1 + (d - s) / (e - s);
+}
+const mid = (range) => { const [lo, hi] = range.split("-").map(Number); return (lo + hi) / 200; };
+const expRate = (m) => Object.entries(m.p).reduce((a, [r, p]) => a + mid(r) * p / 100, 0);
+
+function ffrAt(series, date) {
+  let v = series[0][1];
+  for (const [d, x] of series) if (d <= date) v = x;
+  return v;
+}
+
+function renderPath() {
+  const fw = MAN.fedwatch.weeks, today = new Date().toISOString().slice(0, 10);
+  const nowMid = mid(MAN.fedwatch.current);
+  // 點陣圖：同一利率的點橫向排開
+  const dots = [];
+  for (const yr of MAN.dots.years) {
+    const x0 = yr.label === "長期" ? LR_X : Number(yr.label);
+    for (const [r, n] of Object.entries(yr.counts)) {
+      for (let i = 0; i < n; i++) dots.push({ value: [x0 + (i - (n - 1) / 2) * 0.045, Number(r)], yr: yr.label, n });
+    }
+  }
+  const med = DATA.dot_median.map(([d, v]) => [Number(d.slice(0, 4)), v]);
+  med.push([LR_X, DATA.dot_median_lr[DATA.dot_median_lr.length - 1][1]]);
+  // 實際利率：今年起的區間中值（階梯），x 軸從去年底開始
+  const from = `${new Date().getFullYear()}-01-01`;
+  const steps = DATA.ffr_upper.map(([d, u]) => [d, (u + ffrAt(DATA.ffr_lower, d)) / 2]).filter(x => x[0] >= from);
+  steps.unshift([from, (ffrAt(DATA.ffr_upper, from) + ffrAt(DATA.ffr_lower, from)) / 2]);
+  const hist = steps.map(([d, v]) => ({ value: [yearPos(d), v], date: d }));
+  const paths = fw.map(w => [{ value: [yearPos(today), nowMid], date: today, now: true },
+    ...w.meetings.map(m => ({ value: [yearPos(m.date), expRate(m)], date: m.date }))]);
+
+  const dec = (w) => w.meetings.filter(m => m.date.startsWith("2026-12"))[0];
+  const m26 = dec(fw[0]), dot26 = med.find(x => x[0] === 2026);
+  if (m26 && dot26) {
+    const e = expRate(m26), pe = dec(fw[1]) ? expRate(dec(fw[1])) : e;
+    document.getElementById("stat-path").innerHTML =
+      `<div class="value">${e.toFixed(2)}%</div><div class="delta ${e > pe ? "bad" : (e < pe ? "good" : "flat")}">較上週 ${sign(e - pe)}${((e - pe) * 100).toFixed(1)} bp</div>` +
+      `<div class="meta">市場預期 2026 年底｜點陣圖中位數 ${dot26[1].toFixed(2)}%</div>`;
+  }
+
+  const muted = css("--text-muted"), grid = css("--grid");
+  charts.path.setOption({
+    animation: false,
+    textStyle: { fontFamily: getComputedStyle(document.body).fontFamily },
+    grid: { left: 8, right: 24, top: 36, bottom: 28, containLabel: true },
+    legend: { ...legend(), icon: undefined, itemWidth: 14, itemHeight: 8 },
+    xAxis: {
+      type: "value", min: yearPos(from), max: LR_X + 0.4, interval: 1,
+      axisLine: { lineStyle: { color: grid } }, axisTick: { show: false }, splitLine: { show: false },
+      axisLabel: { color: muted, formatter: (v) => !Number.isInteger(v) ? "" : (v === LR_X ? "長期" : v + " 年底") },
+    },
+    yAxis: { type: "value", min: 2.5, interval: 0.25, axisLabel: { color: muted, formatter: (v) => v.toFixed(2) + "%" },
+      splitLine: { lineStyle: { color: grid } } },
+    tooltip: {
+      trigger: "item", backgroundColor: css("--surface"), borderColor: css("--border"),
+      textStyle: { color: css("--text-primary"), fontSize: 13 },
+      formatter: (p) => {
+        const d = p.data;
+        if (p.seriesName === "委員預估") return `${d.yr === "長期" ? "長期" : d.yr + " 年底"}<br><b>${d.value[1].toFixed(3)}%</b>：${d.n} 位委員`;
+        if (p.seriesName === "點陣圖中位數") return `${d[0] === LR_X ? "長期" : d[0] + " 年底"} 中位數<br><b>${d[1].toFixed(2)}%</b>`;
+        if (p.seriesName === "實際利率") return `${fmtDay(d.date)} 起<br>區間中值 <b>${d.value[1].toFixed(3)}%</b>`;
+        return `${p.seriesName}｜${d.now ? "目前" : fmtDay(d.date) + " 會議"}<br>預期利率 <b>${d.value[1].toFixed(3)}%</b>`;
+      },
+    },
+    series: [
+      { name: "實際利率", type: "line", step: "end", data: hist, showSymbol: false,
+        lineStyle: { width: 2, color: css("--text-secondary") }, itemStyle: { color: css("--text-secondary") } },
+      { name: "委員預估", type: "scatter", data: dots, symbolSize: 8,
+        itemStyle: { color: css("--series-1"), borderColor: css("--surface"), borderWidth: 1 } },
+      { name: "點陣圖中位數", type: "scatter", data: med, symbol: "rect", symbolSize: [30, 3], z: 4,
+        itemStyle: { color: css("--text-primary") } },
+      ...paths.map((p, i) => ({
+        name: `市場預期（${fw[i].label}）`, type: "line", data: p, symbol: "circle", symbolSize: i ? 6 : 8, z: i ? 2 : 3,
+        lineStyle: { width: 2, color: css("--series-2"), type: i ? "dashed" : "solid", opacity: i ? 0.55 : 1 },
+        itemStyle: { color: css("--series-2"), opacity: i ? 0.55 : 1, borderColor: css("--surface"), borderWidth: i ? 0 : 2 },
+      })),
+    ],
+  }, true);
+}
+
+function renderFedwatch() {
+  const [cur, prev] = MAN.fedwatch.weeks;
+  const ranges = [...new Set(MAN.fedwatch.weeks.flatMap(w => w.meetings.flatMap(m => Object.keys(m.p))))]
+    .sort((a, b) => parseInt(a) - parseInt(b));
+  const prevBy = Object.fromEntries((prev ? prev.meetings : []).map(m => [m.date, m]));
+  document.getElementById("fw-desc").textContent =
+    `${MAN.report}｜目前利率區間 ${MAN.fedwatch.current.replace("-", "–")} bps。每格下方小字為較上週變動（百分點）。`;
+  let h = `<thead><tr><th class="left">會議日</th>${ranges.map(r => `<th>${r.replace("-", "–")}</th>`).join("")}<th>預期利率</th></tr></thead><tbody>`;
+  for (const m of cur.meetings) {
+    const pm = prevBy[m.date];
+    const ranked = Object.entries(m.p).sort((a, b) => b[1] - a[1]);
+    h += `<tr><td class="label">${fmtDay(m.date)}</td>`;
+    for (const r of ranges) {
+      const v = m.p[r] || 0, pv = pm ? (pm.p[r] || 0) : null;
+      const cls = r === ranked[0][0] ? "hi" : (ranked[1] && r === ranked[1][0] && v >= 1 ? "mid" : (v === 0 ? "zero" : ""));
+      const d = pv === null ? null : v - pv;
+      const sub = d === null || Math.abs(d) < 0.005 ? "" : `<small class="${d > 0 ? "up" : "down"}">${sign(d)}${d.toFixed(2)}</small>`;
+      h += `<td class="${cls}">${v.toFixed(2)}%${sub}</td>`;
+    }
+    const e = expRate(m), pe = pm ? expRate(pm) : null;
+    const de = pe === null ? "" : `<small class="${e > pe ? "up" : (e < pe ? "down" : "")}">${sign(e - pe)}${((e - pe) * 100).toFixed(1)} bp</small>`;
+    h += `<td class="exp">${e.toFixed(3)}%${de}</td></tr>`;
+  }
+  document.getElementById("fw-table").innerHTML = h + "</tbody>";
+}
+
+// ---------- 市場利率 ----------
+function renderYields() {
+  const a = DATA.dgs2, b = DATA.dgs10;
+  const t = weekPair(b), t2 = weekPair(a);
+  document.getElementById("stat-yields").innerHTML =
+    `<div class="value">${t.v.toFixed(2)}%</div>${deltaHtml(t.v, t.pv, true, " bp", 0, 100)}` +
+    `<div class="meta">10 年期，${fmtDay(t.d)}（較一週前）｜2 年期 ${t2.v.toFixed(2)}%</div>`;
+  // 聯準利率區間：每段一塊色帶
+  const U = DATA.ffr_upper, last = b[b.length - 1][0];
+  const band = U.map(([d, u], i) => [
+    { xAxis: d, yAxis: ffrAt(DATA.ffr_lower, d) },
+    { xAxis: i + 1 < U.length ? U[i + 1][0] : last, yAxis: u },
+  ]);
+  charts.yields.setOption(base({
+    legend: legend(),
+    tooltip: { ...base().tooltip, formatter: (p) => {
+      const d = p[0].value[0];
+      return multiTip(fmtDay, "%", 2)(p) + `<br>聯準利率 ${ffrAt(DATA.ffr_lower, d).toFixed(2)}–${ffrAt(U, d).toFixed(2)}%`;
+    } },
+    series: [
+      line("2 年期", a, css("--series-1"), {
+        markArea: { silent: true, itemStyle: { color: css("--band-neutral") },
+          label: { show: false }, data: band } }),
+      line("10 年期", b, css("--series-2")),
+    ],
+  }), true);
+}
+
+function weekly(s) {
+  // 每週取最後一筆（以週日為界）
+  const out = [];
+  for (const x of s) {
+    const d = new Date(x[0] + "T00:00:00Z");
+    const key = Math.floor((d.getTime() / 864e5 + 4) / 7);
+    if (out.length && out[out.length - 1].k === key) out[out.length - 1] = { k: key, x };
+    else out.push({ k: key, x });
+  }
+  return out.map(o => o.x);
+}
+
+function renderCurve() {
+  const sp = weekly(DATA.t10y2y), nq = DATA.nasdaq;
+  const t = weekPair(DATA.t10y2y);
+  document.getElementById("stat-curve").innerHTML =
+    `<div class="value">${sign(t.v)}${t.v.toFixed(2)}%</div>${deltaHtml(t.v, t.pv, null, " bp", 0, 100)}` +
+    `<div class="meta">${fmtDay(t.d)}（較一週前）</div>`;
+  const b = base(), pos = css("--series-1"), neg = css("--series-2");
+  charts.curve.setOption({
+    ...b,
+    grid: [
+      { left: 8, right: 72, top: 16, height: "48%", containLabel: true },
+      { left: 8, right: 72, top: "64%", bottom: 28, containLabel: true },
+    ],
+    xAxis: [{ ...b.xAxis, gridIndex: 0, axisLabel: { show: false } }, { ...b.xAxis, gridIndex: 1 }],
+    yAxis: [
+      { ...b.yAxis, gridIndex: 0, scale: false, axisLabel: { ...b.yAxis.axisLabel, formatter: (v) => v.toFixed(1) + "%" } },
+      { ...b.yAxis, gridIndex: 1, axisLabel: { ...b.yAxis.axisLabel, formatter: (v) => (v / 1000).toFixed(0) + "k" } },
+    ],
+    axisPointer: { link: [{ xAxisIndex: "all" }] },
+    dataZoom: [{ ...b.dataZoom[0], xAxisIndex: [0, 1] }],
+    tooltip: { ...b.tooltip, formatter: (p) => {
+      const d = p[0].value[0];
+      return `${fmtDay(d)}<br>` + p.map(x => `${x.marker}${x.seriesName} <b>${x.seriesIndex ? x.value[1].toLocaleString("en-US") : sign(x.value[1]) + x.value[1].toFixed(2) + "%"}</b>`).join("<br>");
+    } },
+    series: [
+      { name: "10Y−2Y 利差", type: "bar", data: sp.map(x => ({ value: x, itemStyle: { color: x[1] >= 0 ? pos : neg } })),
+        barMaxWidth: 6, xAxisIndex: 0, yAxisIndex: 0 },
+      { name: "那斯達克綜合指數", type: "line", data: nq, showSymbol: false, xAxisIndex: 1, yAxisIndex: 1,
+        lineStyle: { width: 2, color: css("--text-secondary") }, itemStyle: { color: css("--text-secondary") },
+        endLabel: endLabel((p) => Math.round(p.value[1]).toLocaleString("en-US")) },
+    ],
+  }, true);
+}
+
+// ---------- 信用與油價 ----------
+function renderHy() {
+  const t = weekPair(DATA.hy_ccc), col = SERIES_COLORS();
+  document.getElementById("stat-hy").innerHTML =
+    `<div class="value">${t.v.toFixed(2)}%</div>${deltaHtml(t.v, t.pv, true, " bp", 0, 100)}<div class="meta">CCC 級以下，${fmtDay(t.d)}（較一週前）</div>`;
+  charts.hy.setOption(base({
+    legend: legend(),
+    tooltip: { ...base().tooltip, formatter: multiTip(fmtDay, "%", 2) },
+    series: [
+      line("BB 級", DATA.hy_bb, col[0]),
+      line("B 級", DATA.hy_b, col[1]),
+      line("CCC 級以下", DATA.hy_ccc, col[2]),
+    ],
+  }), true);
+}
+
+function renderCds() {
+  const s = MAN.cds, n = s.length;
+  document.getElementById("stat-cds").innerHTML = n >= 2
+    ? `<div class="value">${s[n - 1][1].toFixed(2)} bp</div>${deltaHtml(s[n - 1][1], s[n - 2][1], true, " bp", 2)}<div class="meta">${fmtDay(s[n - 1][0])}（較上週）</div>`
+    : "";
+  charts.cds.setOption(base({
+    tooltip: { ...base().tooltip, formatter: (p) => `${fmtDay(p[0].value[0])}<br><b>${p[0].value[1].toFixed(2)} bp</b>` },
+    series: [line("美國 5 年 CDS", s, css("--series-1"), { showSymbol: true, symbol: "circle",
+      itemStyle: { color: css("--series-1"), borderColor: css("--surface"), borderWidth: 2 } })],
+  }), true);
+}
+
+function renderOil() {
+  const t = weekPair(DATA.wti);
+  document.getElementById("stat-oil").innerHTML =
+    `<div class="value">${t.v.toFixed(2)}</div>${deltaHtml(t.v, t.pv, true, " 美元", 2)}<div class="meta">WTI，${fmtDay(t.d)}（較一週前）</div>`;
+  charts.oil.setOption(base({
+    legend: legend(),
+    tooltip: { ...base().tooltip, formatter: multiTip(fmtDay, "", 2) },
+    series: [line("WTI", DATA.wti, css("--series-1")), line("Brent", DATA.brent, css("--series-2"))],
+  }), true);
+}
+
+function applyRange() {
+  const groups = {
+    infl: Object.values(DATA.infl), fedview: [DATA.pce6], yields: [DATA.dgs10], curve: [DATA.t10y2y],
+    hy: [DATA.hy_ccc], oil: [DATA.wti],
+  };
+  for (const [k, series] of Object.entries(groups)) {
+    const start = startDate(series);
+    charts[k].dispatchAction(start
+      ? { type: "dataZoom", startValue: start, end: 100 }
+      : { type: "dataZoom", start: 0, end: 100 });
+  }
+}
+
+function renderAll() {
+  renderInfl(); renderFedview(); renderPath(); renderYields(); renderCurve();
+  renderHy(); renderCds(); renderOil(); applyRange();
+}
+
+// ---------- 數據表 ----------
+let tableYear = null;
+
+// 美東時間字串 → Date（自動判斷夏令時間）
+function etToDate(str) {
+  for (const off of [4, 5]) {
+    const d = new Date(str + ":00Z");
+    d.setUTCHours(d.getUTCHours() + off);
+    const h = new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", hourCycle: "h23" }).format(d);
+    if (Number(h) === Number(str.slice(11, 13))) return d;
+  }
+  return new Date(str + ":00-05:00");
+}
+
+function twDate(d) {
+  const p = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Taipei", year: "numeric", month: "numeric", day: "numeric" }).formatToParts(d);
+  const g = (t) => p.find(x => x.type === t).value;
+  return `${g("year")}/${g("month")}/${g("day")}`;
+}
+
+function nextRelease(sched) {
+  if (sched === "daily") return { text: "每日" };
+  if (sched === "weekly") return { text: "週更", weekly: true };
+  if (!sched || !CAL || !CAL[sched]) return { text: "–" };
+  const now = new Date();
+  const hit = CAL[sched].map(etToDate).find(d => d > now);
+  return { text: hit ? twDate(hit) : "待公布" };
+}
+
+function renderTable() {
+  const T = DATA.table;
+  if (!tableYear) tableYear = T.latestYear;
+  const tabs = document.getElementById("year-tabs");
+  tabs.innerHTML = T.years.map(y => `<button data-year="${y}" aria-pressed="${y === tableYear}">${y}</button>`).join("");
+  tabs.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+    tableYear = Number(b.dataset.year);
+    renderTable();
+  }));
+
+  const nowCol = tableYear === T.latestYear ? T.latestMonth : 0;
+  let h = `<thead><tr><th class="left"></th><th class="left">指標</th>`;
+  for (let m = 1; m <= 12; m++) h += `<th class="${m === nowCol ? "now" : ""}">${m}月</th>`;
+  h += `<th>下次發布</th></tr></thead>`;
+
+  const rows = T.rows;
+  const keyRows = new Set(["ffr", "core_cpi", "core_pce", "pce6", "core_pce3"]);
+  const same = (a, b) => a && b && a.group === b.group && a.schedule === b.schedule;
+  rows.forEach((r, i) => {
+    if (i === 0 || rows[i - 1].group !== r.group) {
+      h += i ? `</tbody><tbody class="gap"><tr><td colspan="15"></td></tr></tbody><tbody>` : `<tbody>`;
+    }
+    h += `<tr class="${keyRows.has(r.key) ? "key" : ""}">`;
+    if (i === 0 || rows[i - 1].group !== r.group) {
+      h += `<td class="group" rowspan="${rows.filter(x => x.group === r.group).length}">${r.group}</td>`;
+    }
+    h += `<td class="label">${r.label}</td>`;
+    const upd = new Set((DATA.changedCells || {})[r.key] || []);
+    r.cells[String(tableYear)].forEach((c, m) => {
+      const cls = [c && (c.c || (c.v === "–" ? "muted" : "")), upd.has(`${tableYear}-${m + 1}`) && "updated"].filter(Boolean).join(" ");
+      h += c ? `<td class="${cls}">${c.v}</td>` : `<td></td>`;
+    });
+    if (!same(rows[i - 1], r)) {
+      let span = 1;
+      while (same(rows[i + span], r)) span++;
+      const nx = nextRelease(r.schedule);
+      h += `<td class="next${nx.weekly ? " weekly" : ""}" rowspan="${span}">${nx.text}</td>`;
+    }
+    h += `</tr>`;
+  });
+  document.getElementById("data-table").innerHTML = h + `</tbody>`;
+}
+
+function renderSnapshot() {
+  const rows = DATA.snapshot.map(r => ({ ...r, upIsBad: r.key === "t10y2y" ? null : true }));
+  const c = MAN.cds, n = c.length;
+  if (n >= 2) rows.push({ label: "美國 5 年期 CDS（bp）", prev: c[n - 2][1].toFixed(2), cur: c[n - 1][1].toFixed(2),
+    date: c[n - 1][0], delta: c[n - 1][1] - c[n - 2][1], unit: "bp", schedule: "weekly", upIsBad: true });
+  let h = `<thead><tr><th class="left">指標</th><th>前值</th><th>最新</th><th>變動</th><th>資料日期</th><th>下次發布</th></tr></thead><tbody>`;
+  for (const r of rows) {
+    const d = r.unit === "pct" ? r.delta * 100 : r.delta;
+    const txt = r.unit === "pct" ? `${sign(d)}${d.toFixed(0)} bp` : `${sign(d)}${d.toFixed(2)}${r.unit === "bp" ? " bp" : ""}`;
+    const cls = Math.abs(d) < 1e-9 || r.upIsBad === null ? "flat" : ((d > 0) === r.upIsBad ? "bad" : "good");
+    const nx = nextRelease(r.schedule);
+    h += `<tr><td class="label">${r.label}</td><td>${r.prev}</td><td>${r.cur}</td><td class="${cls}">${txt}</td>` +
+      `<td>${fmtDay(r.date)}</td><td class="next${nx.weekly ? " weekly" : ""}">${nx.text}</td></tr>`;
+  }
+  document.getElementById("snap-table").innerHTML = h + "</tbody>";
+}
+
+function renderNotes() {
+  document.querySelectorAll("[data-notes]").forEach(el => {
+    const list = (MAN.notes || {})[el.dataset.notes] || [];
+    el.replaceChildren(...list.map(t => Object.assign(document.createElement("p"), { textContent: t })));
+  });
+}
+
+document.querySelectorAll(".toolbar button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    years = Number(btn.dataset.years);
+    document.querySelectorAll(".toolbar button").forEach(b => b.setAttribute("aria-pressed", b === btn));
+    applyRange();
+  });
+});
+
+document.querySelectorAll("#infl-tabs button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    inflGroup = btn.dataset.g;
+    document.querySelectorAll("#infl-tabs button").forEach(b => b.setAttribute("aria-pressed", b === btn));
+    renderInfl();
+    applyRange();
+  });
+});
+
+Promise.all([
+  fetch("data/rates.json", { cache: "no-store" }).then(r => r.json()),
+  fetch("data/rates-manual.json", { cache: "no-store" }).then(r => r.json()),
+  fetch("data/calendar.json", { cache: "no-store" }).then(r => r.json()).catch(() => null),
+])
+  .then(([json, man, cal]) => {
+    DATA = json;
+    MAN = man;
+    CAL = cal;
+    renderTable();
+    renderSnapshot();
+    renderFedwatch();
+    renderNotes();
+    for (const k of ["infl", "fedview", "path", "yields", "curve", "hy", "cds", "oil"]) charts[k] = echarts.init(document.getElementById("chart-" + k));
+    renderAll();
+    const t = new Date(DATA.updated.replace("Z", ":00Z"));
+    document.getElementById("updated").textContent =
+      "最後更新：" + t.toLocaleString("zh-TW", { timeZone: "Asia/Taipei", hour12: false }) + "（台灣時間）";
+    const ch = DATA.changes || [];
+    document.getElementById("changes").innerHTML = ch.length
+      ? "本次更新內容：<ul class=\"changes\">" + ch.map(c => `<li><b>${c.label}</b>：${c.items.join("；")}</li>`).join("") + "</ul>"
+      : "";
+  });
+
+window.addEventListener("resize", () => Object.values(charts).forEach(c => c.resize()));
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => DATA && renderAll());
+</script>
+</body>
+</html>

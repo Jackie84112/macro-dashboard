@@ -7,6 +7,7 @@
     { href: "index.html", label: "就業狀況" },
     { href: "margin.html", label: "融資槓桿" },
     { href: "datacenter.html", label: "資料中心成本" },
+    { href: "rates.html", label: "貨幣成本" },
   ];
   const here = location.pathname.split("/").pop() || "index.html";
   const css = `
