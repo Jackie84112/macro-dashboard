@@ -186,7 +186,7 @@ def main() -> None:
     daily = {
         "dgs2": fred("DGS2"), "dgs10": fred("DGS10"), "t10y2y": fred("T10Y2Y"),
         "hy_bb": fred("BAMLH0A1HYBBEY"), "hy_b": fred("BAMLH0A2HYBEY"), "hy_ccc": fred("BAMLH0A3HYCEY"),
-        "wti": fred("DCOILWTICO"), "brent": fred("DCOILBRENTEU"),
+        "wti": fred("DCOILWTICO"),
     }
     # 那斯達克只畫趨勢，改週資料（週五收盤）縮小檔案
     nasdaq = fred("NASDAQCOM").resample("W-FRI").last().dropna()

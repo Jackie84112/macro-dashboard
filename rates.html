@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>貨幣成本｜宏觀監控儀表板</title>
-<meta name="description" content="美國貨幣成本：通膨、Fed 點陣圖與市場預期、公債殖利率、高收益債與 CDS、油價。資料來源 FRED、CME FedWatch，每日自動更新。">
+<meta name="description" content="美國貨幣成本：通膨、Fed 點陣圖與市場預期、公債殖利率、高收益債、油價。資料來源 FRED、CME FedWatch，每日自動更新。">
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
 <style>
 :root {
@@ -207,17 +207,29 @@ footer a { color: inherit; }
     <div class="notes" data-notes="inflation"></div>
   </section>
 
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h3>WTI 原油價格</h3>
+        <p class="desc">日資料，美元／桶。WTI 現貨。</p>
+      </div>
+      <div class="stat" id="stat-oil"></div>
+    </div>
+    <div class="chart" id="chart-oil" role="img" aria-label="WTI 原油價格折線圖"></div>
+    <div class="notes" data-notes="oil"></div>
+  </section>
+
   <h2 class="sec">政策利率<small>FOMC 會議、SEP 點陣圖、CME FedWatch</small></h2>
 
   <section class="card">
     <div class="card-head">
       <div>
-        <h3>利率路徑：點陣圖 vs 市場預期</h3>
-        <p class="desc">藍點為 FOMC 委員對各年底利率的預估（每點一位委員），黑橫線為中位數；折線為 FedWatch 機率加權的預期利率。</p>
+        <h3>FOMC 點陣圖</h3>
+        <p class="desc" id="dots-desc">FOMC 委員對各年底聯準利率區間中值的預估，每點一位委員。</p>
       </div>
       <div class="stat" id="stat-path"></div>
     </div>
-    <div class="chart tall" id="chart-path" role="img" aria-label="點陣圖與市場預期利率路徑"></div>
+    <div class="chart tall" id="chart-path" role="img" aria-label="FOMC 點陣圖"></div>
   </section>
 
   <section class="card">
@@ -260,7 +272,7 @@ footer a { color: inherit; }
     <div class="notes" data-notes="yields"></div>
   </section>
 
-  <h2 class="sec">信用與油價</h2>
+  <h2 class="sec">信用<small>高收益公司債，日資料</small></h2>
 
   <section class="card">
     <div class="card-head">
@@ -271,30 +283,7 @@ footer a { color: inherit; }
       <div class="stat" id="stat-hy"></div>
     </div>
     <div class="chart" id="chart-hy" role="img" aria-label="高收益公司債殖利率折線圖"></div>
-  </section>
-
-  <section class="card">
-    <div class="card-head">
-      <div>
-        <h3>美國 5 年期 CDS</h3>
-        <p class="desc">週資料，單位 bp。手動記錄（無免費資料源），從 2026/10 開始累積。</p>
-      </div>
-      <div class="stat" id="stat-cds"></div>
-    </div>
-    <div class="chart" id="chart-cds" role="img" aria-label="美國 5 年期 CDS 折線圖"></div>
     <div class="notes" data-notes="credit"></div>
-  </section>
-
-  <section class="card">
-    <div class="card-head">
-      <div>
-        <h3>原油價格</h3>
-        <p class="desc">日資料，美元／桶。WTI 與 Brent 現貨。</p>
-      </div>
-      <div class="stat" id="stat-oil"></div>
-    </div>
-    <div class="chart" id="chart-oil" role="img" aria-label="WTI 與 Brent 原油價格折線圖"></div>
-    <div class="notes" data-notes="oil"></div>
   </section>
 
   <h2 class="sec">數據表</h2>
@@ -328,7 +317,7 @@ footer a { color: inherit; }
   <footer>
     <div id="updated"></div>
     <div id="changes"></div>
-    <div>資料來源：<a href="https://fred.stlouisfed.org/" target="_blank" rel="noopener">FRED</a>（CPIAUCNS、CPILFENS、CPILFESL、PCEPI、PCEPILFE、PCETRIM12M159SFRBDAL、PPIFID、PPIFES、DFEDTARU、DFEDTARL、FEDTARMD、FEDTARMDLR、DGS2、DGS10、T10Y2Y、NASDAQCOM、BAMLH0A1HYBBEY、BAMLH0A2HYBEY、BAMLH0A3HYCEY、DCOILWTICO、DCOILBRENTEU）；<a href="https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm" target="_blank" rel="noopener">Fed SEP</a>；<a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" rel="noopener">CME FedWatch</a>（手動）；CDS：財經M平方（手動）；發布日：BLS、BEA、Fed。每個工作日自動更新。</div>
+    <div>資料來源：<a href="https://fred.stlouisfed.org/" target="_blank" rel="noopener">FRED</a>（CPIAUCNS、CPILFENS、CPILFESL、PCEPI、PCEPILFE、PCETRIM12M159SFRBDAL、PPIFID、PPIFES、DFEDTARU、DFEDTARL、FEDTARMD、FEDTARMDLR、DGS2、DGS10、T10Y2Y、NASDAQCOM、BAMLH0A1HYBBEY、BAMLH0A2HYBEY、BAMLH0A3HYCEY、DCOILWTICO）；<a href="https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm" target="_blank" rel="noopener">Fed SEP</a>；<a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" rel="noopener">CME FedWatch</a>（手動）；CDS：財經M平方（手動）；發布日：BLS、BEA、Fed。每個工作日自動更新。</div>
   </footer>
 </main>
 
@@ -465,14 +454,7 @@ function renderFedview() {
   }), true);
 }
 
-// ---------- 政策利率：點陣圖 vs FedWatch ----------
-// x 軸以「年底」為整數刻度：2026 = 2026 年底；長期放在 2030
-const LR_X = 2030;
-function yearPos(date) {
-  const d = new Date(date + "T00:00:00Z"), y = d.getUTCFullYear();
-  const s = Date.UTC(y, 0, 1), e = Date.UTC(y + 1, 0, 1);
-  return y - 1 + (d - s) / (e - s);
-}
+// ---------- 政策利率：點陣圖、FedWatch ----------
 const mid = (range) => { const [lo, hi] = range.split("-").map(Number); return (lo + hi) / 200; };
 const expRate = (m) => Object.entries(m.p).reduce((a, [r, p]) => a + mid(r) * p / 100, 0);
 
@@ -482,73 +464,48 @@ function ffrAt(series, date) {
   return v;
 }
 
+// 點陣圖照 Fed SEP 原圖：各年一欄、同一利率的點橫向排開，長期欄以虛線隔開
 function renderPath() {
-  const fw = MAN.fedwatch.weeks, today = new Date().toISOString().slice(0, 10);
-  const nowMid = mid(MAN.fedwatch.current);
-  // 點陣圖：同一利率的點橫向排開
+  const cols = MAN.dots.years.map(y => y.label);
   const dots = [];
-  for (const yr of MAN.dots.years) {
-    const x0 = yr.label === "長期" ? LR_X : Number(yr.label);
+  MAN.dots.years.forEach((yr, x0) => {
     for (const [r, n] of Object.entries(yr.counts)) {
-      for (let i = 0; i < n; i++) dots.push({ value: [x0 + (i - (n - 1) / 2) * 0.045, Number(r)], yr: yr.label, n });
+      for (let i = 0; i < n; i++) dots.push({ value: [x0 + (i - (n - 1) / 2) * 0.055, Number(r)], yr: yr.label, n });
     }
-  }
-  const med = DATA.dot_median.map(([d, v]) => [Number(d.slice(0, 4)), v]);
-  med.push([LR_X, DATA.dot_median_lr[DATA.dot_median_lr.length - 1][1]]);
-  // 實際利率：今年起的區間中值（階梯），x 軸從去年底開始
-  const from = `${new Date().getFullYear()}-01-01`;
-  const steps = DATA.ffr_upper.map(([d, u]) => [d, (u + ffrAt(DATA.ffr_lower, d)) / 2]).filter(x => x[0] >= from);
-  steps.unshift([from, (ffrAt(DATA.ffr_upper, from) + ffrAt(DATA.ffr_lower, from)) / 2]);
-  const hist = steps.map(([d, v]) => ({ value: [yearPos(d), v], date: d }));
-  const paths = fw.map(w => [{ value: [yearPos(today), nowMid], date: today, now: true },
-    ...w.meetings.map(m => ({ value: [yearPos(m.date), expRate(m)], date: m.date }))]);
+  });
+  const total = Math.max(...MAN.dots.years.map(y => Object.values(y.counts).reduce((a, b) => a + b, 0)));
+  document.getElementById("dots-desc").textContent =
+    `FOMC 委員對各年底聯準利率區間中值的預估，每點一位委員（共 ${total} 位）。${fmtDay(MAN.dots.sep)} SEP。`;
+  const med = DATA.dot_median.find(([d]) => d.startsWith(cols[0]));
+  if (med) document.getElementById("stat-path").innerHTML =
+    `<div class="value">${med[1].toFixed(2)}%</div><div class="meta">${cols[0]} 年底中位數｜長期 ${DATA.dot_median_lr[DATA.dot_median_lr.length - 1][1].toFixed(2)}%</div>`;
 
-  const dec = (w) => w.meetings.filter(m => m.date.startsWith("2026-12"))[0];
-  const m26 = dec(fw[0]), dot26 = med.find(x => x[0] === 2026);
-  if (m26 && dot26) {
-    const e = expRate(m26), pe = dec(fw[1]) ? expRate(dec(fw[1])) : e;
-    document.getElementById("stat-path").innerHTML =
-      `<div class="value">${e.toFixed(2)}%</div><div class="delta ${e > pe ? "bad" : (e < pe ? "good" : "flat")}">較上週 ${sign(e - pe)}${((e - pe) * 100).toFixed(1)} bp</div>` +
-      `<div class="meta">市場預期 2026 年底｜點陣圖中位數 ${dot26[1].toFixed(2)}%</div>`;
-  }
-
-  const muted = css("--text-muted"), grid = css("--grid");
+  const muted = css("--text-muted"), grid = css("--grid"), lr = cols.indexOf("長期");
   charts.path.setOption({
     animation: false,
     textStyle: { fontFamily: getComputedStyle(document.body).fontFamily },
-    grid: { left: 8, right: 24, top: 36, bottom: 28, containLabel: true },
-    legend: { ...legend(), icon: undefined, itemWidth: 14, itemHeight: 8 },
-    xAxis: {
-      type: "value", min: yearPos(from), max: LR_X + 0.4, interval: 1,
-      axisLine: { lineStyle: { color: grid } }, axisTick: { show: false }, splitLine: { show: false },
-      axisLabel: { color: muted, formatter: (v) => !Number.isInteger(v) ? "" : (v === LR_X ? "長期" : v + " 年底") },
-    },
-    yAxis: { type: "value", min: 2.5, interval: 0.25, axisLabel: { color: muted, formatter: (v) => v.toFixed(2) + "%" },
-      splitLine: { lineStyle: { color: grid } } },
+    grid: { left: 8, right: 24, top: 16, bottom: 28, containLabel: true },
+    // 分類軸只負責年份標籤，點畫在同範圍的隱藏數值軸上（才能橫向排開）
+    xAxis: [
+      { type: "category", data: cols, axisTick: { show: false },
+        axisLine: { lineStyle: { color: css("--text-secondary") } },
+        axisLabel: { color: css("--text-secondary"), fontSize: 13 } },
+      { type: "value", min: -0.5, max: cols.length - 0.5, show: false },
+    ],
+    yAxis: { type: "value", min: 0, max: 6, interval: 0.5, position: "right", axisLine: { show: false }, axisTick: { show: false },
+      axisLabel: { color: muted, formatter: (v) => v.toFixed(1) },
+      splitLine: { lineStyle: { color: grid, type: "dotted" } } },
     tooltip: {
       trigger: "item", backgroundColor: css("--surface"), borderColor: css("--border"),
       textStyle: { color: css("--text-primary"), fontSize: 13 },
-      formatter: (p) => {
-        const d = p.data;
-        if (p.seriesName === "委員預估") return `${d.yr === "長期" ? "長期" : d.yr + " 年底"}<br><b>${d.value[1].toFixed(3)}%</b>：${d.n} 位委員`;
-        if (p.seriesName === "點陣圖中位數") return `${d[0] === LR_X ? "長期" : d[0] + " 年底"} 中位數<br><b>${d[1].toFixed(2)}%</b>`;
-        if (p.seriesName === "實際利率") return `${fmtDay(d.date)} 起<br>區間中值 <b>${d.value[1].toFixed(3)}%</b>`;
-        return `${p.seriesName}｜${d.now ? "目前" : fmtDay(d.date) + " 會議"}<br>預期利率 <b>${d.value[1].toFixed(3)}%</b>`;
-      },
+      formatter: (p) => `${p.data.yr === "長期" ? "長期" : p.data.yr + " 年底"}<br><b>${p.data.value[1].toFixed(3)}%</b>：${p.data.n} 位委員`,
     },
-    series: [
-      { name: "實際利率", type: "line", step: "end", data: hist, showSymbol: false,
-        lineStyle: { width: 2, color: css("--text-secondary") }, itemStyle: { color: css("--text-secondary") } },
-      { name: "委員預估", type: "scatter", data: dots, symbolSize: 8,
-        itemStyle: { color: css("--series-1"), borderColor: css("--surface"), borderWidth: 1 } },
-      { name: "點陣圖中位數", type: "scatter", data: med, symbol: "rect", symbolSize: [30, 3], z: 4,
-        itemStyle: { color: css("--text-primary") } },
-      ...paths.map((p, i) => ({
-        name: `市場預期（${fw[i].label}）`, type: "line", data: p, symbol: "circle", symbolSize: i ? 6 : 8, z: i ? 2 : 3,
-        lineStyle: { width: 2, color: css("--series-2"), type: i ? "dashed" : "solid", opacity: i ? 0.55 : 1 },
-        itemStyle: { color: css("--series-2"), opacity: i ? 0.55 : 1, borderColor: css("--surface"), borderWidth: i ? 0 : 2 },
-      })),
-    ],
+    series: [{
+      name: "委員預估", type: "scatter", data: dots, symbolSize: 8, xAxisIndex: 1,
+      itemStyle: { color: css("--series-1"), borderColor: css("--surface"), borderWidth: 1 },
+      markLine: lr > 0 ? { silent: true, symbol: "none", label: { show: false },
+        lineStyle: { color: muted, type: "dashed", width: 1 }, data: [{ xAxis: lr - 0.5 }] } : undefined,
+    }],
   }, true);
 }
 
@@ -668,26 +625,13 @@ function renderHy() {
   }), true);
 }
 
-function renderCds() {
-  const s = MAN.cds, n = s.length;
-  document.getElementById("stat-cds").innerHTML = n >= 2
-    ? `<div class="value">${s[n - 1][1].toFixed(2)} bp</div>${deltaHtml(s[n - 1][1], s[n - 2][1], true, " bp", 2)}<div class="meta">${fmtDay(s[n - 1][0])}（較上週）</div>`
-    : "";
-  charts.cds.setOption(base({
-    tooltip: { ...base().tooltip, formatter: (p) => `${fmtDay(p[0].value[0])}<br><b>${p[0].value[1].toFixed(2)} bp</b>` },
-    series: [line("美國 5 年 CDS", s, css("--series-1"), { showSymbol: true, symbol: "circle",
-      itemStyle: { color: css("--series-1"), borderColor: css("--surface"), borderWidth: 2 } })],
-  }), true);
-}
-
 function renderOil() {
   const t = weekPair(DATA.wti);
   document.getElementById("stat-oil").innerHTML =
-    `<div class="value">${t.v.toFixed(2)}</div>${deltaHtml(t.v, t.pv, true, " 美元", 2)}<div class="meta">WTI，${fmtDay(t.d)}（較一週前）</div>`;
+    `<div class="value">${t.v.toFixed(2)}</div>${deltaHtml(t.v, t.pv, true, " 美元", 2)}<div class="meta">${fmtDay(t.d)}（較一週前）</div>`;
   charts.oil.setOption(base({
-    legend: legend(),
-    tooltip: { ...base().tooltip, formatter: multiTip(fmtDay, "", 2) },
-    series: [line("WTI", DATA.wti, css("--series-1")), line("Brent", DATA.brent, css("--series-2"))],
+    tooltip: { ...base().tooltip, formatter: (p) => `${fmtDay(p[0].value[0])}<br><b>${p[0].value[1].toFixed(2)} 美元</b>` },
+    series: [line("WTI", DATA.wti, css("--series-1"))],
   }), true);
 }
 
@@ -706,7 +650,7 @@ function applyRange() {
 
 function renderAll() {
   renderInfl(); renderFedview(); renderPath(); renderYields(); renderCurve();
-  renderHy(); renderCds(); renderOil(); applyRange();
+  renderHy(); renderOil(); applyRange();
 }
 
 // ---------- 數據表 ----------
@@ -835,7 +779,7 @@ Promise.all([
     renderSnapshot();
     renderFedwatch();
     renderNotes();
-    for (const k of ["infl", "fedview", "path", "yields", "curve", "hy", "cds", "oil"]) charts[k] = echarts.init(document.getElementById("chart-" + k));
+    for (const k of ["infl", "fedview", "path", "yields", "curve", "hy", "oil"]) charts[k] = echarts.init(document.getElementById("chart-" + k));
     renderAll();
     const t = new Date(DATA.updated.replace("Z", ":00Z"));
     document.getElementById("updated").textContent =
