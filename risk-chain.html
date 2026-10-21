@@ -133,7 +133,7 @@ header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
   position: relative; z-index: 1;
   grid-column: 1; grid-row: 4 / span 2;
   border: 1.5px solid var(--loop); border-radius: 10px; background: var(--surface);
-  padding: 10px 8px; text-align: center; font-size: 13px; color: var(--text-secondary);
+  padding: 10px 8px 20px; text-align: center; font-size: 13px; color: var(--text-secondary);
 }
 .loopbox b { display: block; color: var(--loop); font-size: 14px; margin-bottom: 2px; }
 .legend {
@@ -152,24 +152,24 @@ header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
   font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; white-space: nowrap;
 }
 
-/* 跳轉標籤 */
-.go-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 8px; }
-a.go {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 12px; line-height: 1.4; text-decoration: none; white-space: nowrap;
-  color: var(--chip-fg); background: var(--chip-bg); border-radius: 999px; padding: 2px 10px;
-  border: 1px solid transparent; transition: border-color .15s;
+/* 整框可點：跳到本站對應圖表 */
+[data-href] { cursor: pointer; transition: box-shadow .15s, transform .15s; }
+.node[data-href]:hover, .node[data-href]:focus-visible, .loopbox[data-href]:hover, .loopbox[data-href]:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--bd, var(--loop)) 35%, transparent), 0 4px 14px rgba(0,0,0,.08);
+  transform: translateY(-1px); outline: none;
 }
-a.go::after { content: "↗"; font-size: 11px; }
-a.go:hover, a.go:focus-visible { border-color: var(--chip-fg); outline: none; }
+.node[data-href]::after, .loopbox[data-href]::after {
+  content: "↗"; position: absolute; right: 10px; bottom: 6px; font-size: 13px; color: var(--text-muted);
+}
+.watch li[data-href]:hover, .watch li[data-href]:focus-visible { background: var(--chip-bg); outline: none; }
+.watch li[data-href] b::after { content: " ↗"; font-weight: 400; color: var(--text-muted); font-size: 12px; }
 
 /* 觀察指標 */
 .watch h2 { margin: 0 0 10px; font-size: 18px; }
 .watch ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 32px; }
-.watch li { position: relative; padding-left: 16px; font-size: 14px; }
-.watch li::before { content: ""; position: absolute; left: 0; top: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--risk); }
+.watch li { position: relative; padding: 2px 6px 2px 22px; border-radius: 6px; font-size: 14px; }
+.watch li::before { content: ""; position: absolute; left: 6px; top: 10px; width: 8px; height: 8px; border-radius: 50%; background: var(--risk); }
 .watch li span { color: var(--text-secondary); }
-.watch li a.go { margin-left: 6px; vertical-align: 1px; }
 .notes { margin: 12px 0 0; font-size: 12px; color: var(--text-muted); }
 .notes p { margin: 2px 0; }
 footer { color: var(--text-muted); font-size: 12px; margin-top: 24px; }
@@ -198,7 +198,7 @@ footer { color: var(--text-muted); font-size: 12px; margin-top: 24px; }
   <header>
     <h1>通膨 → 利率 → AI 信用風險：傳導鏈</h1>
     <p>截至 2026-10-21 · 個人判斷整理，非市場共識 · 數據來源：BLS、CNBC、Bloomberg 等</p>
-    <p class="hint">框內藍色標籤可點，會跳到本站對應的圖表。</p>
+    <p class="hint">點任一個框（或觀察指標）會跳到本站對應的圖表。</p>
   </header>
 
   <section class="card">
@@ -214,72 +214,62 @@ footer { color: var(--text-muted); font-size: 12px; margin-top: 24px; }
         <div><i class="box"></i>最脆弱環節</div>
       </div>
 
-      <div class="node oil" id="n-oil" style="grid-row:1">
+      <div class="node oil" data-href="rates.html#chart-oil" role="link" tabindex="0" id="n-oil" style="grid-row:1">
         <h3>伊朗戰爭 → 油價上漲</h3>
         <p>俄烏能源停火後短暫止穩，但風險未解除</p>
-        <div class="go-row"><a class="go" href="rates.html#chart-oil">WTI 原油價格</a></div>
       </div>
 
-      <div class="node infl" id="n-infl" style="grid-row:2">
+      <div class="node infl" data-href="rates.html#chart-infl" role="link" tabindex="0" id="n-infl" style="grid-row:2">
         <h3>9 月 PPI 年增 6.3%｜CPI 年增 3.7%</h3>
         <p>能源主導（汽油單月 +20.3%）</p>
         <p>剔除能源與貿易服務後 PPI 仍年增 5.0%</p>
-        <div class="go-row"><a class="go" href="rates.html#chart-infl">物價年增率（CPI／PCE／PPI）</a></div>
       </div>
 
-      <div class="node fed" id="n-fed" style="grid-row:3">
+      <div class="node fed" data-href="rates.html#chart-path" role="link" tabindex="0" id="n-fed" style="grid-row:3">
         <h3>Fed 偏鷹：利率維持高檔更久</h3>
         <p>9 月升一碼至 3.75–4.00%</p>
         <p>10 月傾向按兵不動，12 月很可能再升</p>
-        <div class="go-row"><a class="go" href="rates.html#chart-path">FOMC 點陣圖</a><a class="go" href="rates.html#fw-weeks">CME FedWatch</a></div>
       </div>
 
-      <div class="loopbox" id="n-loop">
+      <div class="loopbox" data-href="datacenter.html#chart-sankey" role="link" tabindex="0" id="n-loop">
         <b>循環</b>AI 需求本身推升通膨（電力、記憶體）
-        <div class="go-row"><a class="go" href="datacenter.html#chart-sankey">AI 資本支出流向</a></div>
       </div>
 
-      <div class="node cost" id="n-cost" style="grid-row:4">
+      <div class="node cost" data-href="rates.html#chart-yields" role="link" tabindex="0" id="n-cost" style="grid-row:4">
         <h3>資金成本上升</h3>
         <p>再融資更貴、投資回報門檻變高</p>
-        <div class="go-row"><a class="go" href="rates.html#chart-yields">2 年／10 年公債殖利率</a></div>
       </div>
 
-      <div class="node weak" id="n-weak" style="grid-row:5">
+      <div class="node weak" data-href="rates.html#chart-hy" role="link" tabindex="0" id="n-weak" style="grid-row:5">
         <span class="badge">最脆弱環節</span>
         <h3>舉債擴建的 AI 業者承壓</h3>
         <p>CoreWeave：5 年 CDS 一度約 1,195bp（隱含違約率 &gt;60%）</p>
         <p>Oracle：約 322bp｜AI 業者今年發債約 4,660 億美元</p>
-        <div class="go-row"><a class="go" href="rates.html#chart-hy">高收益公司債殖利率</a></div>
       </div>
 
-      <div class="node cds" id="n-cds" style="grid-row:6">
+      <div class="node cds" data-href="rates.html#chart-curve" role="link" tabindex="0" id="n-cds" style="grid-row:6">
         <h3>CDS 跳升、AI 股修正</h3>
         <p>Meta／Nvidia CDS 創紀錄（主要是避險需求）</p>
         <p>CDS 週成交量：7 月 &lt;20 億 → 9 月 &gt;90 億美元</p>
-        <div class="go-row"><a class="go" href="rates.html#chart-curve">10Y−2Y 利差 vs 那斯達克</a><a class="go" href="margin.html#t-dir">融資槓桿方向</a></div>
       </div>
 
-      <div class="node safe" id="n-safe" style="grid-row:6">
+      <div class="node safe" data-href="rates.html#chart-yields" role="link" tabindex="0" id="n-safe" style="grid-row:6">
         <h3>避險資金轉進美債</h3>
         <p>10Y 殖利率：5.33% → 約 5.1%</p>
         <p>CPI 偏熱當天反而大跌</p>
-        <div class="go-row"><a class="go" href="rates.html#chart-yields">10 年期公債殖利率</a></div>
       </div>
 
-      <div class="node next" id="n-next" style="grid-row:7">
+      <div class="node next" data-href="datacenter.html#chart-sankey" role="link" tabindex="0" id="n-next" style="grid-row:7">
         <h3>下一步風險：融資變難 → 資本支出下修</h3>
         <p>GPU 擔保品貶值、算力租金下跌</p>
         <p>觀察 10 月底雲端巨頭財報的資本支出指引</p>
-        <div class="go-row"><a class="go" href="datacenter.html#chart-sankey">每 $100 AI 資本支出流向</a></div>
       </div>
 
-      <div class="node eps" id="n-eps" style="grid-row:8">
+      <div class="node eps" data-href="datacenter.html#chart-sankey" role="link" tabindex="0" id="n-eps" style="grid-row:8">
         <h3>供應鏈 EPS 下修</h3>
         <p>記憶體 MU／SK hynix：最敏感</p>
         <p>光通訊、伺服器 LITE／緯穎：訂單能見度下降</p>
         <p>TSMC：相對抗跌，但估值受類股拖累</p>
-        <div class="go-row"><a class="go" href="datacenter.html#chart-sankey">供應鏈分配（記憶體／光模組／晶片）</a></div>
       </div>
 
       <span class="pill" id="pill">部分抵銷利率壓力（不穩固）</span>
@@ -289,11 +279,11 @@ footer { color: var(--text-muted); font-size: 12px; margin-top: 24px; }
   <section class="card watch" id="watch">
     <h2>觀察指標：哪個出現惡化訊號，鏈條就往下走</h2>
     <ul>
-      <li><b>CoreWeave／Oracle CDS 與新債</b> <span>— 發債溢價擴大、認購不足或延後發債</span><a class="go" href="rates.html#chart-hy">高收益債殖利率</a></li>
-      <li><b>雲端巨頭資本支出指引</b> <span>— 2027 年指引持平或下修</span><a class="go" href="datacenter.html#chart-sankey">AI 資本支出流向</a></li>
+      <li data-href="rates.html#chart-hy" role="link" tabindex="0"><b>CoreWeave／Oracle CDS 與新債</b> <span>— 發債溢價擴大、認購不足或延後發債</span></li>
+      <li data-href="datacenter.html#chart-sankey" role="link" tabindex="0"><b>雲端巨頭資本支出指引</b> <span>— 2027 年指引持平或下修</span></li>
       <li><b>GPU 算力租金</b> <span>— 持續下跌</span></li>
-      <li><b>核心 PCE／核心 PPI</b> <span>— 繼續升溫 → 利率更高</span><a class="go" href="rates.html#chart-fedview">Core PCE 年化</a><a class="go" href="rates.html#chart-infl">物價年增率</a></li>
-      <li><b>油價</b> <span>— 再次上漲 → 整條鏈重來</span><a class="go" href="rates.html#chart-oil">WTI 原油價格</a></li>
+      <li data-href="rates.html#chart-fedview" role="link" tabindex="0"><b>核心 PCE／核心 PPI</b> <span>— 繼續升溫 → 利率更高</span></li>
+      <li data-href="rates.html#chart-oil" role="link" tabindex="0"><b>油價</b> <span>— 再次上漲 → 整條鏈重來</span></li>
     </ul>
     <div class="notes">
       <p>[註1]：個別公司 CDS（CoreWeave、Oracle、Meta、Nvidia）與 GPU 算力租金本站尚無圖表，以高收益公司債殖利率作為信用環境的替代觀察。</p>
@@ -349,6 +339,12 @@ function draw() {
 draw();
 new ResizeObserver(draw).observe(flow);
 document.fonts && document.fonts.ready.then(draw);
+// 整框點擊（或 Enter／空白鍵）跳到 data-href
+document.addEventListener("click", e => { const el = e.target.closest("[data-href]"); if (el) location.href = el.dataset.href; });
+document.addEventListener("keydown", e => {
+  const el = e.target.closest && e.target.closest("[data-href]");
+  if (el && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); location.href = el.dataset.href; }
+});
 </script>
 </body>
 </html>
