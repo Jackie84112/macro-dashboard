@@ -10,6 +10,7 @@
     { href: "margin.html", label: "融資槓桿" },
     { href: "datacenter.html", label: "資料中心成本" },
     { href: "risk-chain.html", label: "風險傳導鏈" },
+    { href: "asml.html", label: "ASML產能分配" },
   ];
   const here = location.pathname.split("/").pop() || "index.html";
   const css = `
