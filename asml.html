@@ -110,7 +110,7 @@ footer a { color: inherit; }
     <div class="card-head">
       <div>
         <h3>邏輯與記憶體系統銷售金額</h3>
-        <p class="desc">單位：億歐元。開啟年增率後以折線顯示於右軸（%）。</p>
+        <p class="desc">單位：億歐元。</p>
       </div>
       <div class="stat" id="stat-amt"></div>
     </div>
@@ -133,7 +133,6 @@ footer a { color: inherit; }
     <div class="chart" id="chart-amt" role="img" aria-label="邏輯與記憶體系統銷售金額柱狀圖"></div>
     <div class="notes">
       <p>[註1]：2026 年度僅含 Q1–Q3，年增率為與 2025 Q1–Q3 同期比較。</p>
-      <p>[註2]：季度年增率為與去年同季比較。</p>
     </div>
   </section>
 
@@ -166,9 +165,8 @@ footer a { color: inherit; }
       </div>
     </div>
     <div class="notes">
-      <p>[註1]：2015–2017 年 ASML 分類為 Memory／Foundry／IDM，此處 Logic = Foundry + IDM（與 2018 年起官方 Logic 定義一致）。</p>
-      <p>[註2]：ASML 依機台用途分類而非客戶：三星記憶體廠算 Memory，晶圓代工／System LSI 算 Logic。</p>
-      <p>[註3]：2026 年 Memory 連三季 46–51%，為 2018 年以來最高區間（Q3'26 法說會）。</p>
+      <p>[註1]：ASML 依機台用途分類而非客戶：三星記憶體廠算 Memory，晶圓代工／System LSI 算 Logic。</p>
+      <p>[註2]：2026 年 Memory 連三季 46–51%，為 2018 年以來最高區間（Q3'26 法說會）。</p>
     </div>
   </section>
 
@@ -239,11 +237,10 @@ function baseOpt(extra) {
 
 function renderAmt() {
   const st = state.amt, data = pick(st), c1 = css("--series-1"), c2 = css("--series-2"), muted = css("--text-muted");
-  const last = data[data.length - 1], cmp = st.freq === "y" ? (last.n < 4 ? `較去年同期（Q1–Q${last.n}）` : "較去年") : "較去年同季";
+  const last = data[data.length - 1];
   document.getElementById("stat-amt").innerHTML =
     `<div class="value"><span style="color:${c1}">${eur(last.L)}</span> ／ <span style="color:${c2}">${eur(last.M)}</span></div>` +
-    `<div class="delta"><span class="delta ${deltaCls(last.yL)}">邏輯 ${pct(last.yL)}</span>　<span class="delta ${deltaCls(last.yM)}">記憶體 ${pct(last.yM)}</span></div>` +
-    `<div class="meta">${last.label}，${cmp}</div>`;
+    `<div class="delta"><span class="delta ${deltaCls(last.yL)}">邏輯 ${pct(last.yL)}</span>　<span class="delta ${deltaCls(last.yM)}">記憶體 ${pct(last.yM)}</span></div>`;
   const dense = data.length > 12 || st.yoy;
   const barLabel = { show: !dense, position: "top", color: css("--text-secondary"), fontSize: 11, formatter: (p) => p.value.toFixed(0) };
   const series = [
