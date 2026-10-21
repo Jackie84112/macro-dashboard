@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>風險傳導鏈｜宏觀監控儀表板</title>
+<meta name="description" content="通膨 → 利率 → AI 信用風險的傳導鏈：油價、物價、Fed、資金成本、AI 舉債業者、CDS 與供應鏈 EPS。個人判斷整理，可點標籤跳到本站對應圖表。">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f5f5f3;
+  --surface: #fcfcfb;
+  --border: #e4e3de;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #7a7973;
+  --line: #8a8984;
+  --risk: #c43131;
+  --hedge: #2e8b57;
+  --loop: #d98a2b;
+  --oil-bg: #fdf1e7;   --oil-bd: #e0954a;
+  --infl-bg: #fcecec;  --infl-bd: #d06060;
+  --fed-bg: #eaf1fb;   --fed-bd: #4a78c2;
+  --cost-bg: #f0f0f2;  --cost-bd: #7a7f8a;
+  --weak-bg: #fbe5e5;  --weak-bd: #c43131;
+  --cds-bg: #f3eefb;   --cds-bd: #8a62c4;
+  --next-bg: #fcfcfb;
+  --eps-bg: #fdf6e3;   --eps-bd: #d9a640;
+  --safe-bg: #eaf5ee;  --safe-bd: #2e8b57;
+  --chip-bg: rgba(42, 120, 214, 0.10);
+  --chip-fg: #1f5fae;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211;
+    --surface: #1a1a19;
+    --border: #2e2e2b;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8f8e86;
+    --line: #8f8e86;
+    --risk: #e06666;
+    --hedge: #4cb07a;
+    --loop: #e5a04a;
+    --oil-bg: #2a2018;   --oil-bd: #c47d3a;
+    --infl-bg: #2c1c1c;  --infl-bd: #c45a5a;
+    --fed-bg: #18222f;   --fed-bd: #5b8bd6;
+    --cost-bg: #222327;  --cost-bd: #8a8f9a;
+    --weak-bg: #331a1a;  --weak-bd: #e06666;
+    --cds-bg: #231d2e;   --cds-bd: #9b7bd0;
+    --next-bg: #1a1a19;
+    --eps-bg: #2a2416;   --eps-bd: #c99a3a;
+    --safe-bg: #17261d;  --safe-bd: #4cb07a;
+    --chip-bg: rgba(90, 160, 240, 0.16);
+    --chip-fg: #8fc0f5;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211;
+  --surface: #1a1a19;
+  --border: #2e2e2b;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #8f8e86;
+  --line: #8f8e86;
+  --risk: #e06666;
+  --hedge: #4cb07a;
+  --loop: #e5a04a;
+  --oil-bg: #2a2018;   --oil-bd: #c47d3a;
+  --infl-bg: #2c1c1c;  --infl-bd: #c45a5a;
+  --fed-bg: #18222f;   --fed-bd: #5b8bd6;
+  --cost-bg: #222327;  --cost-bd: #8a8f9a;
+  --weak-bg: #331a1a;  --weak-bd: #e06666;
+  --cds-bg: #231d2e;   --cds-bd: #9b7bd0;
+  --next-bg: #1a1a19;
+  --eps-bg: #2a2416;   --eps-bd: #c99a3a;
+  --safe-bg: #17261d;  --safe-bd: #4cb07a;
+  --chip-bg: rgba(90, 160, 240, 0.16);
+  --chip-fg: #8fc0f5;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif;
+  line-height: 1.5;
+}
+main { max-width: 1180px; margin: 0 auto; padding: 32px 16px 48px; }
+header h1 { font-size: 28px; margin: 0 0 4px; font-weight: 700; }
+header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
+.hint { margin: 10px 0 0; font-size: 13px; color: var(--text-secondary); }
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px; margin-top: 20px;
+}
+
+/* 傳導鏈：三欄（循環｜主鏈｜圖例＋避險），連線由 JS 畫在 svg 疊層 */
+.flow {
+  position: relative;
+  display: grid;
+  grid-template-columns: 130px minmax(0, 1fr) 330px;
+  column-gap: 56px;
+  row-gap: 40px;
+  align-items: center;
+}
+.flow svg.wires { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.node {
+  position: relative; z-index: 1;
+  grid-column: 2;
+  border: 1.5px solid var(--bd); background: var(--bg-c); border-radius: 10px;
+  padding: 12px 18px; text-align: center;
+}
+.node h3 { margin: 0 0 4px; font-size: 19px; font-weight: 700; }
+.node p { margin: 0; font-size: 14px; color: var(--text-secondary); }
+.node.oil  { --bd: var(--oil-bd);  --bg-c: var(--oil-bg); }
+.node.infl { --bd: var(--infl-bd); --bg-c: var(--infl-bg); }
+.node.fed  { --bd: var(--fed-bd);  --bg-c: var(--fed-bg); }
+.node.cost { --bd: var(--cost-bd); --bg-c: var(--cost-bg); }
+.node.weak { --bd: var(--weak-bd); --bg-c: var(--weak-bg); border-width: 3px; }
+.node.cds  { --bd: var(--cds-bd);  --bg-c: var(--cds-bg); }
+.node.next { --bd: var(--risk);    --bg-c: var(--next-bg); border: 2px dashed var(--risk); }
+.node.eps  { --bd: var(--eps-bd);  --bg-c: var(--eps-bg); }
+.node.safe { --bd: var(--safe-bd); --bg-c: var(--safe-bg); grid-column: 3; }
+.badge {
+  position: absolute; top: -13px; right: 14px;
+  background: var(--risk); color: #fff; font-size: 12px; font-weight: 700;
+  padding: 2px 10px; border-radius: 999px;
+}
+.loopbox {
+  position: relative; z-index: 1;
+  grid-column: 1; grid-row: 4 / span 2;
+  border: 1.5px solid var(--loop); border-radius: 10px; background: var(--surface);
+  padding: 10px 8px; text-align: center; font-size: 13px; color: var(--text-secondary);
+}
+.loopbox b { display: block; color: var(--loop); font-size: 14px; margin-bottom: 2px; }
+.legend {
+  grid-column: 3; grid-row: 1 / span 2; align-self: start;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--surface);
+  padding: 12px 16px; font-size: 14px;
+}
+.legend h4 { margin: 0 0 6px; font-size: 15px; }
+.legend div { display: flex; align-items: center; gap: 12px; margin: 6px 0; color: var(--text-secondary); }
+.legend i { flex: 0 0 48px; height: 0; border-top: 2px solid var(--c); }
+.legend i.dash { border-top-style: dashed; }
+.legend i.box { height: 22px; border: 2.5px solid var(--risk); background: var(--weak-bg); border-radius: 5px; }
+.pill {
+  position: absolute; z-index: 2; transform: translate(-50%, -50%);
+  background: var(--surface); border: 1.5px solid var(--hedge); color: var(--hedge);
+  font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; white-space: nowrap;
+}
+
+/* 跳轉標籤 */
+.go-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 8px; }
+a.go {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 12px; line-height: 1.4; text-decoration: none; white-space: nowrap;
+  color: var(--chip-fg); background: var(--chip-bg); border-radius: 999px; padding: 2px 10px;
+  border: 1px solid transparent; transition: border-color .15s;
+}
+a.go::after { content: "↗"; font-size: 11px; }
+a.go:hover, a.go:focus-visible { border-color: var(--chip-fg); outline: none; }
+
+/* 觀察指標 */
+.watch h2 { margin: 0 0 10px; font-size: 18px; }
+.watch ul { margin: 0; padding: 0; list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px 32px; }
+.watch li { position: relative; padding-left: 16px; font-size: 14px; }
+.watch li::before { content: ""; position: absolute; left: 0; top: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--risk); }
+.watch li span { color: var(--text-secondary); }
+.watch li a.go { margin-left: 6px; vertical-align: 1px; }
+.notes { margin: 12px 0 0; font-size: 12px; color: var(--text-muted); }
+.notes p { margin: 2px 0; }
+footer { color: var(--text-muted); font-size: 12px; margin-top: 24px; }
+
+/* 窄螢幕：單欄，連線改成框間箭頭文字 */
+@media (max-width: 900px) {
+  .flow { grid-template-columns: minmax(0, 1fr); row-gap: 0; }
+  .flow svg.wires, .pill { display: none; }
+  .node, .node.safe, .loopbox, .legend { grid-column: 1; grid-row: auto !important; }
+  .legend { order: -1; margin-bottom: 20px; }
+  .node + .node::before, .node + .loopbox::before, .loopbox + .node::before {
+    content: "↓"; position: absolute; top: -30px; left: 50%; transform: translateX(-50%);
+    color: var(--line); font-size: 20px; line-height: 1;
+  }
+  .node, .loopbox { margin-top: 34px; }
+  .legend + .node { margin-top: 0; }
+  .node.safe::before { content: "↓ CDS 跳升後" !important; font-size: 13px !important; color: var(--hedge) !important; white-space: nowrap; }
+  .loopbox::before { content: "↺ 回饋到通膨" !important; font-size: 13px !important; color: var(--loop) !important; white-space: nowrap; }
+  .watch ul { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<script src="nav.js?v=20261021"></script>
+<main>
+  <header>
+    <h1>通膨 → 利率 → AI 信用風險：傳導鏈</h1>
+    <p>截至 2026-10-21 · 個人判斷整理，非市場共識 · 數據來源：BLS、CNBC、Bloomberg 等</p>
+    <p class="hint">框內藍色標籤可點，會跳到本站對應的圖表。</p>
+  </header>
+
+  <section class="card">
+    <div class="flow" id="flow">
+      <svg class="wires" id="wires" aria-hidden="true"></svg>
+
+      <div class="legend" aria-label="圖例">
+        <h4>圖例</h4>
+        <div><i style="--c:var(--line)"></i>已發生的傳導</div>
+        <div><i class="dash" style="--c:var(--risk)"></i>潛在風險（尚未發生）</div>
+        <div><i style="--c:var(--hedge)"></i>避險資金流向</div>
+        <div><i class="dash" style="--c:var(--loop)"></i>回饋循環</div>
+        <div><i class="box"></i>最脆弱環節</div>
+      </div>
+
+      <div class="node oil" id="n-oil" style="grid-row:1">
+        <h3>伊朗戰爭 → 油價上漲</h3>
+        <p>俄烏能源停火後短暫止穩，但風險未解除</p>
+        <div class="go-row"><a class="go" href="rates.html#chart-oil">WTI 原油價格</a></div>
+      </div>
+
+      <div class="node infl" id="n-infl" style="grid-row:2">
+        <h3>9 月 PPI 年增 6.3%｜CPI 年增 3.7%</h3>
+        <p>能源主導（汽油單月 +20.3%）</p>
+        <p>剔除能源與貿易服務後 PPI 仍年增 5.0%</p>
+        <div class="go-row"><a class="go" href="rates.html#chart-infl">物價年增率（CPI／PCE／PPI）</a></div>
+      </div>
+
+      <div class="node fed" id="n-fed" style="grid-row:3">
+        <h3>Fed 偏鷹：利率維持高檔更久</h3>
+        <p>9 月升一碼至 3.75–4.00%</p>
+        <p>10 月傾向按兵不動，12 月很可能再升</p>
+        <div class="go-row"><a class="go" href="rates.html#chart-path">FOMC 點陣圖</a><a class="go" href="rates.html#fw-weeks">CME FedWatch</a></div>
+      </div>
+
+      <div class="loopbox" id="n-loop">
+        <b>循環</b>AI 需求本身推升通膨（電力、記憶體）
+        <div class="go-row"><a class="go" href="datacenter.html#chart-sankey">AI 資本支出流向</a></div>
+      </div>
+
+      <div class="node cost" id="n-cost" style="grid-row:4">
+        <h3>資金成本上升</h3>
+        <p>再融資更貴、投資回報門檻變高</p>
+        <div class="go-row"><a class="go" href="rates.html#chart-yields">2 年／10 年公債殖利率</a></div>
+      </div>
+
+      <div class="node weak" id="n-weak" style="grid-row:5">
+        <span class="badge">最脆弱環節</span>
+        <h3>舉債擴建的 AI 業者承壓</h3>
+        <p>CoreWeave：5 年 CDS 一度約 1,195bp（隱含違約率 &gt;60%）</p>
+        <p>Oracle：約 322bp｜AI 業者今年發債約 4,660 億美元</p>
+        <div class="go-row"><a class="go" href="rates.html#chart-hy">高收益公司債殖利率</a></div>
+      </div>
+
+      <div class="node cds" id="n-cds" style="grid-row:6">
+        <h3>CDS 跳升、AI 股修正</h3>
+        <p>Meta／Nvidia CDS 創紀錄（主要是避險需求）</p>
+        <p>CDS 週成交量：7 月 &lt;20 億 → 9 月 &gt;90 億美元</p>
+        <div class="go-row"><a class="go" href="rates.html#chart-curve">10Y−2Y 利差 vs 那斯達克</a><a class="go" href="margin.html#t-dir">融資槓桿方向</a></div>
+      </div>
+
+      <div class="node safe" id="n-safe" style="grid-row:6">
+        <h3>避險資金轉進美債</h3>
+        <p>10Y 殖利率：5.33% → 約 5.1%</p>
+        <p>CPI 偏熱當天反而大跌</p>
+        <div class="go-row"><a class="go" href="rates.html#chart-yields">10 年期公債殖利率</a></div>
+      </div>
+
+      <div class="node next" id="n-next" style="grid-row:7">
+        <h3>下一步風險：融資變難 → 資本支出下修</h3>
+        <p>GPU 擔保品貶值、算力租金下跌</p>
+        <p>觀察 10 月底雲端巨頭財報的資本支出指引</p>
+        <div class="go-row"><a class="go" href="datacenter.html#chart-sankey">每 $100 AI 資本支出流向</a></div>
+      </div>
+
+      <div class="node eps" id="n-eps" style="grid-row:8">
+        <h3>供應鏈 EPS 下修</h3>
+        <p>記憶體 MU／SK hynix：最敏感</p>
+        <p>光通訊、伺服器 LITE／緯穎：訂單能見度下降</p>
+        <p>TSMC：相對抗跌，但估值受類股拖累</p>
+        <div class="go-row"><a class="go" href="datacenter.html#chart-sankey">供應鏈分配（記憶體／光模組／晶片）</a></div>
+      </div>
+
+      <span class="pill" id="pill">部分抵銷利率壓力（不穩固）</span>
+    </div>
+  </section>
+
+  <section class="card watch" id="watch">
+    <h2>觀察指標：哪個出現惡化訊號，鏈條就往下走</h2>
+    <ul>
+      <li><b>CoreWeave／Oracle CDS 與新債</b> <span>— 發債溢價擴大、認購不足或延後發債</span><a class="go" href="rates.html#chart-hy">高收益債殖利率</a></li>
+      <li><b>雲端巨頭資本支出指引</b> <span>— 2027 年指引持平或下修</span><a class="go" href="datacenter.html#chart-sankey">AI 資本支出流向</a></li>
+      <li><b>GPU 算力租金</b> <span>— 持續下跌</span></li>
+      <li><b>核心 PCE／核心 PPI</b> <span>— 繼續升溫 → 利率更高</span><a class="go" href="rates.html#chart-fedview">Core PCE 年化</a><a class="go" href="rates.html#chart-infl">物價年增率</a></li>
+      <li><b>油價</b> <span>— 再次上漲 → 整條鏈重來</span><a class="go" href="rates.html#chart-oil">WTI 原油價格</a></li>
+    </ul>
+    <div class="notes">
+      <p>[註1]：個別公司 CDS（CoreWeave、Oracle、Meta、Nvidia）與 GPU 算力租金本站尚無圖表，以高收益公司債殖利率作為信用環境的替代觀察。</p>
+      <p>[註2]：本頁為靜態整理，數字截至 2026-10-21，不自動更新；連結的圖表會隨各頁資料自動更新。</p>
+    </div>
+  </section>
+
+  <footer>個人判斷整理，非市場共識；不構成投資建議。</footer>
+</main>
+
+<script>
+// 連線：[起點框, 終點框, 樣式]；座標每次依框的實際位置重算
+const flow = document.getElementById("flow"), svg = document.getElementById("wires"), pill = document.getElementById("pill");
+const $ = id => document.getElementById(id);
+const STYLE = {
+  done:  { c: "--line",  dash: "" },
+  risk:  { c: "--risk",  dash: "7 5" },
+  hedge: { c: "--hedge", dash: "" },
+  hedgeD:{ c: "--hedge", dash: "7 5" },
+  loop:  { c: "--loop",  dash: "7 5" },
+};
+
+function draw() {
+  if (getComputedStyle(svg).display === "none") return;
+  const f = flow.getBoundingClientRect();
+  const r = id => { const b = $(id).getBoundingClientRect();
+    return { l: b.left - f.left, r: b.right - f.left, t: b.top - f.top, b: b.bottom - f.top,
+             cx: (b.left + b.right) / 2 - f.left, cy: (b.top + b.bottom) / 2 - f.top }; };
+  const marker = k => `<marker id="m-${k}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(${STYLE[k].c})"/></marker>`;
+  const path = (d, k) => `<path d="${d}" fill="none" style="stroke:var(${STYLE[k].c})" stroke-width="2" ${STYLE[k].dash ? `stroke-dasharray="${STYLE[k].dash}"` : ""} marker-end="url(#m-${k})"/>`;
+
+  let out = `<defs>${Object.keys(STYLE).map(marker).join("")}</defs>`;
+  const chain = ["n-oil", "n-infl", "n-fed", "n-cost", "n-weak", "n-cds", "n-next", "n-eps"];
+  for (let i = 0; i < chain.length - 1; i++) {
+    const a = r(chain[i]), b = r(chain[i + 1]);
+    out += path(`M${a.cx},${a.b} L${a.cx},${b.t - 1}`, i >= 5 ? "risk" : "done");
+  }
+  // CDS → 避險資金
+  const cds = r("n-cds"), safe = r("n-safe"), cost = r("n-cost");
+  out += path(`M${cds.r},${cds.cy} L${safe.l - 1},${cds.cy}`, "hedge");
+  // 避險資金 → 回頭壓低資金成本
+  const sx = safe.cx;
+  out += path(`M${sx},${safe.t} L${sx},${cost.cy} L${cost.r + 1},${cost.cy}`, "hedgeD");
+  pill.style.left = sx + "px";
+  pill.style.top = ((safe.t + cost.cy) / 2 + 30) + "px";
+  // 回饋循環：下一步風險 → 循環框 → PPI/CPI
+  const next = r("n-next"), loop = r("n-loop"), infl = r("n-infl");
+  const lx = loop.cx;
+  out += `<path d="M${next.l},${next.cy} L${lx},${next.cy} L${lx},${loop.b}" fill="none" style="stroke:var(--loop)" stroke-width="2" stroke-dasharray="7 5"/>`;
+  out += path(`M${lx},${loop.t} L${lx},${infl.cy} L${infl.l - 1},${infl.cy}`, "loop");
+  svg.innerHTML = out;
+}
+draw();
+new ResizeObserver(draw).observe(flow);
+document.fonts && document.fonts.ready.then(draw);
+</script>
+</body>
+</html>
