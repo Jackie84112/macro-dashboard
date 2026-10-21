@@ -120,16 +120,16 @@ header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
   .flow .arrow svg { transform: rotate(90deg); }
   .timeline, .timeline-labels { display: none; }
 }
-.orders { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 16px 0 10px; }
-.orders .col { border: 1px solid var(--border); border-top: 4px solid var(--c); border-radius: 10px; padding: 12px 14px; }
-.orders .hd { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; margin-bottom: 6px; }
+.orders { display: flex; flex-direction: column; gap: 12px; margin: 16px 0 10px; }
+.orders .col { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 16px; align-items: start;
+  border: 1px solid var(--border); border-left: 5px solid var(--c); border-radius: 10px; padding: 14px 16px; }
+.orders .hd { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700; padding-top: 2px; }
 .orders .hd i { font-style: normal; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
   background: var(--c); color: #fff; font-size: 12px; flex: none; }
 .orders ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--text-secondary); }
 .orders li { margin: 4px 0; }
 .orders b { color: var(--text-primary); }
-@media (max-width: 900px) { .orders { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 560px) { .orders { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .orders .col { grid-template-columns: 1fr; gap: 6px; } }
 footer { color: var(--text-muted); font-size: 12px; margin-top: 24px; }
 footer a { color: inherit; }
 </style>
@@ -243,16 +243,8 @@ footer a { color: inherit; }
 
   <section class="card" id="orders">
     <h3>最新法說會：訂單相關說法（26Q3）</h3>
-    <p class="desc">2026-10-14 法說會，依上方四項觀察指標分類整理。</p>
+    <p class="desc">2026-10-14 法說會，對應上方觀察指標第 2、4 項。</p>
     <div class="orders">
-      <div class="col" style="--c:#1baf7a">
-        <div class="hd"><i>1</i>客戶擴產</div>
-        <ul>
-          <li>領先客戶簽下更多長約，研判<b>需求大於供給至少到 2028</b>。</li>
-          <li>客戶<b>加速擴產</b>，並開始規劃 2028 年後的產能。</li>
-          <li>ASML 以客戶的建廠時程驗證需求，認為是<b>真實需求，不是重複下單</b>。</li>
-        </ul>
-      </div>
       <div class="col" style="--c:#2a78d6">
         <div class="hd"><i>2</i>設備商訂單</div>
         <ul>
@@ -261,14 +253,6 @@ footer a { color: inherit; }
           <li>下單意願<b>來自多家客戶</b>，不只是單一大客戶；低 NA EUV 的 DRAM 端、High-NA 都出現新客戶。</li>
           <li>2029–30 年的需求，邏輯和記憶體相當，DRAM 較積極（指 EUV，不含中國）。</li>
           <li>最關鍵的產品<b>已談妥漲價</b>，2027 年部分反映，2028 年起全面反映。</li>
-        </ul>
-      </div>
-      <div class="col" style="--c:#7b5bc4">
-        <div class="hd"><i>3</i>預付款</div>
-        <ul>
-          <li>ASML 已不公布訂單金額，CFO 認同<b>非流動負債（含預付款）是訂單的代理指標</b>，但屬落後指標，因為收款晚於簽約。</li>
-          <li>分析師提到非流動負債<b>季增約 €50 億</b>；當季自由現金流 <b>€114 億</b>，公司說明是反映訂單動能與預付款。</li>
-          <li>下單要付「<b>夠痛</b>」的預付款，取消訂單的代價還高於預付款。</li>
         </ul>
       </div>
       <div class="col" style="--c:#eb6834">
