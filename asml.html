@@ -104,14 +104,13 @@ footer a { color: inherit; }
 <main>
   <header>
     <h1>ASML 產能分配：邏輯 vs 記憶體</h1>
-    <p>ASML 系統銷售（Net system sales）依機台終端用途拆分。看晶圓廠擴產資金流向邏輯（台積電、三星代工、英特爾等）還是記憶體（三星、SK 海力士、美光等）。</p>
   </header>
 
   <section class="card">
     <div class="card-head">
       <div>
         <h3>邏輯與記憶體系統銷售金額</h3>
-        <p class="desc">單位：十億歐元（€B）。開啟年增率後以折線顯示於右軸（%）。</p>
+        <p class="desc">單位：億歐元。開啟年增率後以折線顯示於右軸（%）。</p>
       </div>
       <div class="stat" id="stat-amt"></div>
     </div>
@@ -180,7 +179,7 @@ footer a { color: inherit; }
 </main>
 
 <script>
-// [季度, 系統銷售 €B, Logic %]；Memory % = 100 − Logic %
+// [季度, 系統銷售 €B（十億歐元）, Logic %]；載入時換算成億歐元；Memory % = 100 − Logic %
 const RAW = [
   ["2015Q1",1.247,45],["2015Q2",1.134,53],["2015Q3",0.975,44],["2015Q4",0.881,56],
   ["2016Q1",0.856,58],["2016Q2",1.254,65],["2016Q3",1.238,84],["2016Q4",1.223,61],
@@ -198,7 +197,7 @@ const RAW = [
 
 // 季度序列
 const Q = RAW.map(([k, s, lp]) => ({ k, y: +k.slice(0, 4), q: +k[5], label: `Q${k[5]}'${k.slice(2, 4)}`,
-  s, L: s * lp / 100, M: s * (100 - lp) / 100 }));
+  s: s * 10, L: s * lp / 10, M: s * (100 - lp) / 10 }));
 Q.forEach((d, i) => { const p = Q[i - 4];
   d.yL = p ? (d.L / p.L - 1) * 100 : null; d.yM = p ? (d.M / p.M - 1) * 100 : null; });
 
@@ -218,7 +217,7 @@ const pick = ({ freq, years }) => freq === "y" ? Y.slice(-years) : Q.slice(-year
 const axisLabel = (d, freq) => freq === "y" ? d.axis : d.label;
 
 const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-const eur = (v) => "€" + v.toFixed(2) + "B";
+const eur = (v) => "€" + v.toFixed(1) + " 億";
 const pct = (v, dp = 1) => v == null ? "—" : (v > 0 ? "+" : "") + v.toFixed(dp) + "%";
 const deltaCls = (v) => v == null ? "" : v >= 0 ? "good" : "bad";
 
@@ -229,7 +228,7 @@ function baseOpt(extra) {
     textStyle: { fontFamily: getComputedStyle(document.body).fontFamily },
     grid: { left: 8, right: 16, top: 36, bottom: 8, containLabel: true },
     legend: { top: 0, right: 0, itemWidth: 14, itemHeight: 10, textStyle: { color: css("--text-secondary"), fontSize: 12 } },
-    tooltip: { trigger: "axis", axisPointer: { type: "shadow" }, confine: true,
+    tooltip: { trigger: "axis", axisPointer: { type: "none" }, confine: true,
       backgroundColor: css("--surface"), borderColor: css("--border"), textStyle: { color: css("--text-primary"), fontSize: 13 } },
     xAxis: { type: "category", axisTick: { show: false }, axisLine: { lineStyle: { color: grid } },
       axisLabel: { color: muted, hideOverlap: true } },
@@ -246,14 +245,14 @@ function renderAmt() {
     `<div class="delta"><span class="delta ${deltaCls(last.yL)}">邏輯 ${pct(last.yL)}</span>　<span class="delta ${deltaCls(last.yM)}">記憶體 ${pct(last.yM)}</span></div>` +
     `<div class="meta">${last.label}，${cmp}</div>`;
   const dense = data.length > 12 || st.yoy;
-  const barLabel = { show: !dense, position: "top", color: css("--text-secondary"), fontSize: 11, formatter: (p) => p.value.toFixed(1) };
+  const barLabel = { show: !dense, position: "top", color: css("--text-secondary"), fontSize: 11, formatter: (p) => p.value.toFixed(0) };
   const series = [
     { name: "邏輯", type: "bar", data: data.map(d => +d.L.toFixed(3)), itemStyle: { color: c1, borderRadius: [3, 3, 0, 0] },
       barGap: "10%", barMaxWidth: 28, label: barLabel },
     { name: "記憶體", type: "bar", data: data.map(d => +d.M.toFixed(3)), itemStyle: { color: c2, borderRadius: [3, 3, 0, 0] },
       barMaxWidth: 28, label: barLabel },
   ];
-  const yAxis = [{ ...baseOpt().yAxis, name: "€B", nameTextStyle: { color: muted, align: "left" } }];
+  const yAxis = [{ ...baseOpt().yAxis, name: "億歐元", nameTextStyle: { color: muted, align: "left" } }];
   if (st.yoy) {
     yAxis.push({ type: "value",
       axisLabel: { color: muted, formatter: "{value}%" }, splitLine: { show: false } });
