@@ -199,9 +199,9 @@ footer a { color: inherit; }
       <div class="stat" id="stat-infl"></div>
     </div>
     <div class="tabs" role="group" aria-label="物價指標" id="infl-tabs">
-      <button data-g="cpi" aria-pressed="true">CPI</button>
+      <button data-g="ppi" aria-pressed="true">PPI</button>
+      <button data-g="cpi">CPI</button>
       <button data-g="pce">PCE</button>
-      <button data-g="ppi">PPI</button>
     </div>
     <div class="chart" id="chart-infl" role="img" aria-label="物價年增率折線圖"></div>
   </section>
@@ -332,7 +332,7 @@ footer a { color: inherit; }
 const charts = {};
 let DATA = null, MAN = null, CAL = null;
 let years = 3;
-let inflGroup = "cpi";
+let inflGroup = "ppi";
 
 const css = (name) => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 const fmtMonth = (d) => d.slice(0, 7).replace("-", "/");
