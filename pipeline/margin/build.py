@@ -121,7 +121,7 @@ site_html = ('<!doctype html>\n<html lang="zh-Hant">\n<head>\n<meta charset="utf
              '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
              + html.replace("<title>美國融資槓桿監測</title>", "<title>融資槓桿｜宏觀監控儀表板</title>", 1)
                    .replace('<div class="wrap">', '<style>body{padding-top:0}.wrap{margin-top:20px}</style>\n'
-                            '</head>\n<body>\n<script src="nav.js?v=20261021b"></script>\n<div class="wrap">', 1)
+                            '</head>\n<body>\n<script src="nav.js?v=20261021c"></script>\n<div class="wrap">', 1)
              + "\n</body>\n</html>\n")
 assert site_html.count("nav.js") == 1
 open(SITE, "w", encoding="utf-8", newline="\n").write(site_html)
