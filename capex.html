@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI半導體產業看板｜宏觀監控儀表板</title>
+<meta name="description" content="AI 半導體產業看板：雲端大廠 CapEx 季度趨勢與 YoY。">
+</head>
+<body>
+
+<style>
+:root{
+  --ink:#111827; --muted:#6B7280; --hair:#E5E7EB; --grid:#EEF0F2; --neg:#C13B2E;
+  --amzn:#1CA9A0; --msft:#F5764A; --googl:#2C63EE; --meta:#E1499A; --orcl:#8B52D7;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#FFFFFF;color:var(--ink);
+  font-family:"Segoe UI Variable Text","Segoe UI","Microsoft JhengHei UI","Microsoft JhengHei","Noto Sans TC",sans-serif;
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1040px;margin:0 auto;padding:56px 32px 64px}
+h1{font-size:clamp(26px,3.6vw,38px);line-height:1.25;font-weight:700;letter-spacing:-.015em;
+   margin:0 0 40px;max-width:26em;text-wrap:balance}
+.axis-title{font-size:16px;font-weight:650;margin:0 0 6px}
+.chartbox{overflow-x:auto}
+.chartbox svg{display:block;min-width:880px;width:100%;height:auto}
+svg text{font-family:inherit}
+#tip{position:fixed;pointer-events:none;z-index:10;display:none;
+  background:#fff;border:1px solid #CBD1D8;border-radius:6px;box-shadow:0 4px 14px rgba(17,24,39,.13);
+  padding:9px 13px 10px;font-size:12px;line-height:1.5;font-variant-numeric:tabular-nums;white-space:nowrap}
+#tip .qh{font-weight:700;font-size:13.5px;margin-bottom:5px}
+#tip .nm{display:inline-flex;align-items:center;gap:7px}
+#tip .nm i{width:10px;height:10px;border-radius:2px;display:inline-block}
+#tip table{border-collapse:collapse}
+#tip th{font-size:10px;letter-spacing:.05em;color:#6B7280;font-weight:600;text-align:right;padding:0 0 3px 15px;border-bottom:1px solid #E5E7EB}
+#tip th:first-child{text-align:left;padding-left:0}
+#tip td{text-align:right;padding:2px 0 2px 15px;font-weight:600}
+#tip td:first-child{text-align:left;padding-left:0}
+#tip tr.sum td{border-top:1px solid #E5E7EB;padding-top:4px;font-weight:700}
+#tip .dim{color:#9CA3AF;font-weight:400}
+#tip .yoy-n{color:var(--neg)}
+h2{font-size:23px;letter-spacing:-.01em;color:var(--ink);font-weight:700;
+   margin:50px 0 16px;padding-top:16px;border-top:2px solid var(--ink)}
+.tbltitle{font-size:19px;font-weight:650;margin:4px 0 2px}
+.tblsub{color:var(--muted);font-size:13.5px;margin:0 0 10px}
+.tblbox{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:760px;font-size:14px;font-variant-numeric:tabular-nums}
+th{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;
+   border-bottom:1.5px solid var(--ink);padding:6px 14px 6px 0;font-weight:650;white-space:nowrap}
+td{border-bottom:1px solid var(--hair);padding:8px 14px 8px 0;vertical-align:top;white-space:nowrap}
+td.num{font-weight:650}
+td small{color:var(--muted)}
+tr.total td{border-bottom:none;border-top:1.5px solid var(--ink);font-weight:650}
+.chip{display:inline-block;font-size:11.5px;font-weight:650;padding:1px 8px;border-radius:10px;background:#E7F0E9;color:#2F7D4F}
+.footnote{color:var(--muted);font-size:14.5px;max-width:56em;margin-top:26px}
+.fnlist{color:var(--muted);font-size:14.5px;max-width:56em;margin:12px 0 0;padding-left:1.25em}
+.fnlist li{margin:.35em 0}
+/* signal lights */
+.siglights{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;margin:4px 0 10px}
+.sig{border:1px solid var(--hair);border-radius:10px;padding:18px 20px;background:#fff}
+.sig .h{display:flex;align-items:center;gap:14px;font-weight:700;font-size:18px;letter-spacing:-.01em}
+.sig .lamp{width:26px;height:26px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:14px;font-weight:700;line-height:1}
+.sig.g .lamp{background:#1F8A4C}
+.sig.y .lamp{background:#C9930F}
+.sig.r .lamp{background:#B93A31}
+.sig.g .lamp::after{content:"✓"}
+.sig.y .lamp::after{content:"!"}
+.sig.r .lamp::after{content:"✕";font-size:12px}
+.sig ul{list-style:none;margin:14px 0 0;padding:0;font-size:12.5px;color:var(--muted);line-height:1.6}
+.sig li{display:flex;gap:8px;margin:5px 0;align-items:baseline}
+.sig li i{width:9px;height:9px;border-radius:50%;flex:none;position:relative;top:1px}
+.sig li i.dg{background:#1FA55A}.sig li i.dy{background:#E0A81C}.sig li i.dr{background:#CC3D33}
+.tglrow{display:flex;justify-content:flex-end;margin:0 0 4px}
+.tgl{font-size:12px;color:#374151;background:#fff;border:1px solid #CBD1D8;border-radius:4px;padding:3px 10px;cursor:pointer}
+.tgl:hover{border-color:#6B7280}
+/* learn more (collapsible, Epoch style) */
+.learn{margin-top:52px}
+.learn-title{font-size:20px;font-weight:700;margin:0 0 8px;letter-spacing:-.01em}
+.learn details{border-top:1px solid var(--hair)}
+.learn details:last-of-type{border-bottom:1px solid var(--hair)}
+.learn summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;
+  padding:15px 2px;font-size:16.5px;font-weight:650;color:#111827}
+.learn summary::-webkit-details-marker{display:none}
+.learn summary:hover{color:#26323F}
+.learn .chev{flex:none;transition:transform .15s;color:#6B7280}
+.learn details[open] .chev{transform:rotate(180deg)}
+.dbody{padding:0 2px 20px;font-size:14.5px;color:#374151;max-width:50em;line-height:1.75}
+.dbody p{margin:.2em 0 .7em}
+.dbody ul{margin:.3em 0 .7em;padding-left:1.3em}
+.dbody li{margin:.4em 0}
+.dbody code{background:#F3F4F6;font-size:.82em;padding:1px 5px;border-radius:3px;font-family:Consolas,"Courier New",monospace}
+.dbody a{color:#26323F}
+@media (prefers-reduced-motion: reduce){.learn .chev{transition:none}}
+.foot-brand{display:flex;justify-content:space-between;align-items:center;margin-top:34px;
+  border-top:1px solid var(--hair);padding-top:16px;font-size:13px;color:var(--muted)}
+.foot-brand b{color:var(--ink);letter-spacing:.02em}
+</style>
+
+<div class="wrap">
+  <h1>雲端算力公司（CSPs）資本支出</h1>
+
+  <div class="siglights">
+    <div class="sig g">
+      <div class="h"><span class="lamp"></span>指引修訂</div>
+      <ul>
+        <li><i class="dg"></i>綠：當季有公司上修、無人下修</li>
+        <li><i class="dy"></i>黃：全體僅「確認」、無人上修；或單家下修</li>
+        <li><i class="dr"></i>紅：兩家以上下修，或下修幅度大於 10%</li>
+      </ul>
+    </div>
+    <div class="sig g">
+      <div class="h"><span class="lamp"></span>指引、實際差額</div>
+      <ul>
+        <li><i class="dg"></i>綠：實際達隱含季均的 95% 以上</li>
+        <li><i class="dy"></i>黃：落後 5–15%，且屬「效率型」措辭</li>
+        <li><i class="dr"></i>紅：落後大於 15%，或連續兩季落後</li>
+      </ul>
+    </div>
+    <div class="sig g">
+      <div class="h"><span class="lamp"></span>實際趨勢</div>
+      <ul>
+        <li><i class="dg"></i>綠：距趨勢線差額 ≥ −12%</li>
+        <li><i class="dy"></i>黃：連續兩季低於 −12%</li>
+        <li><i class="dr"></i>紅：連續兩季低於 −25%，或 QoQ 連兩季轉負</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2 style="margin-top:28px">圖 1 · 季度 CapEx</h2>
+  <div class="tglrow"><button id="tgl1" class="tgl">顯示 YoY 折線</button></div>
+  <div class="chartbox" id="chart"></div>
+
+  <h2>圖 2 · 年度 CapEx</h2>
+  <div class="tglrow"><button id="tgl2" class="tgl">顯示 YoY 折線</button></div>
+  <div class="chartbox" id="chart2"></div>
+
+  <h2>表 1 · 2026 年 CapEx：指引 vs 實際</h2>
+  <p class="tblsub">指引為全年制、每季法說會修訂，表中為<b>截至 2026 年 7 月的最新修訂值</b>；「隱含後續季均」＝（全年指引 − YTD 實際）÷ 剩餘季數。</p>
+  <div class="tblbox">
+  <table>
+    <thead><tr><th>公司</th><th>2026 指引</th><th>適用期間</th><th>YTD 實際</th><th>達成進度</th><th>隱含後續季均</th><th>措辭</th></tr></thead>
+    <tbody>
+      <tr><td>Amazon</td><td class="num">$200B</td><td>曆年 2026</td><td>$45.8B <small>（Q1）</small></td><td>23%</td><td class="num">$51.4B <small>（vs Q1 +12%）</small></td><td><span class="chip">擴張</span></td></tr>
+      <tr><td>Microsoft</td><td class="num">$190B <small>（含租賃）</small></td><td>曆年 2026</td><td>$34.9B <small>（Q1）</small></td><td>18%</td><td class="num">$51.7B <small>（vs Q1 +48%）</small></td><td><span class="chip">擴張</span></td></tr>
+      <tr><td>Google</td><td class="num">$180–190B <small>（中值 $185B）</small></td><td>曆年 2026</td><td>$35.9B <small>（Q1）</small></td><td>19%</td><td class="num">$49.7B <small>（vs Q1 +38%）</small></td><td><span class="chip">擴張</span></td></tr>
+      <tr><td>Meta</td><td class="num">$125–145B <small>（中值 $135B）</small></td><td>曆年 2026</td><td>$19.0B <small>（Q1）</small></td><td>14%</td><td class="num">$38.7B <small>（vs Q1 +104%）</small></td><td><span class="chip">擴張</span></td></tr>
+      <tr><td>Oracle</td><td class="num">$50B</td><td>FY26 <small>（2025/6–2026/5，已完結）</small></td><td>$57.2B <small>（全年度）</small></td><td class="num">114% <small>（超支 +14%）</small></td><td>—</td><td><span class="chip">擴張</span></td></tr>
+      <tr class="total"><td>四大合計</td><td>$710B <small>（中值合計）</small></td><td>曆年 2026</td><td>$135.6B</td><td>19% <small>（年度已過 25%）</small></td><td>$191.5B／季 <small>（較 Q1 +41%）</small></td><td>—</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <ul class="fnlist">
+    <li>達成進度低於 25% 屬正常：CapEx 逐季爬坡，年初佔比天然偏低。</li>
+    <li>隱含後續季均較 Q1 實際高 41%：<b>指引本身內含「持續加速」的承諾</b>，之後每季實際 vs 此值即可判定超前或落後。</li>
+    <li>Oracle 為會計年度制，不併入四大合計。</li>
+  </ul>
+
+  <div class="learn" style="margin-top:14px">
+    <details>
+      <summary>季度法說會 CapEx 指引修訂記錄<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+      <div class="dbody">
+        <table style="min-width:0;width:auto">
+          <thead><tr><th>季度</th><th>指引變化（僅列有變化者）</th></tr></thead>
+          <tbody>
+            <tr><td>2025 Q3</td><td style="white-space:normal">Oracle：FY26 初始指引 <b>$35B</b>（較 FY25 實績 +$15B）</td></tr>
+            <tr><td>2025 Q4</td><td style="white-space:normal">
+              Google：初次給出 2026 指引 <b>$175–185B</b><br>
+              Amazon：初次給出 <b>$200B</b><br>
+              Microsoft：初次給出 <b>$190B</b>（含租賃）<br>
+              Meta：初次給出 <b>$125–145B</b><br>
+              Oracle：FY26 上修 $35B → <b>$50B</b></td></tr>
+            <tr><td>2026 Q1</td><td style="white-space:normal">
+              Google：上修 $175–185B → <b>$180–190B</b>（含 Intersect 併購投資，非純有機上修）；CFO 預告 2027 CapEx 將「顯著增加」；同場宣布 $30B 股權增資</td></tr>
+            <tr><td>2026 Q2</td><td style="white-space:normal">
+              Oracle：FY26 實際 $57.2B 收官（vs 最終指引 +14%、vs 初始 +63%）；發布 FY27 指引 <b>$70B 淨額</b>（總額 $90–95B，含客戶預付 $20–25B）</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </div>
+
+  <p class="footnote">資本支出包含非 AI 項目；各家投資人溝通均強調成長由 AI 資料中心建置驅動。</p>
+
+  <div class="learn">
+    <p class="learn-title">Learn more about this graph</p>
+
+    <details>
+      <summary>Data<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+      <div class="dbody">
+        <p>數據取自五家公司向 SEC 申報的 10-Q／10-K 財務報表（2021Q1–2026Q1），經 <a href="https://www.sec.gov/search-filings/edgar-application-programming-interfaces">SEC EDGAR XBRL API</a> 以結構化標籤直接解析，不採用公司新聞稿或法說會口頭數字，以確保五家口徑一致。</p>
+        <ul>
+          <li><b>資本支出定義</b>：cash PP&amp;E ＋ 融資租賃 ROU 資產，即 <code>PaymentsToAcquirePropertyPlantAndEquipment</code> ＋ <code>RightOfUseAssetObtainedInExchangeForFinanceLeaseLiability</code> 兩個 XBRL 標籤之和。納入融資租賃是因為 Microsoft 大量以租賃方式建置資料中心，僅看現金 capex 會系統性低估其真實規模。</li>
+          <li><b>標籤差異處理</b>：Amazon 歷史期間使用 <code>PaymentsToAcquireProductiveAssets</code> 申報現金資本支出，已與標準標籤合併為連續序列。</li>
+          <li><b>季度化</b>：現金流量表為年初至今（YTD）累計制，已逐季差分還原為單季增量；同一期間若有重述（restatement），以最新申報值為準。</li>
+          <li><b>曆季對齊</b>：Microsoft（6 月結帳）與 Oracle（5 月結帳）依各季末日期歸入曆法季度，與 Google、Amazon、Meta 的曆年制對齊後方可加總。</li>
+          <li><b>2026 指引柱</b>：來自各家法說會揭露之全年指引（Meta 區間 $125–145B 取中值），屬前瞻陳述、非申報數據；Oracle 採會計年度制、無曆年指引，不含其中。</li>
+          <li><b>交叉驗證</b>：本序列與 <a href="https://epoch.ai/data-insights/hyperscaler-capex-trend">Epoch AI 同口徑序列</a>比對——擬合年化增速 70% vs 其 72%，公司級年度合計與各家財報一致（如 Google 2025 年 $93.1B、Meta $69.7B）。</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>Analysis<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+      <div class="dbody">
+        <p>圖 1 虛線為對 2023Q2–2026Q1 五家合計季度資本支出取自然對數後，以普通最小二乘法（OLS）擬合的指數增長模型，對應年化倍率約 1.70x／年（頁面載入時即時計算，非固定值）。起點選在 2023Q2，係因該季為上一輪 CapEx 消化期的低谷、亦為 GPT-4 發布後的第一個完整季度。</p>
+        <ul>
+          <li><b>YoY（柱頂）</b>：五家合計對去年同季之年增率；2022 年各季的基期採 2021 年申報數據，非估計值。紅字為負值——2023Q2 的 −8% 即上一輪消化期的可視印記。</li>
+          <li><b>Tooltip 單家 YoY</b>：各公司對自身去年同季，用於觀察加速度的公司間分化（例如 2026Q1：Oracle +215%、Google +103%、Meta +47%）。</li>
+          <li><b>表 1 衍生指標</b>：達成進度＝YTD 實際 ÷ 全年指引；隱含後續季均＝（全年指引 − YTD 實際）÷ 剩餘季數。後者是預實差追蹤的基準——每季實際數高於或低於此值，即為需求強於或弱於指引承諾的量化訊號，判讀時須配合法說會措辭（供給瓶頸型落後與需求鬆動型落後意義相反）。</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>Limitations<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+      <div class="dbody">
+        <ul>
+          <li><b>融資租賃覆蓋不全</b>：Google 與 Oracle 多數期間未申報該 XBRL 標籤（本圖記為 0），Oracle 僅兩個數據點；finance lease 合計可能被低估。</li>
+          <li><b>營運租賃完全排除</b>：Moody's 估計五家已簽約、未開始的資料中心租約約 $662B 位於表外（多屬 operating lease）。本圖因此是真實建置承諾的<b>下限</b>，而非全貌。</li>
+          <li><b>含非 AI 支出</b>：資本支出無法拆分 AI 佔比——Amazon 的數字包含倉儲物流，Microsoft 包含一般雲產能。逐季「變化率」比「絕對水位」更能反映 AI 建置的邊際動向。</li>
+          <li><b>指引口徑不一</b>：Microsoft 含租賃、Meta 為區間、Amazon 屬「投資承諾」表述、Google 屢次年中上修；隱含 YoY 與佔比僅供方向參考，跨公司精確比較應以事後申報數為準。</li>
+          <li><b>未計算置信區間</b>：趨勢倍率為單點估計（Epoch 同法給出 90% CI 1.66–1.78x／年），且對擬合起點的選擇敏感。</li>
+          <li><b>更新滯後</b>：XBRL 明細於 10-Q 申報後才可得，較法說會晚一至兩週；2026Q2 起數據待 2026 年 8 月財報季後更新（目前僅 Oracle 因 5 月結帳先行入帳）。</li>
+        </ul>
+      </div>
+    </details>
+
+    <details>
+      <summary>Signals<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+      <div class="dbody">
+        <p>頁首三顆燈以本頁數據為源，量測「變化的方向與速度」而非絕對水位；每季財報季後更新一次。</p>
+        <ul>
+          <li><b>指引修訂</b>（源：修訂記錄）——綠：當季有任一家上修、無人下修。黃：全體僅「確認」（加速週期中首個無人加碼的季度，是動能見頂的最早訊號），或單家下修。紅：兩家以上下修，或單家下修幅度大於 10%。</li>
+          <li><b>指引、實際差額</b>（源：表 1）——實際 ÷ 隱含後續季均 ≥95% 為綠；落後 5–15% 且法說會措辭屬「效率／優化」型為黃（「電力／供給瓶頸」型落後不降級，僅標注）；落後大於 15% 或連續兩季落後為紅。<b>回測 2025</b>（年初指引 vs 實際）：Google $75B→$93.1B（+24%）、Amazon ≈$100B→$134.7B（+30% 以上）、Meta $60–65B→$69.7B（較中值 +12%）、Microsoft FY25 ≈$80B→$85.1B（+6%）——歷史基準為<b>系統性超支</b>，故本輪中「僅達標」即屬邊際轉弱，判讀需比字面規則更嚴。</li>
+          <li><b>實際趨勢</b>（源：圖 1 趨勢線）——以 2023Q2 起、剔除最近兩季的凍結窗口做指數擬合並外推（hold-out，防止趨勢線追著數據下彎而自我鈍化），比較最近實績與外推值：差額 ≥−12% 為綠；連續兩季低於 −12% 為黃；連續兩季低於 −25% 為紅。−12% 校準自指引路徑（五家完美兌現指引時，年底差額約 −9%，留三個百分點緩衝），<b>每次指引修訂後重校</b>。另設絕對收縮紅線：連續兩季 QoQ 負值（排除單獨出現的 Q1 季節性回落）或 YoY 轉負，無條件轉紅。輔助交叉驗證（不亮燈）：YoY 減半規則、連三季收斂計數。</li>
+        </ul>
+        <p><b>YoY 折線（圖 1／圖 2 右上角可切換）</b>：獨立於燈號的輔助圖層。基數墊高造成的增速滑落不代表需求轉弱，但成長股估值錨定增速的變化——YoY 自峰值大幅滑落時，市場往往先壓縮本益比再問基本面。指引隱含 2026 全年約 +75%，低於 2026Q1 的 +89%：<b>減速已在排程上</b>，屆時應對照 C 燈分辨「排程內的數學」與「排程外的需求」。</p>
+      </div>
+    </details>
+  </div>
+
+  <div class="foot-brand"><span><b>AI 半導體產業看板</b>　｜　數據：SEC EDGAR</span><span>口徑與呈現參照 Epoch AI（CC-BY）</span></div>
+</div>
+<div id="tip"></div>
+
+<script>
+/* ---- data: 2022Q1..2026Q1, $B ---- */
+const QTRS=["2022 Q1","2022 Q2","2022 Q3","2022 Q4","2023 Q1","2023 Q2","2023 Q3","2023 Q4","2024 Q1","2024 Q2","2024 Q3","2024 Q4","2025 Q1","2025 Q2","2025 Q3","2025 Q4","2026 Q1"];
+const TOTAL={
+ Amazon   :[15.1,15.8,16.5,16.9,14.2,11.7,12.7,14.8,15.0,17.8,22.8,28.3,25.1,33.1,36.1,40.5,45.8],
+ Microsoft:[6.1,8.0,6.9,6.9,7.7,9.8,11.6,11.5,14.4,18.6,19.3,22.2,20.0,23.6,28.5,36.2,34.9],
+ Google   :[9.8,6.8,7.3,7.6,6.3,6.9,8.1,11.0,12.0,13.3,13.1,14.3,17.7,22.5,24.3,28.5,35.9],
+ Meta     :[5.5,7.6,9.4,8.9,6.9,6.4,6.6,7.7,6.4,8.2,8.3,14.4,12.9,16.5,18.8,21.4,19.0],
+ Oracle   :[1.1,1.4,1.7,2.4,2.6,1.9,1.3,1.1,1.7,2.8,2.3,4.0,5.9,11.1,8.5,12.0,18.6]};
+const LEASE={
+ Amazon   :[0.2,0.1,0.1,0.3,0.0,0.2,0.2,0.2,0.0,0.2,0.2,0.4,0.1,0.9,1.0,0.9,1.6],
+ Microsoft:[0.7,1.1,0.6,0.6,1.0,0.9,1.7,1.8,3.4,4.7,4.3,6.4,3.2,6.5,9.1,6.3,4.0],
+ Google   :[0,0,0,0,0,0,0,0,0.0,0.1,0.1,0.1,0.5,0.1,0.4,0.6,0.2],
+ Meta     :[0.1,0.1,0.0,0.1,0.1,0.3,0.1,0.1,0,0,0,0,0,0,0,0,0],
+ Oracle   :[0,0,0,0,0,0,0,0,0,0,0,0,0,2.0,0,0,0]};
+const T2021=[30.8,33.9,37.0,40.1];                       /* 2021 五家合計，供 2022 YoY */
+const P2021={Amazon:[14.1,15.9,17.5,20.5],Microsoft:[5.9,7.1,7.2,6.8],Google:[5.9,5.5,6.8,6.4],
+             Meta:[4.3,4.7,4.4,5.4],Oracle:[0.4,0.7,1.1,0.9]};   /* 2021 各家，供 2022 單家 YoY */
+const STACK=["Oracle","Meta","Google","Microsoft","Amazon"];
+const LEGEND=["Amazon","Microsoft","Google","Meta","Oracle"];
+const COLOR={Amazon:"#1CA9A0",Microsoft:"#F5764A",Google:"#2C63EE",Meta:"#E1499A",Oracle:"#8B52D7"};
+
+/* ---- geometry ---- */
+const W=1000,H=570,L=64,R=150,T=30,B=56,pw=W-L-R,ph=H-T-B,YMAX=160;
+const n=QTRS.length,step=pw/n,bw=step*0.78;
+const y=v=>T+ph-v/YMAX*ph, xc=i=>L+i*step+step/2;
+const totals=QTRS.map((q,i)=>STACK.reduce((a,c)=>a+TOTAL[c][i],0));
+const yoy=totals.map((t,i)=>i<4? t/T2021[i]-1 : t/totals[i-4]-1);
+
+let s='';
+for(let g=0;g<=YMAX;g+=20){
+ s+=`<line x1="${L}" x2="${W-R}" y1="${y(g)}" y2="${y(g)}" stroke="${g===0?'#9CA3AF':'#EEF0F2'}" stroke-width="1"/>`;
+ s+=`<line x1="${L-6}" x2="${L}" y1="${y(g)}" y2="${y(g)}" stroke="#9CA3AF"/>`;
+ s+=`<text x="${L-12}" y="${y(g)+4.5}" text-anchor="end" font-size="13" fill="#4B5563">$${g}B</text>`;
+}
+QTRS.forEach((q,i)=>{
+ let acc=0;const x0=L+i*step+(step-bw)/2;
+ STACK.forEach(c=>{
+  const v=TOTAL[c][i];if(v<=0)return;
+  const y1=y(acc+v),h=y(acc)-y1;
+  s+=`<rect x="${x0.toFixed(1)}" y="${y1.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" fill="${COLOR[c]}"/>`;
+  acc+=v;});
+ /* YoY 柱頂標籤 */
+ const p=yoy[i],lab=(p>=0?"+":"")+Math.round(p*100)+"%";
+ s+=`<text x="${xc(i)}" y="${y(totals[i])-7}" text-anchor="middle" font-size="10.5" font-weight="650" fill="${p<0?'#C13B2E':'#374151'}">${lab}</text>`;
+ if(i%2===0) s+=`<text x="${xc(i)}" y="${H-22}" text-anchor="middle" font-size="13" fill="#4B5563">${q}</text>`;
+});
+/* GPT-4 marker */
+const xg=L+5*step;
+s+=`<line x1="${xg}" x2="${xg}" y1="${T}" y2="${T+ph}" stroke="#9CA3AF" stroke-width="1" stroke-dasharray="2 4"/>`;
+s+=`<text x="${xg+9}" y="${y(92)}" font-size="13.5" fill="#374151">GPT-4</text>`;
+s+=`<text x="${xg+9}" y="${y(92)+18}" font-size="13.5" fill="#374151">2023年3月</text>`;
+/* trend fit from 2023Q2 */
+(function(){
+ const i0=5,xs=[],ys=[];
+ for(let i=i0;i<n;i++){xs.push(i);ys.push(Math.log(totals[i]));}
+ const m=xs.length,sx=xs.reduce((a,b)=>a+b,0),sy=ys.reduce((a,b)=>a+b,0);
+ const sxx=xs.reduce((a,b)=>a+b*b,0),sxy=xs.reduce((a,b,k)=>a+b*ys[k],0);
+ const b=(m*sxy-sx*sy)/(m*sxx-sx*sx),a=(sy-b*sx)/m;
+ let pts=[];
+ for(let t=i0;t<=n-1;t+=0.25){const v=Math.exp(a+b*t);if(v<=YMAX)pts.push(xc(t).toFixed(1)+','+y(v).toFixed(1));}
+ s+=`<polyline fill="none" stroke="#26323F" stroke-width="2.2" stroke-dasharray="7 6" points="${pts.join(' ')}"/>`;
+ const ax=xc(11.3),ay=y(Math.exp(a+b*12.1));
+ s+=`<text x="${ax}" y="${ay-46}" text-anchor="end" font-size="15" font-weight="700" fill="#26323F">${Math.exp(4*b).toFixed(2)}x／年</text>`;
+ s+=`<text x="${ax}" y="${ay-26}" text-anchor="end" font-size="13" fill="#4B5563">2023Q2 起指數擬合</text>`;
+ s+=`<path d="M ${ax+6} ${ay-40} Q ${ax+30} ${ay-30} ${ax+34} ${ay-8}" fill="none" stroke="#26323F" stroke-width="1.6"/>`;
+ s+=`<path d="M ${ax+30} ${ay-12} L ${ax+34} ${ay-8} L ${ax+37} ${ay-15}" fill="none" stroke="#26323F" stroke-width="1.6"/>`;
+})();
+/* YoY line (toggleable) */
+(function(){
+ const yv=p=>T+ph-((p+0.2)/1.2)*ph;
+ let g=`<line x1="${L}" x2="${W-R}" y1="${yv(0)}" y2="${yv(0)}" stroke="#9CA3AF" stroke-dasharray="3 4" stroke-width="1"/>`;
+ g+=`<polyline fill="none" stroke="#374151" stroke-width="2" points="${QTRS.map((q,i)=>xc(i).toFixed(1)+','+yv(yoy[i]).toFixed(1)).join(' ')}"/>`;
+ QTRS.forEach((q,i)=>{g+=`<circle cx="${xc(i).toFixed(1)}" cy="${yv(yoy[i]).toFixed(1)}" r="3" fill="${yoy[i]<0?'#C13B2E':'#374151'}"/>`;});
+ g+=`<text x="${xc(0)+10}" y="${yv(yoy[0])-12}" font-size="11" font-weight="650" fill="#374151">合計 YoY（數值見柱頂）</text>`;
+ s+=`<g id="yoyg1" style="display:none">${g}</g>`;
+})();
+/* legend */
+LEGEND.forEach((c,k)=>{
+ const lx=W-R+26,ly=T+14+k*30;
+ s+=`<rect x="${lx}" y="${ly-11}" width="14" height="14" fill="${COLOR[c]}"/>`;
+ s+=`<text x="${lx+22}" y="${ly+1}" font-size="14.5" fill="#111827">${c}</text>`;});
+/* column hover targets + outline */
+s+=`<rect id="hl" fill="none" stroke="#111827" stroke-width="1.3" style="display:none"/>`;
+QTRS.forEach((q,i)=>{
+ s+=`<rect class="hot" data-i="${i}" x="${(L+i*step).toFixed(1)}" y="${T}" width="${step.toFixed(1)}" height="${ph}" fill="transparent"/>`;});
+
+document.getElementById("chart").innerHTML=
+ `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="五大雲廠季度資本支出堆疊圖，2022Q1 至 2026Q1">${s}</svg>`;
+
+/* ---- tooltip: whole-quarter, all five companies ---- */
+const tip=document.getElementById("tip"),hl=document.getElementById("hl");
+const fmt=v=>"$"+v.toFixed(1)+"B";
+const pctCell=p=>`<td class="${p<0?'yoy-n':''}">${(p>=0?"+":"−")+Math.abs(Math.round(p*100))}%</td>`;
+const HDR=`<tr><th>公司</th><th>總額</th><th>PP&amp;E</th><th>Lease</th><th>YoY</th><th>佔比</th></tr>`;
+function tipHTML(i){
+ let sumL=0;
+ const rows=LEGEND.map(c=>{
+  const v=TOTAL[c][i],lv=LEASE[c][i]||0,cash=v-lv;sumL+=lv;
+  const prev=i<4?P2021[c][i]:TOTAL[c][i-4];
+  return `<tr><td><span class="nm"><i style="background:${COLOR[c]}"></i>${c}</span></td>`+
+   `<td>${fmt(v)}</td><td>${fmt(cash)}</td><td>${lv>=0.05?fmt(lv):'<span class="dim">—</span>'}</td>`+
+   pctCell(v/prev-1)+`<td>${(v/totals[i]*100).toFixed(0)}%</td></tr>`;
+ }).join("");
+ const sum=`<tr class="sum"><td>合計</td><td>${fmt(totals[i])}</td><td>${fmt(totals[i]-sumL)}</td>`+
+  `<td>${sumL>=0.05?fmt(sumL):'<span class="dim">—</span>'}</td>`+pctCell(yoy[i])+`<td>100%</td></tr>`;
+ return `<div class="qh">${QTRS[i]}</div><table>${HDR}${rows}${sum}</table>`;
+}
+document.querySelectorAll(".hot").forEach(r=>{
+ r.addEventListener("pointerenter",()=>{
+  const i=+r.dataset.i;
+  tip.innerHTML=tipHTML(i);tip.style.display="block";
+  const svg=r.ownerSVGElement,x0=L+i*step+(step-bw)/2;
+  hl.setAttribute("x",x0-1.5);hl.setAttribute("y",y(totals[i])-1.5);
+  hl.setAttribute("width",bw+3);hl.setAttribute("height",T+ph-y(totals[i])+1.5);
+  hl.style.display="block";});
+ r.addEventListener("pointermove",e=>{
+  const tw=tip.offsetWidth,th=tip.offsetHeight;
+  let x=e.clientX+18; if(x+tw+8>innerWidth)x=e.clientX-tw-14;
+  let yy=e.clientY-th/2; yy=Math.max(8,Math.min(yy,innerHeight-th-8));
+  tip.style.left=x+"px";tip.style.top=yy+"px";});
+ r.addEventListener("pointerleave",()=>{tip.style.display="none";hl.style.display="none";});
+});
+document.getElementById("tgl1").addEventListener("click",()=>{
+ const g=document.getElementById("yoyg1"),b=document.getElementById("tgl1");
+ const show=g.style.display==="none";g.style.display=show?"":"none";
+ b.textContent=show?"隱藏 YoY 折線":"顯示 YoY 折線";});
+
+/* ================= 圖 2 · 年度 ================= */
+const YEARS=["2021","2022","2023","2024","2025","2026 指引"];
+const A_TOTAL={
+ Amazon   :[68.1,64.3,53.4,83.9,134.7,200],
+ Microsoft:[27.1,27.8,40.6,74.5,108.3,190],
+ Google   :[24.6,31.5,32.3,52.8,93.1,185],
+ Meta     :[18.9,31.4,27.6,37.3,69.7,135],
+ Oracle   :[3.1,6.7,6.9,10.7,37.5,0]};
+const A_LEASE={
+ Amazon   :[7.1,0.7,0.6,0.9,2.9],
+ Microsoft:[3.8,3.1,5.4,18.9,25.2],
+ Google   :[0,0,0,0.3,1.6],
+ Meta     :[0.2,0.2,0.6,0,0],
+ Oracle   :[0,0,0,0,2.0]};
+const GUID={Amazon:"$200B",Microsoft:"$190B（含租賃）",Google:"$185B（中值；區間 $180–190B）",Meta:"$135B（中值；區間 $125–145B）",Oracle:"—（FY 制，無曆年指引）"};
+(function(){
+ const W=1000,H=520,L=64,R=150,T=30,B=56,pw=W-L-R,ph=H-T-B,YMAX=800;
+ const n=YEARS.length,step=pw/n,bw=step*0.62;
+ const y=v=>T+ph-v/YMAX*ph, xc=i=>L+i*step+step/2;
+ const at=YEARS.map((q,i)=>STACK.reduce((a,c)=>a+A_TOTAL[c][i],0));   /* 2026=710 四大 */
+ const big4_25=A_TOTAL.Amazon[4]+A_TOTAL.Microsoft[4]+A_TOTAL.Google[4]+A_TOTAL.Meta[4];
+ let s='';
+ for(let g=0;g<=YMAX;g+=100){
+  s+=`<line x1="${L}" x2="${W-R}" y1="${y(g)}" y2="${y(g)}" stroke="${g===0?'#9CA3AF':'#EEF0F2'}" stroke-width="1"/>`;
+  s+=`<line x1="${L-6}" x2="${L}" y1="${y(g)}" y2="${y(g)}" stroke="#9CA3AF"/>`;
+  s+=`<text x="${L-12}" y="${y(g)+4.5}" text-anchor="end" font-size="13" fill="#4B5563">$${g}B</text>`;
+ }
+ YEARS.forEach((yr,i)=>{
+  const guide=i===n-1;let acc=0;const x0=L+i*step+(step-bw)/2;
+  STACK.forEach(c=>{
+   const v=A_TOTAL[c][i];if(v<=0)return;
+   const y1=y(acc+v),h=y(acc)-y1;
+   s+=`<rect x="${x0.toFixed(1)}" y="${y1.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" fill="${COLOR[c]}"${guide?' fill-opacity="0.42"':''}/>`;
+   acc+=v;});
+  if(guide) s+=`<rect x="${x0.toFixed(1)}" y="${y(acc).toFixed(1)}" width="${bw.toFixed(1)}" height="${(T+ph-y(acc)).toFixed(1)}" fill="none" stroke="#4B5563" stroke-width="1.4" stroke-dasharray="6 4"/>`;
+  /* YoY */
+  let lab="";
+  if(i>0&&i<n-1){const p=at[i]/at[i-1]-1;lab=(p>=0?"+":"")+Math.round(p*100)+"%";
+   s+=`<text x="${xc(i)}" y="${y(at[i])-8}" text-anchor="middle" font-size="12" font-weight="650" fill="${p<0?'#C13B2E':'#374151'}">${lab}</text>`;}
+  if(guide){const p=at[i]/big4_25-1;
+   s+=`<text x="${xc(i)}" y="${y(at[i])-24}" text-anchor="middle" font-size="12" font-weight="650" fill="#374151">+${Math.round(p*100)}%</text>`;
+   s+=`<text x="${xc(i)}" y="${y(at[i])-8}" text-anchor="middle" font-size="10.5" fill="#6B7280">指引隱含（四大）</text>`;}
+  s+=`<text x="${xc(i)}" y="${H-22}" text-anchor="middle" font-size="13" fill="#4B5563">${yr}</text>`;
+ });
+ LEGEND.forEach((c,k)=>{
+  const lx=W-R+26,ly=T+14+k*30;
+  s+=`<rect x="${lx}" y="${ly-11}" width="14" height="14" fill="${COLOR[c]}"/>`;
+  s+=`<text x="${lx+22}" y="${ly+1}" font-size="14.5" fill="#111827">${c}</text>`;});
+ /* YoY line (toggleable) */
+ (function(){
+  const yv=p=>T+ph-((p+0.1)/1.0)*ph;
+  const ay=YEARS.map((yr,i)=>i===0?null:(i===n-1?at[i]/big4_25-1:at[i]/at[i-1]-1));
+  let g=`<line x1="${L}" x2="${W-R}" y1="${yv(0)}" y2="${yv(0)}" stroke="#9CA3AF" stroke-dasharray="3 4" stroke-width="1"/>`;
+  g+=`<polyline fill="none" stroke="#374151" stroke-width="2" points="${[1,2,3,4].map(i=>xc(i).toFixed(1)+','+yv(ay[i]).toFixed(1)).join(' ')}"/>`;
+  g+=`<line x1="${xc(4).toFixed(1)}" y1="${yv(ay[4]).toFixed(1)}" x2="${xc(5).toFixed(1)}" y2="${yv(ay[5]).toFixed(1)}" stroke="#374151" stroke-width="2" stroke-dasharray="5 5"/>`;
+  [1,2,3,4].forEach(i=>{g+=`<circle cx="${xc(i).toFixed(1)}" cy="${yv(ay[i]).toFixed(1)}" r="3.4" fill="${ay[i]<0?'#C13B2E':'#374151'}"/>`;});
+  g+=`<circle cx="${xc(5).toFixed(1)}" cy="${yv(ay[5]).toFixed(1)}" r="3.6" fill="#fff" stroke="#374151" stroke-width="1.8"/>`;
+  g+=`<text x="${xc(1)}" y="${yv(ay[1])-12}" text-anchor="middle" font-size="11" font-weight="650" fill="#374151">合計 YoY（2026 為指引隱含）</text>`;
+  s+=`<g id="yoyg2" style="display:none">${g}</g>`;
+ })();
+ s+=`<rect id="hl2" fill="none" stroke="#111827" stroke-width="1.3" style="display:none"/>`;
+ YEARS.forEach((yr,i)=>{
+  s+=`<rect class="hot2" data-i="${i}" x="${(L+i*step).toFixed(1)}" y="${T}" width="${step.toFixed(1)}" height="${ph}" fill="transparent"/>`;});
+ document.getElementById("chart2").innerHTML=
+  `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="五大雲廠年度資本支出堆疊圖，2021 至 2026 指引">${s}</svg>`;
+
+ const hl2=document.getElementById("hl2");
+ function tipA(i){
+  if(i===n-1){
+   const rows=LEGEND.map(c=>{
+    const v=A_TOTAL[c][i];
+    if(v<=0)return `<tr><td><span class="nm"><i style="background:${COLOR[c]}"></i>${c}</span></td>`+
+     `<td><span class="dim">—</span></td><td colspan="2" style="text-align:left;padding-left:15px" class="dim">FY 制，無曆年指引</td></tr>`;
+    const g=Math.round((v/A_TOTAL[c][4]-1)*100);
+    return `<tr><td><span class="nm"><i style="background:${COLOR[c]}"></i>${c}</span></td>`+
+     `<td>${GUID[c]}</td><td>+${g}%</td><td>${(v/710*100).toFixed(0)}%</td></tr>`;}).join("");
+   const sum=`<tr class="sum"><td>四大合計</td><td>$710B（中值）</td><td>+75%</td><td>100%</td></tr>`;
+   return `<div class="qh">2026 曆年指引（非實績）</div><table>`+
+    `<tr><th>公司</th><th>指引</th><th>隱含 YoY</th><th>佔四大</th></tr>${rows}${sum}</table>`;
+  }
+  let sumL=0;
+  const rows=LEGEND.map(c=>{
+   const v=A_TOTAL[c][i],lv=A_LEASE[c][i]||0,cash=v-lv;sumL+=lv;
+   const prev=i>0?A_TOTAL[c][i-1]:null;
+   return `<tr><td><span class="nm"><i style="background:${COLOR[c]}"></i>${c}</span></td>`+
+    `<td>${fmt(v)}</td><td>${fmt(cash)}</td><td>${lv>=0.05?fmt(lv):'<span class="dim">—</span>'}</td>`+
+    (prev?pctCell(v/prev-1):'<td class="dim">—</td>')+`<td>${(v/at[i]*100).toFixed(0)}%</td></tr>`;}).join("");
+  const sum=`<tr class="sum"><td>合計</td><td>${fmt(at[i])}</td><td>${fmt(at[i]-sumL)}</td>`+
+   `<td>${sumL>=0.05?fmt(sumL):'<span class="dim">—</span>'}</td>`+
+   (i>0?pctCell(at[i]/at[i-1]-1):'<td class="dim">—</td>')+`<td>100%</td></tr>`;
+  return `<div class="qh">${YEARS[i]} 全年</div><table>${HDR}${rows}${sum}</table>`;
+ }
+ document.querySelectorAll(".hot2").forEach(r=>{
+  r.addEventListener("pointerenter",()=>{
+   const i=+r.dataset.i;
+   tip.innerHTML=tipA(i);tip.style.display="block";
+   const x0=L+i*step+(step-bw)/2;
+   hl2.setAttribute("x",x0-1.5);hl2.setAttribute("y",y(at[i])-1.5);
+   hl2.setAttribute("width",bw+3);hl2.setAttribute("height",T+ph-y(at[i])+1.5);
+   hl2.style.display="block";});
+  r.addEventListener("pointermove",e=>{
+   const tw=tip.offsetWidth,th=tip.offsetHeight;
+   let x=e.clientX+18; if(x+tw+8>innerWidth)x=e.clientX-tw-14;
+   let yy=e.clientY-th/2; yy=Math.max(8,Math.min(yy,innerHeight-th-8));
+   tip.style.left=x+"px";tip.style.top=yy+"px";});
+  r.addEventListener("pointerleave",()=>{tip.style.display="none";hl2.style.display="none";});
+ });
+ document.getElementById("tgl2").addEventListener("click",()=>{
+  const g=document.getElementById("yoyg2"),b=document.getElementById("tgl2");
+  const show=g.style.display==="none";g.style.display=show?"":"none";
+  b.textContent=show?"隱藏 YoY 折線":"顯示 YoY 折線";});
+})();
+</script>
+<script src="nav.js?v=20261027a"></script>
+</body>
+</html>

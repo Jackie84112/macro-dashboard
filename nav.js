@@ -14,6 +14,7 @@
     { label: "產業數據", items: [
       { href: "datacenter.html", label: "資料中心成本", desc: "每 $100 AI 資本支出沿供應鏈的流向" },
       { href: "asml.html", label: "ASML產能分配", desc: "邏輯 vs 記憶體系統銷售金額與占比" },
+      { href: "capex.html", label: "AI半導體產業看板", desc: "雲端大廠 CapEx 季度趨勢與 YoY" },
     ] },
   ];
   const here = location.pathname.split("/").pop() || "index.html";
