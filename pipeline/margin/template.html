@@ -256,7 +256,7 @@ function stageSeries(){
   }
   return out;
 }
-// 背離區間底色：年增率曾 ≥40% 後自本輪高點回落（且已低於 40%，與紅區不重疊）、較上月下滑（上升月不算），SPX/NDX/SOX 任一個較 3 個月前持平或上漲（> −3%）
+// 背離區間底色：年增率曾 ≥40% 後自本輪高點回落（含仍 ≥40% 的月份，會與紅底疊色）、較上月下滑（上升月不算），SPX/NDX/SOX 任一個較 3 個月前持平或上漲（> −3%）
 function divSeries(){
   const nc = {}; NCS.forEach(o => nc[o.month] = o.yoy);
   const flatUp = i => ["spx","ndx","sox"].some(k => { const a=RAW[k][i], b=RAW[k][i-3];
@@ -266,7 +266,7 @@ function divSeries(){
     const y = RAW.yoy[i]!=null ? RAW.yoy[i] : (nc[M[i]]!=null ? nc[M[i]] : null);
     if(y==null){ out.push(false); continue; }
     if(y < 0) peak = null;
-    out.push(peak!=null && y < peak && y < 40 && py!=null && y < py && flatUp(i));   // 年增率較上月上升者不算
+    out.push(peak!=null && y < peak && py!=null && y < py && flatUp(i));   // 年增率較上月上升者不算
     if(y >= 40) peak = Math.max(peak ?? y, y);
     py = y;
   }
