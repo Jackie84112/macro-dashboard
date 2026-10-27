@@ -4,190 +4,283 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AI半導體產業看板｜宏觀監控儀表板</title>
-<meta name="description" content="AI 半導體產業看板：雲端大廠 CapEx 季度趨勢與 YoY。">
+<meta name="description" content="雲端大廠（Amazon、Microsoft、Google、Meta、Oracle）季度與年度資本支出，含指引修訂、指引兌現與成長趨勢三顆燈號。">
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f5f5f3;
+  --surface: #fcfcfb;
+  --border: #e4e3de;
+  --grid: #ecebe7;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #7a7973;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --bar-neutral: #c9c8c2;
+  --band-critical: rgba(208, 59, 59, 0.17);
+  --warn-line: #d03b3b;
+  --band-neutral: rgba(82, 81, 78, 0.10);
+  --good: #0a7d0a;
+  --bad: #c43131;
+  --group-bg: #f3f2ee;
+  --group-rule: #b9b8b1;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211;
+    --surface: #1a1a19;
+    --border: #2e2e2b;
+    --grid: #2a2a28;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8f8e86;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --bar-neutral: #55544f;
+    --band-critical: rgba(230, 103, 103, 0.22);
+    --warn-line: #e66767;
+    --band-neutral: rgba(195, 194, 183, 0.12);
+    --good: #4cc24c;
+    --bad: #e66767;
+    --group-bg: rgba(255, 255, 255, 0.05);
+    --group-rule: #5c5b56;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211;
+  --surface: #1a1a19;
+  --border: #2e2e2b;
+  --grid: #2a2a28;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #8f8e86;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --bar-neutral: #55544f;
+  --band-critical: rgba(230, 103, 103, 0.22);
+    --warn-line: #e66767;
+  --band-neutral: rgba(195, 194, 183, 0.12);
+  --good: #4cc24c;
+  --bad: #e66767;
+  --group-bg: rgba(255, 255, 255, 0.05);
+  --group-rule: #5c5b56;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif;
+  line-height: 1.5;
+}
+main { max-width: 1080px; margin: 0 auto; padding: 32px 16px 48px; }
+header h1 { font-size: 28px; margin: 0 0 4px; font-weight: 700; }
+header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
+.signals { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; margin-bottom: 20px; }
+.signal {
+  display: flex; gap: 12px; align-items: flex-start; text-decoration: none; color: inherit;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
+}
+.signal .lamp { flex: none; width: 22px; height: 22px; border-radius: 50%; margin-top: 2px; box-shadow: 0 0 0 4px var(--lamp-halo); }
+.signal.green { --lamp: #0ca30c; --lamp-halo: rgba(12, 163, 12, 0.16); }
+.signal.yellow { --lamp: #fab219; --lamp-halo: rgba(250, 178, 25, 0.22); }
+.signal.red { --lamp: #d03b3b; --lamp-halo: rgba(208, 59, 59, 0.18); }
+.signal .lamp { background: var(--lamp); }
+@keyframes lamp-blink { 0%, 100% { opacity: 1; box-shadow: 0 0 0 4px var(--lamp-halo); } 50% { opacity: 0.65; box-shadow: 0 0 0 6px transparent; } }
+.signal .lamp { animation: lamp-blink 2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .signal .lamp { animation: none; } }
+.signal .name { font-size: 17px; font-weight: 700; color: var(--text-primary); line-height: 1.3; }
+.signal .state { font-size: 12px; color: var(--text-secondary); margin: 2px 0 4px; }
+.signal .why { font-size: 14px; font-weight: 600; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.signal .rule { list-style: none; margin: 8px 0 0; padding: 8px 0 0; border-top: 1px dashed var(--border); font-size: 11.5px; color: var(--text-secondary); }
+.signal > span:last-child { flex: 1; min-width: 0; }
+.signal .rule li { margin: 1px 0; }
+.signal .rule i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
+.signal .rule .r { background: #d03b3b; } .signal .rule .y { background: #fab219; } .signal .rule .g { background: #0ca30c; }
+@media (max-width: 720px) { .signals { grid-template-columns: 1fr; } }
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px 20px 8px; margin-bottom: 16px;
+}
+.card-head { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+.card h2 { font-size: 18px; margin: 0; font-weight: 700; }
+.card .desc { margin: 2px 0 0; color: var(--text-secondary); font-size: 13px; }
+.stat { text-align: right; }
+.stat .value { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat .meta { font-size: 12px; color: var(--text-muted); }
+.stat .delta { font-size: 13px; font-weight: 600; }
+.delta.flat { color: var(--series-1); }
+.tabs { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 12px 0 0; }
+.tabs span { color: var(--text-muted); font-size: 12px; margin-right: 2px; }
+.tabs button {
+  font: inherit; font-size: 12px; padding: 2px 10px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer;
+}
+.tabs button[aria-pressed="true"] { background: var(--text-primary); color: var(--surface); border-color: var(--text-primary); }
+.chartbox { overflow-x: auto; margin-top: 4px; }
+.chartbox svg { display: block; min-width: 880px; width: 100%; height: auto; }
+svg text { font-family: inherit; }
+/* 圖表 SVG 的灰階一律接站內色票（深色模式同步）；系列色保持固定 */
+.chartbox svg text[fill="#4B5563"]{fill:var(--text-secondary)}
+.chartbox svg [fill="#374151"],.chartbox svg [fill="#26323F"],.chartbox svg [fill="#111827"]{fill:var(--text-primary)}
+.chartbox svg [fill="#6B7280"]{fill:var(--text-muted)}
+.chartbox svg [fill="#C13B2E"]{fill:var(--bad)}
+.chartbox svg circle[fill="#fff"]{fill:var(--surface)}
+.chartbox svg [stroke="#9CA3AF"]{stroke:var(--text-muted)}
+.chartbox svg [stroke="#EEF0F2"]{stroke:var(--grid)}
+.chartbox svg [stroke="#374151"],.chartbox svg [stroke="#26323F"],.chartbox svg [stroke="#111827"]{stroke:var(--text-primary)}
+.chartbox svg [stroke="#4B5563"]{stroke:var(--text-secondary)}
+.chartbox svg [stroke="#fff"]{stroke:var(--text-primary)}
+#tip { position: fixed; pointer-events: none; z-index: 60; display: none; background: var(--surface); color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 14px rgba(0,0,0,.18);
+  padding: 9px 13px 10px; font-size: 12px; line-height: 1.5; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#tip .qh { font-weight: 700; font-size: 13.5px; margin-bottom: 5px; }
+#tip .nm { display: inline-flex; align-items: center; gap: 7px; }
+#tip .nm i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+#tip table { border-collapse: collapse; }
+#tip th { font-size: 10px; letter-spacing: .05em; color: var(--text-muted); font-weight: 600; text-align: right; padding: 0 0 3px 15px; border-bottom: 1px solid var(--border); }
+#tip th:first-child { text-align: left; padding-left: 0; }
+#tip td { text-align: right; padding: 2px 0 2px 15px; font-weight: 600; }
+#tip td:first-child { text-align: left; padding-left: 0; }
+#tip tr.sum td { border-top: 1px solid var(--border); padding-top: 4px; font-weight: 700; }
+#tip .dim { color: var(--text-muted); font-weight: 400; }
+#tip .yoy-n { color: var(--bad); }
+.table-wrap { overflow-x: auto; margin: 12px -20px 0; padding: 0 20px 12px; }
+table.data { border-collapse: collapse; width: 100%; min-width: 760px; font-size: 13px; font-variant-numeric: tabular-nums; }
+table.data th, table.data td { padding: 6px 5px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+table.data thead th { font-weight: 600; color: var(--text-secondary); text-align: right; border-bottom: 1px solid var(--border); }
+table.data thead th.left { text-align: left; }
+table.data td { text-align: right; color: var(--text-primary); }
+table.data td.label { text-align: left; }
+table.data td.wrap { white-space: normal; line-height: 1.7; }
+table.data td { vertical-align: top; }
+table.data td small { color: var(--text-muted); }
+table.data tr.key td { font-weight: 700; border-top: 1px solid var(--border); border-bottom: none; background: var(--group-bg); }
+table.data tbody tr:last-child td { border-bottom: none; }
+.chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 0 8px; border-radius: 999px;
+  color: var(--good); background: color-mix(in srgb, var(--good) 14%, transparent); }
+.notes { margin: 8px 0 12px; font-size: 12px; color: var(--text-secondary); }
+.notes p { margin: 2px 0; }
+.more details { border-top: 1px solid var(--grid); }
+.more details:first-of-type { margin-top: 12px; }
+.more summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center;
+  padding: 11px 2px; font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.more summary::-webkit-details-marker { display: none }
+.more .chev { flex: none; transition: transform .15s; color: var(--text-muted); }
+.more details[open] .chev { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .more .chev { transition: none; } }
+.dbody { padding: 0 2px 14px; font-size: 13px; color: var(--text-secondary); line-height: 1.7; }
+.dbody p { margin: .2em 0 .6em; }
+.dbody ul { margin: .3em 0 .6em; padding-left: 1.3em; }
+.dbody li { margin: .35em 0; }
+.dbody b { color: var(--text-primary); }
+.dbody code { background: var(--group-bg); font-size: .85em; padding: 1px 5px; border-radius: 3px; font-family: Consolas, "Courier New", monospace; }
+.dbody a { color: inherit; }
+footer { color: var(--text-muted); font-size: 12px; margin-top: 24px; }
+footer a { color: inherit; }
+@media (max-width: 600px) { .stat { text-align: left; } }
+</style>
 </head>
 <body>
+<script src="nav.js?v=20261027a"></script>
+<main>
+  <header>
+    <h1>雲端算力公司（CSPs）資本支出</h1>
+    <p>Amazon、Microsoft、Google、Meta、Oracle 季度與年度 CapEx；三顆燈號追蹤指引修訂、指引兌現與成長趨勢（量測變化的方向與速度，非絕對水位）。</p>
+  </header>
 
-<style>
-:root{
-  --ink:#111827; --muted:#6B7280; --hair:#E5E7EB; --grid:#EEF0F2; --neg:#C13B2E;
-  --amzn:#1CA9A0; --msft:#F5764A; --googl:#2C63EE; --meta:#E1499A; --orcl:#8B52D7;
-}
-*{box-sizing:border-box}
-body{margin:0;background:#FFFFFF;color:var(--ink);
-  font-family:"Segoe UI Variable Text","Segoe UI","Microsoft JhengHei UI","Microsoft JhengHei","Noto Sans TC",sans-serif;
-  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
-.wrap{max-width:1040px;margin:0 auto;padding:56px 32px 64px}
-h1{font-size:clamp(26px,3.6vw,38px);line-height:1.25;font-weight:700;letter-spacing:-.015em;
-   margin:0 0 40px;max-width:26em;text-wrap:balance}
-.axis-title{font-size:16px;font-weight:650;margin:0 0 6px}
-.chartbox{overflow-x:auto}
-.chartbox svg{display:block;min-width:880px;width:100%;height:auto}
-svg text{font-family:inherit}
-#tip{position:fixed;pointer-events:none;z-index:10;display:none;
-  background:#fff;border:1px solid #CBD1D8;border-radius:6px;box-shadow:0 4px 14px rgba(17,24,39,.13);
-  padding:9px 13px 10px;font-size:12px;line-height:1.5;font-variant-numeric:tabular-nums;white-space:nowrap}
-#tip .qh{font-weight:700;font-size:13.5px;margin-bottom:5px}
-#tip .nm{display:inline-flex;align-items:center;gap:7px}
-#tip .nm i{width:10px;height:10px;border-radius:2px;display:inline-block}
-#tip table{border-collapse:collapse}
-#tip th{font-size:10px;letter-spacing:.05em;color:#6B7280;font-weight:600;text-align:right;padding:0 0 3px 15px;border-bottom:1px solid #E5E7EB}
-#tip th:first-child{text-align:left;padding-left:0}
-#tip td{text-align:right;padding:2px 0 2px 15px;font-weight:600}
-#tip td:first-child{text-align:left;padding-left:0}
-#tip tr.sum td{border-top:1px solid #E5E7EB;padding-top:4px;font-weight:700}
-#tip .dim{color:#9CA3AF;font-weight:400}
-#tip .yoy-n{color:var(--neg)}
-h2{font-size:23px;letter-spacing:-.01em;color:var(--ink);font-weight:700;
-   margin:50px 0 16px;padding-top:16px;border-top:2px solid var(--ink)}
-.tbltitle{font-size:19px;font-weight:650;margin:4px 0 2px}
-.tblsub{color:var(--muted);font-size:13.5px;margin:0 0 10px}
-.tblbox{overflow-x:auto}
-table{border-collapse:collapse;width:100%;min-width:760px;font-size:14px;font-variant-numeric:tabular-nums}
-th{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left;
-   border-bottom:1.5px solid var(--ink);padding:6px 14px 6px 0;font-weight:650;white-space:nowrap}
-td{border-bottom:1px solid var(--hair);padding:8px 14px 8px 0;vertical-align:top;white-space:nowrap}
-td.num{font-weight:650}
-td small{color:var(--muted)}
-tr.total td{border-bottom:none;border-top:1.5px solid var(--ink);font-weight:650}
-.chip{display:inline-block;font-size:11.5px;font-weight:650;padding:1px 8px;border-radius:10px;background:#E7F0E9;color:#2F7D4F}
-.footnote{color:var(--muted);font-size:14.5px;max-width:56em;margin-top:26px}
-.fnlist{color:var(--muted);font-size:14.5px;max-width:56em;margin:12px 0 0;padding-left:1.25em}
-.fnlist li{margin:.35em 0}
-/* signal lights */
-.siglights{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:14px;margin:4px 0 10px}
-.sig{border:1px solid var(--hair);border-radius:10px;padding:18px 20px;background:#fff}
-.sig .h{display:flex;align-items:center;gap:14px;font-weight:700;font-size:18px;letter-spacing:-.01em}
-.sig .lamp{width:26px;height:26px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
-  color:#fff;font-size:14px;font-weight:700;line-height:1}
-.sig.g .lamp{background:#1F8A4C}
-.sig.y .lamp{background:#C9930F}
-.sig.r .lamp{background:#B93A31}
-.sig.g .lamp::after{content:"✓"}
-.sig.y .lamp::after{content:"!"}
-.sig.r .lamp::after{content:"✕";font-size:12px}
-.sig ul{list-style:none;margin:14px 0 0;padding:0;font-size:12.5px;color:var(--muted);line-height:1.6}
-.sig li{display:flex;gap:8px;margin:5px 0;align-items:baseline}
-.sig li i{width:9px;height:9px;border-radius:50%;flex:none;position:relative;top:1px}
-.sig li i.dg{background:#1FA55A}.sig li i.dy{background:#E0A81C}.sig li i.dr{background:#CC3D33}
-.tglrow{display:flex;justify-content:flex-end;margin:0 0 4px}
-.tgl{font-size:12px;color:#374151;background:#fff;border:1px solid #CBD1D8;border-radius:4px;padding:3px 10px;cursor:pointer}
-.tgl:hover{border-color:#6B7280}
-/* learn more (collapsible, Epoch style) */
-.learn{margin-top:52px}
-.learn-title{font-size:20px;font-weight:700;margin:0 0 8px;letter-spacing:-.01em}
-.learn details{border-top:1px solid var(--hair)}
-.learn details:last-of-type{border-bottom:1px solid var(--hair)}
-.learn summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;
-  padding:15px 2px;font-size:16.5px;font-weight:650;color:#111827}
-.learn summary::-webkit-details-marker{display:none}
-.learn summary:hover{color:#26323F}
-.learn .chev{flex:none;transition:transform .15s;color:#6B7280}
-.learn details[open] .chev{transform:rotate(180deg)}
-.dbody{padding:0 2px 20px;font-size:14.5px;color:#374151;max-width:50em;line-height:1.75}
-.dbody p{margin:.2em 0 .7em}
-.dbody ul{margin:.3em 0 .7em;padding-left:1.3em}
-.dbody li{margin:.4em 0}
-.dbody code{background:#F3F4F6;font-size:.82em;padding:1px 5px;border-radius:3px;font-family:Consolas,"Courier New",monospace}
-.dbody a{color:#26323F}
-@media (prefers-reduced-motion: reduce){.learn .chev{transition:none}}
-.foot-brand{display:flex;justify-content:space-between;align-items:center;margin-top:34px;
-  border-top:1px solid var(--hair);padding-top:16px;font-size:13px;color:var(--muted)}
-.foot-brand b{color:var(--ink);letter-spacing:.02em}
-</style>
+  <section class="signals" id="signals" aria-label="三大警示燈號"></section>
 
-<div class="wrap">
-  <h1>雲端算力公司（CSPs）資本支出</h1>
-
-  <div class="siglights">
-    <div class="sig g">
-      <div class="h"><span class="lamp"></span>指引修訂</div>
-      <ul>
-        <li><i class="dg"></i>綠：當季有公司上修、無人下修</li>
-        <li><i class="dy"></i>黃：全體僅「確認」、無人上修；或單家下修</li>
-        <li><i class="dr"></i>紅：兩家以上下修，或下修幅度大於 10%</li>
-      </ul>
+  <section class="card" id="card-q">
+    <div class="card-head">
+      <div>
+        <h2>圖 1 · 季度 CapEx</h2>
+        <p class="desc">五家合計堆疊柱，單位十億美元；柱頂為合計 YoY，虛線為 2023Q2 起指數擬合。</p>
+      </div>
+      <div class="stat" id="stat-q"></div>
     </div>
-    <div class="sig g">
-      <div class="h"><span class="lamp"></span>指引、實際差額</div>
-      <ul>
-        <li><i class="dg"></i>綠：實際達隱含季均的 95% 以上</li>
-        <li><i class="dy"></i>黃：落後 5–15%，且屬「效率型」措辭</li>
-        <li><i class="dr"></i>紅：落後大於 15%，或連續兩季落後</li>
-      </ul>
+    <div class="tabs" role="group" aria-label="圖層"><span>圖層</span><button type="button" id="tgl1" aria-pressed="false">YoY 折線</button></div>
+    <div class="chartbox" id="chart"></div>
+    <div class="notes">
+      <p>[註1]：資本支出包含非 AI 項目；各家投資人溝通均強調成長由 AI 資料中心建置驅動。</p>
     </div>
-    <div class="sig g">
-      <div class="h"><span class="lamp"></span>實際趨勢</div>
-      <ul>
-        <li><i class="dg"></i>綠：距趨勢線差額 ≥ −12%</li>
-        <li><i class="dy"></i>黃：連續兩季低於 −12%</li>
-        <li><i class="dr"></i>紅：連續兩季低於 −25%，或 QoQ 連兩季轉負</li>
-      </ul>
+  </section>
+
+  <section class="card" id="card-y">
+    <div class="card-head">
+      <div>
+        <h2>圖 2 · 年度 CapEx</h2>
+        <p class="desc">2026 柱為各家法說會全年指引（前瞻陳述，非實績；Oracle 為 FY 制不含）。</p>
+      </div>
+      <div class="stat" id="stat-y"></div>
     </div>
-  </div>
+    <div class="tabs" role="group" aria-label="圖層"><span>圖層</span><button type="button" id="tgl2" aria-pressed="false">YoY 折線</button></div>
+    <div class="chartbox" id="chart2"></div>
+  </section>
 
-  <h2 style="margin-top:28px">圖 1 · 季度 CapEx</h2>
-  <div class="tglrow"><button id="tgl1" class="tgl">顯示 YoY 折線</button></div>
-  <div class="chartbox" id="chart"></div>
+  <section class="card" id="card-guide">
+    <div class="card-head">
+      <div>
+        <h2>表 1 · 2026 年 CapEx：指引 vs 實際</h2>
+        <p class="desc">指引為全年制、每季法說會修訂，表中為截至 2026 年 7 月的最新修訂值。</p>
+      </div>
+    </div>
+    <div class="table-wrap"><table class="data">
+      <thead><tr><th class="left">公司</th><th>2026 指引</th><th class="left">適用期間</th><th>YTD 實際</th><th>達成進度</th><th>隱含後續季均</th><th class="left">措辭</th></tr></thead>
+      <tbody>
+      <tr><td class="label">Amazon</td><td>$200B</td><td class="label">曆年 2026</td><td>$45.8B <small>（Q1）</small></td><td>23%</td><td>$51.4B <small>（vs Q1 +12%）</small></td><td class="label"><span class="chip">擴張</span></td></tr>
+      <tr><td class="label">Microsoft</td><td>$190B <small>（含租賃）</small></td><td class="label">曆年 2026</td><td>$34.9B <small>（Q1）</small></td><td>18%</td><td>$51.7B <small>（vs Q1 +48%）</small></td><td class="label"><span class="chip">擴張</span></td></tr>
+      <tr><td class="label">Google</td><td>$180–190B <small>（中值 $185B）</small></td><td class="label">曆年 2026</td><td>$35.9B <small>（Q1）</small></td><td>19%</td><td>$49.7B <small>（vs Q1 +38%）</small></td><td class="label"><span class="chip">擴張</span></td></tr>
+      <tr><td class="label">Meta</td><td>$125–145B <small>（中值 $135B）</small></td><td class="label">曆年 2026</td><td>$19.0B <small>（Q1）</small></td><td>14%</td><td>$38.7B <small>（vs Q1 +104%）</small></td><td class="label"><span class="chip">擴張</span></td></tr>
+      <tr><td class="label">Oracle</td><td>$50B</td><td class="label">FY26 <small>（2025/6–2026/5，已完結）</small></td><td>$57.2B <small>（全年度）</small></td><td>114% <small>（超支 +14%）</small></td><td>—</td><td class="label"><span class="chip">擴張</span></td></tr>
+      <tr class="key"><td class="label">四大合計</td><td>$710B <small>（中值合計）</small></td><td class="label">曆年 2026</td><td>$135.6B</td><td>19% <small>（年度已過 25%）</small></td><td>$191.5B／季 <small>（較 Q1 +41%）</small></td><td class="label">—</td></tr>
+      </tbody>
+    </table></div>
+    <div class="notes">
+      <p>[註1]：隱含後續季均＝（全年指引 − YTD 實際）÷ 剩餘季數。</p>
+      <p>[註2]：達成進度低於 25% 屬正常：CapEx 逐季爬坡，年初佔比天然偏低。</p>
+      <p>[註3]：隱含後續季均較 Q1 實際高 41%：指引本身內含「持續加速」的承諾，之後每季實際 vs 此值即可判定超前或落後。</p>
+      <p>[註4]：Oracle 為會計年度制，不併入四大合計。</p>
+    </div>
+  </section>
 
-  <h2>圖 2 · 年度 CapEx</h2>
-  <div class="tglrow"><button id="tgl2" class="tgl">顯示 YoY 折線</button></div>
-  <div class="chartbox" id="chart2"></div>
+  <section class="card" id="card-log">
+    <div class="card-head">
+      <div>
+        <h2>季度法說會 CapEx 指引修訂記錄</h2>
+        <p class="desc">僅列有變化者；「指引修訂」燈號的判定來源。</p>
+      </div>
+    </div>
+    <div class="table-wrap"><table class="data" style="min-width:0">
+      <thead><tr><th class="left">季度</th><th class="left">指引變化</th></tr></thead>
+      <tbody>
 
-  <h2>表 1 · 2026 年 CapEx：指引 vs 實際</h2>
-  <p class="tblsub">指引為全年制、每季法說會修訂，表中為<b>截至 2026 年 7 月的最新修訂值</b>；「隱含後續季均」＝（全年指引 − YTD 實際）÷ 剩餘季數。</p>
-  <div class="tblbox">
-  <table>
-    <thead><tr><th>公司</th><th>2026 指引</th><th>適用期間</th><th>YTD 實際</th><th>達成進度</th><th>隱含後續季均</th><th>措辭</th></tr></thead>
-    <tbody>
-      <tr><td>Amazon</td><td class="num">$200B</td><td>曆年 2026</td><td>$45.8B <small>（Q1）</small></td><td>23%</td><td class="num">$51.4B <small>（vs Q1 +12%）</small></td><td><span class="chip">擴張</span></td></tr>
-      <tr><td>Microsoft</td><td class="num">$190B <small>（含租賃）</small></td><td>曆年 2026</td><td>$34.9B <small>（Q1）</small></td><td>18%</td><td class="num">$51.7B <small>（vs Q1 +48%）</small></td><td><span class="chip">擴張</span></td></tr>
-      <tr><td>Google</td><td class="num">$180–190B <small>（中值 $185B）</small></td><td>曆年 2026</td><td>$35.9B <small>（Q1）</small></td><td>19%</td><td class="num">$49.7B <small>（vs Q1 +38%）</small></td><td><span class="chip">擴張</span></td></tr>
-      <tr><td>Meta</td><td class="num">$125–145B <small>（中值 $135B）</small></td><td>曆年 2026</td><td>$19.0B <small>（Q1）</small></td><td>14%</td><td class="num">$38.7B <small>（vs Q1 +104%）</small></td><td><span class="chip">擴張</span></td></tr>
-      <tr><td>Oracle</td><td class="num">$50B</td><td>FY26 <small>（2025/6–2026/5，已完結）</small></td><td>$57.2B <small>（全年度）</small></td><td class="num">114% <small>（超支 +14%）</small></td><td>—</td><td><span class="chip">擴張</span></td></tr>
-      <tr class="total"><td>四大合計</td><td>$710B <small>（中值合計）</small></td><td>曆年 2026</td><td>$135.6B</td><td>19% <small>（年度已過 25%）</small></td><td>$191.5B／季 <small>（較 Q1 +41%）</small></td><td>—</td></tr>
-    </tbody>
-  </table>
-  </div>
-  <ul class="fnlist">
-    <li>達成進度低於 25% 屬正常：CapEx 逐季爬坡，年初佔比天然偏低。</li>
-    <li>隱含後續季均較 Q1 實際高 41%：<b>指引本身內含「持續加速」的承諾</b>，之後每季實際 vs 此值即可判定超前或落後。</li>
-    <li>Oracle 為會計年度制，不併入四大合計。</li>
-  </ul>
-
-  <div class="learn" style="margin-top:14px">
-    <details>
-      <summary>季度法說會 CapEx 指引修訂記錄<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-      <div class="dbody">
-        <table style="min-width:0;width:auto">
-          <thead><tr><th>季度</th><th>指引變化（僅列有變化者）</th></tr></thead>
-          <tbody>
-            <tr><td>2025 Q3</td><td style="white-space:normal">Oracle：FY26 初始指引 <b>$35B</b>（較 FY25 實績 +$15B）</td></tr>
-            <tr><td>2025 Q4</td><td style="white-space:normal">
+            <tr><td class="label">2025 Q3</td><td class="label wrap">Oracle：FY26 初始指引 <b>$35B</b>（較 FY25 實績 +$15B）</td></tr>
+            <tr><td class="label">2025 Q4</td><td class="label wrap">
               Google：初次給出 2026 指引 <b>$175–185B</b><br>
               Amazon：初次給出 <b>$200B</b><br>
               Microsoft：初次給出 <b>$190B</b>（含租賃）<br>
               Meta：初次給出 <b>$125–145B</b><br>
               Oracle：FY26 上修 $35B → <b>$50B</b></td></tr>
-            <tr><td>2026 Q1</td><td style="white-space:normal">
+            <tr><td class="label">2026 Q1</td><td class="label wrap">
               Google：上修 $175–185B → <b>$180–190B</b>（含 Intersect 併購投資，非純有機上修）；CFO 預告 2027 CapEx 將「顯著增加」；同場宣布 $30B 股權增資</td></tr>
-            <tr><td>2026 Q2</td><td style="white-space:normal">
+            <tr><td class="label">2026 Q2</td><td class="label wrap">
               Oracle：FY26 實際 $57.2B 收官（vs 最終指引 +14%、vs 初始 +63%）；發布 FY27 指引 <b>$70B 淨額</b>（總額 $90–95B，含客戶預付 $20–25B）</td></tr>
-          </tbody>
-        </table>
+                </tbody>
+    </table></div>
+  </section>
+
+  <section class="card more" id="card-more">
+    <div class="card-head">
+      <div>
+        <h2>資料說明</h2>
+        <p class="desc">資料來源與口徑、分析方法、限制、燈號規則。</p>
       </div>
-    </details>
-  </div>
-
-  <p class="footnote">資本支出包含非 AI 項目；各家投資人溝通均強調成長由 AI 資料中心建置驅動。</p>
-
-  <div class="learn">
-    <p class="learn-title">Learn more about this graph</p>
-
-    <details>
-      <summary>Data<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-      <div class="dbody">
-        <p>數據取自五家公司向 SEC 申報的 10-Q／10-K 財務報表（2021Q1–2026Q1），經 <a href="https://www.sec.gov/search-filings/edgar-application-programming-interfaces">SEC EDGAR XBRL API</a> 以結構化標籤直接解析，不採用公司新聞稿或法說會口頭數字，以確保五家口徑一致。</p>
+    </div>
+    <details><summary>資料來源與口徑<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary><div class="dbody"><p>數據取自五家公司向 SEC 申報的 10-Q／10-K 財務報表（2021Q1–2026Q1），經 <a href="https://www.sec.gov/search-filings/edgar-application-programming-interfaces">SEC EDGAR XBRL API</a> 以結構化標籤直接解析，不採用公司新聞稿或法說會口頭數字，以確保五家口徑一致。</p>
         <ul>
           <li><b>資本支出定義</b>：cash PP&amp;E ＋ 融資租賃 ROU 資產，即 <code>PaymentsToAcquirePropertyPlantAndEquipment</code> ＋ <code>RightOfUseAssetObtainedInExchangeForFinanceLeaseLiability</code> 兩個 XBRL 標籤之和。納入融資租賃是因為 Microsoft 大量以租賃方式建置資料中心，僅看現金 capex 會系統性低估其真實規模。</li>
           <li><b>標籤差異處理</b>：Amazon 歷史期間使用 <code>PaymentsToAcquireProductiveAssets</code> 申報現金資本支出，已與標準標籤合併為連續序列。</li>
@@ -195,52 +288,34 @@ tr.total td{border-bottom:none;border-top:1.5px solid var(--ink);font-weight:650
           <li><b>曆季對齊</b>：Microsoft（6 月結帳）與 Oracle（5 月結帳）依各季末日期歸入曆法季度，與 Google、Amazon、Meta 的曆年制對齊後方可加總。</li>
           <li><b>2026 指引柱</b>：來自各家法說會揭露之全年指引（Meta 區間 $125–145B 取中值），屬前瞻陳述、非申報數據；Oracle 採會計年度制、無曆年指引，不含其中。</li>
           <li><b>交叉驗證</b>：本序列與 <a href="https://epoch.ai/data-insights/hyperscaler-capex-trend">Epoch AI 同口徑序列</a>比對——擬合年化增速 70% vs 其 72%，公司級年度合計與各家財報一致（如 Google 2025 年 $93.1B、Meta $69.7B）。</li>
-        </ul>
-      </div>
-    </details>
-
-    <details>
-      <summary>Analysis<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-      <div class="dbody">
-        <p>圖 1 虛線為對 2023Q2–2026Q1 五家合計季度資本支出取自然對數後，以普通最小二乘法（OLS）擬合的指數增長模型，對應年化倍率約 1.70x／年（頁面載入時即時計算，非固定值）。起點選在 2023Q2，係因該季為上一輪 CapEx 消化期的低谷、亦為 GPT-4 發布後的第一個完整季度。</p>
+        </ul></div></details>
+    <details><summary>分析方法<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary><div class="dbody"><p>圖 1 虛線為對 2023Q2–2026Q1 五家合計季度資本支出取自然對數後，以普通最小二乘法（OLS）擬合的指數增長模型，對應年化倍率約 1.70x／年（頁面載入時即時計算，非固定值）。起點選在 2023Q2，係因該季為上一輪 CapEx 消化期的低谷、亦為 GPT-4 發布後的第一個完整季度。</p>
         <ul>
           <li><b>YoY（柱頂）</b>：五家合計對去年同季之年增率；2022 年各季的基期採 2021 年申報數據，非估計值。紅字為負值——2023Q2 的 −8% 即上一輪消化期的可視印記。</li>
           <li><b>Tooltip 單家 YoY</b>：各公司對自身去年同季，用於觀察加速度的公司間分化（例如 2026Q1：Oracle +215%、Google +103%、Meta +47%）。</li>
           <li><b>表 1 衍生指標</b>：達成進度＝YTD 實際 ÷ 全年指引；隱含後續季均＝（全年指引 − YTD 實際）÷ 剩餘季數。後者是預實差追蹤的基準——每季實際數高於或低於此值，即為需求強於或弱於指引承諾的量化訊號，判讀時須配合法說會措辭（供給瓶頸型落後與需求鬆動型落後意義相反）。</li>
-        </ul>
-      </div>
-    </details>
-
-    <details>
-      <summary>Limitations<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-      <div class="dbody">
-        <ul>
+        </ul></div></details>
+    <details><summary>限制<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary><div class="dbody"><ul>
           <li><b>融資租賃覆蓋不全</b>：Google 與 Oracle 多數期間未申報該 XBRL 標籤（本圖記為 0），Oracle 僅兩個數據點；finance lease 合計可能被低估。</li>
           <li><b>營運租賃完全排除</b>：Moody's 估計五家已簽約、未開始的資料中心租約約 $662B 位於表外（多屬 operating lease）。本圖因此是真實建置承諾的<b>下限</b>，而非全貌。</li>
           <li><b>含非 AI 支出</b>：資本支出無法拆分 AI 佔比——Amazon 的數字包含倉儲物流，Microsoft 包含一般雲產能。逐季「變化率」比「絕對水位」更能反映 AI 建置的邊際動向。</li>
           <li><b>指引口徑不一</b>：Microsoft 含租賃、Meta 為區間、Amazon 屬「投資承諾」表述、Google 屢次年中上修；隱含 YoY 與佔比僅供方向參考，跨公司精確比較應以事後申報數為準。</li>
           <li><b>未計算置信區間</b>：趨勢倍率為單點估計（Epoch 同法給出 90% CI 1.66–1.78x／年），且對擬合起點的選擇敏感。</li>
           <li><b>更新滯後</b>：XBRL 明細於 10-Q 申報後才可得，較法說會晚一至兩週；2026Q2 起數據待 2026 年 8 月財報季後更新（目前僅 Oracle 因 5 月結帳先行入帳）。</li>
-        </ul>
-      </div>
-    </details>
-
-    <details>
-      <summary>Signals<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
-      <div class="dbody">
-        <p>頁首三顆燈以本頁數據為源，量測「變化的方向與速度」而非絕對水位；每季財報季後更新一次。</p>
+        </ul></div></details>
+    <details><summary>燈號規則<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary><div class="dbody"><p>頁首三顆燈以本頁數據為源，量測「變化的方向與速度」而非絕對水位；每季財報季後更新一次。</p>
         <ul>
           <li><b>指引修訂</b>（源：修訂記錄）——綠：當季有任一家上修、無人下修。黃：全體僅「確認」（加速週期中首個無人加碼的季度，是動能見頂的最早訊號），或單家下修。紅：兩家以上下修，或單家下修幅度大於 10%。</li>
           <li><b>指引、實際差額</b>（源：表 1）——實際 ÷ 隱含後續季均 ≥95% 為綠；落後 5–15% 且法說會措辭屬「效率／優化」型為黃（「電力／供給瓶頸」型落後不降級，僅標注）；落後大於 15% 或連續兩季落後為紅。<b>回測 2025</b>（年初指引 vs 實際）：Google $75B→$93.1B（+24%）、Amazon ≈$100B→$134.7B（+30% 以上）、Meta $60–65B→$69.7B（較中值 +12%）、Microsoft FY25 ≈$80B→$85.1B（+6%）——歷史基準為<b>系統性超支</b>，故本輪中「僅達標」即屬邊際轉弱，判讀需比字面規則更嚴。</li>
           <li><b>實際趨勢</b>（源：圖 1 趨勢線）——以 2023Q2 起、剔除最近兩季的凍結窗口做指數擬合並外推（hold-out，防止趨勢線追著數據下彎而自我鈍化），比較最近實績與外推值：差額 ≥−12% 為綠；連續兩季低於 −12% 為黃；連續兩季低於 −25% 為紅。−12% 校準自指引路徑（五家完美兌現指引時，年底差額約 −9%，留三個百分點緩衝），<b>每次指引修訂後重校</b>。另設絕對收縮紅線：連續兩季 QoQ 負值（排除單獨出現的 Q1 季節性回落）或 YoY 轉負，無條件轉紅。輔助交叉驗證（不亮燈）：YoY 減半規則、連三季收斂計數。</li>
         </ul>
-        <p><b>YoY 折線（圖 1／圖 2 右上角可切換）</b>：獨立於燈號的輔助圖層。基數墊高造成的增速滑落不代表需求轉弱，但成長股估值錨定增速的變化——YoY 自峰值大幅滑落時，市場往往先壓縮本益比再問基本面。指引隱含 2026 全年約 +75%，低於 2026Q1 的 +89%：<b>減速已在排程上</b>，屆時應對照 C 燈分辨「排程內的數學」與「排程外的需求」。</p>
-      </div>
-    </details>
-  </div>
+        <p><b>YoY 折線（圖 1／圖 2 右上角可切換）</b>：獨立於燈號的輔助圖層。基數墊高造成的增速滑落不代表需求轉弱，但成長股估值錨定增速的變化——YoY 自峰值大幅滑落時，市場往往先壓縮本益比再問基本面。指引隱含 2026 全年約 +75%，低於 2026Q1 的 +89%：<b>減速已在排程上</b>，屆時應對照 C 燈分辨「排程內的數學」與「排程外的需求」。</p></div></details>
+  </section>
 
-  <div class="foot-brand"><span><b>AI 半導體產業看板</b>　｜　數據：SEC EDGAR</span><span>口徑與呈現參照 Epoch AI（CC-BY）</span></div>
-</div>
+  <footer>
+    <div>資料來源：<a href="https://www.sec.gov/search-filings/edgar-application-programming-interfaces" target="_blank" rel="noopener">SEC EDGAR</a>（10-Q／10-K XBRL）；口徑與呈現參照 <a href="https://epoch.ai/data-insights/hyperscaler-capex-trend" target="_blank" rel="noopener">Epoch AI</a>（CC-BY）</div>
+  </footer>
+</main>
 <div id="tip"></div>
 
 <script>
@@ -305,6 +380,7 @@ s+=`<text x="${xg+9}" y="${y(92)+18}" font-size="13.5" fill="#374151">2023年3�
  let pts=[];
  for(let t=i0;t<=n-1;t+=0.25){const v=Math.exp(a+b*t);if(v<=YMAX)pts.push(xc(t).toFixed(1)+','+y(v).toFixed(1));}
  s+=`<polyline fill="none" stroke="#26323F" stroke-width="2.2" stroke-dasharray="7 6" points="${pts.join(' ')}"/>`;
+ window.TREND_X=Math.exp(4*b);
  const ax=xc(11.3),ay=y(Math.exp(a+b*12.1));
  s+=`<text x="${ax}" y="${ay-46}" text-anchor="end" font-size="15" font-weight="700" fill="#26323F">${Math.exp(4*b).toFixed(2)}x／年</text>`;
  s+=`<text x="${ax}" y="${ay-26}" text-anchor="end" font-size="13" fill="#4B5563">2023Q2 起指數擬合</text>`;
@@ -369,7 +445,7 @@ document.querySelectorAll(".hot").forEach(r=>{
 document.getElementById("tgl1").addEventListener("click",()=>{
  const g=document.getElementById("yoyg1"),b=document.getElementById("tgl1");
  const show=g.style.display==="none";g.style.display=show?"":"none";
- b.textContent=show?"隱藏 YoY 折線":"顯示 YoY 折線";});
+ b.setAttribute("aria-pressed",show);});
 
 /* ================= 圖 2 · 年度 ================= */
 const YEARS=["2021","2022","2023","2024","2025","2026 指引"];
@@ -478,12 +554,34 @@ const GUID={Amazon:"$200B",Microsoft:"$190B（含租賃）",Google:"$185B（中�
    tip.style.left=x+"px";tip.style.top=yy+"px";});
   r.addEventListener("pointerleave",()=>{tip.style.display="none";hl2.style.display="none";});
  });
+ document.getElementById("stat-y").innerHTML=
+  `<div class="value">$${Math.round(at[n-1])}B</div><div class="meta">2026 指引（四大中值合計）</div><div class="delta flat">隱含 YoY +${Math.round((at[n-1]/big4_25-1)*100)}%</div>`;
  document.getElementById("tgl2").addEventListener("click",()=>{
   const g=document.getElementById("yoyg2"),b=document.getElementById("tgl2");
   const show=g.style.display==="none";g.style.display=show?"":"none";
-  b.textContent=show?"隱藏 YoY 折線":"顯示 YoY 折線";});
+  b.setAttribute("aria-pressed",show);});
+})();
+
+/* ---- 季度 stat ---- */
+(function(){
+ const i=n-1,p=yoy[i];
+ document.getElementById("stat-q").innerHTML=
+  `<div class="value">$${totals[i].toFixed(1)}B</div><div class="meta">${QTRS[i]} 五家合計</div><div class="delta flat">YoY ${p>=0?"+":"−"}${Math.abs(Math.round(p*100))}%</div>`;
+ /* ---- 三燈號（燈色沿用原頁判定，說明列取自本頁數據） ---- */
+ const STATE={green:"正常",yellow:"注意",red:"警示"};
+ const LAMPS=[
+  {id:"card-log",name:"指引修訂",level:"green",why:"2026 Q1 Google 上修至 $180–190B｜無人下修",
+   rule:[["r","警示：兩家以上下修，或單家下修幅度大於 10%"],["y","注意：全體僅「確認」、無人上修；或單家下修"],["g","正常：當季有公司上修、無人下修"]]},
+  {id:"card-guide",name:"指引、實際差額",level:"green",why:"四大 YTD $135.6B（達成 19%）｜隱含季均較 Q1 +41%",
+   rule:[["r","警示：落後大於 15%，或連續兩季落後"],["y","注意：落後 5–15%，且屬「效率型」措辭"],["g","正常：實際達隱含季均的 95% 以上"]]},
+  {id:"card-q",name:"實際趨勢",level:"green",why:`擬合 ${TREND_X.toFixed(2)}x／年｜${QTRS[i]} YoY ${p>=0?"+":"−"}${Math.abs(Math.round(p*100))}%`,
+   rule:[["r","警示：連續兩季低於 −25%，或 QoQ 連兩季轉負"],["y","注意：連續兩季低於 −12%"],["g","正常：距趨勢線差額 ≥ −12%"]]}];
+ document.getElementById("signals").innerHTML=LAMPS.map(s=>
+  `<div class="signal ${s.level}" data-to="${s.id}" role="link" tabindex="0" title="點擊跳到對應圖表">
+    <span class="lamp" aria-hidden="true"></span>
+    <span><div class="name">${s.name}</div><div class="state">${STATE[s.level]}</div><div class="why">${s.why}</div><ul class="rule">${s.rule.map(([c,t])=>`<li><i class="${c}"></i>${t}</li>`).join("")}</ul></span>
+   </div>`).join("");
 })();
 </script>
-<script src="nav.js?v=20261027a"></script>
 </body>
 </html>
