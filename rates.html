@@ -310,6 +310,35 @@ footer a { color: inherit; }
   <section class="card">
     <div class="card-head">
       <div>
+        <h3>信用利差（OAS）：依評級</h3>
+        <p class="desc">日資料，單位 bp。公司債殖利率減同期公債殖利率，扣掉公債漲跌，只看市場要求的風險補償。ICE 美銀美林（FRED 只提供近 3 年）。</p>
+      </div>
+      <div class="stat" id="stat-oas"></div>
+    </div>
+    <div class="chart tall" id="chart-oas" role="img" aria-label="投資級與高收益信用利差折線圖"></div>
+    <div class="notes" data-notes="oas"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h3>各評級利差變化</h3>
+        <p class="desc">長條＝利差相對變化（%），標籤＝bp 變化。各評級長度相近代表整體風險溢酬上升；集中在低評級代表風險集中在垃圾債。</p>
+      </div>
+      <div class="stat" id="stat-oasd"></div>
+    </div>
+    <div class="tabs" role="group" aria-label="比較區間" id="oasd-tabs">
+      <button data-d="14" aria-pressed="true">近 2 週</button>
+      <button data-d="30" aria-pressed="false">近 1 個月</button>
+      <button data-d="90" aria-pressed="false">近 3 個月</button>
+    </div>
+    <div class="chart" id="chart-oasd" role="img" aria-label="各評級信用利差變化長條圖" style="height:300px"></div>
+    <div class="notes" data-notes="oasd"></div>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
         <h3>高收益公司債有效殖利率</h3>
         <p class="desc">日資料，單位 %。ICE 美銀美林 BB／B／CCC 級以下（FRED 只提供近 3 年）。</p>
       </div>
@@ -351,7 +380,7 @@ footer a { color: inherit; }
   <footer>
     <div id="updated"></div>
     <div id="changes"></div>
-    <div>資料來源：<a href="https://fred.stlouisfed.org/" target="_blank" rel="noopener">FRED</a>（CPIAUCNS、CPILFENS、CPILFESL、PCEPI、PCEPILFE、PCETRIM12M159SFRBDAL、PPIFID、PPIFES、DFEDTARU、DFEDTARL、FEDTARMD、FEDTARMDLR、DGS2、DGS10、NASDAQCOM、BAMLH0A1HYBBEY、BAMLH0A2HYBEY、BAMLH0A3HYCEY）；<a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates" target="_blank" rel="noopener">美國財政部</a>（2 年、10 年殖利率最近幾日）；<a href="https://finance.yahoo.com/quote/CL%3DF/" target="_blank" rel="noopener">Yahoo Finance</a>（WTI 期貨 CL=F）；<a href="https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm" target="_blank" rel="noopener">Fed SEP</a>；<a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" rel="noopener">CME FedWatch</a>（手動）；CDS：財經M平方（手動）；發布日：BLS、BEA、Fed。每個工作日自動更新。</div>
+    <div>資料來源：<a href="https://fred.stlouisfed.org/" target="_blank" rel="noopener">FRED</a>（CPIAUCNS、CPILFENS、CPILFESL、PCEPI、PCEPILFE、PCETRIM12M159SFRBDAL、PPIFID、PPIFES、DFEDTARU、DFEDTARL、FEDTARMD、FEDTARMDLR、DGS2、DGS10、NASDAQCOM、BAMLH0A1HYBBEY、BAMLH0A2HYBEY、BAMLH0A3HYCEY、BAMLC0A1CAAA、BAMLC0A2CAA、BAMLC0A3CA、BAMLC0A4CBBB、BAMLC0A0CM、BAMLH0A1HYBB、BAMLH0A2HYB、BAMLH0A3HYC、BAMLH0A0HYM2）；<a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates" target="_blank" rel="noopener">美國財政部</a>（2 年、10 年殖利率最近幾日）；<a href="https://finance.yahoo.com/quote/CL%3DF/" target="_blank" rel="noopener">Yahoo Finance</a>（WTI 期貨 CL=F）；<a href="https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm" target="_blank" rel="noopener">Fed SEP</a>；<a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" rel="noopener">CME FedWatch</a>（手動）；CDS：財經M平方（手動）；發布日：BLS、BEA、Fed。每個工作日自動更新。</div>
   </footer>
 </main>
 
@@ -712,6 +741,96 @@ function renderHy() {
   }), true);
 }
 
+// ---------- 信用利差 OAS ----------
+const OAS_IG = [["oas_aaa", "AAA"], ["oas_aa", "AA"], ["oas_a", "A"], ["oas_bbb", "BBB"]];
+const OAS_HY = [["oas_bb", "BB"], ["oas_b", "B"], ["oas_hy", "高收益全體"]];
+let oasdDays = 14;
+
+// Fed 調整利率上限的日期（升息紅、降息綠），畫成垂直標線
+function fedMoves() {
+  const U = DATA.ffr_upper, out = [];
+  for (let i = 1; i < U.length; i++) {
+    const d = U[i][1] - U[i - 1][1];
+    if (Math.abs(d) > 1e-9) out.push({ xAxis: U[i][0], name: d > 0 ? "升息" : "降息",
+      lineStyle: { color: d > 0 ? css("--bad") : css("--good"), type: "dashed", width: 1, opacity: 0.7 } });
+  }
+  return out;
+}
+
+function renderOas() {
+  const t = weekPair(DATA.oas_hy), ig = weekPair(DATA.oas_ig);
+  document.getElementById("stat-oas").innerHTML =
+    `<div class="value">${t.v.toFixed(0)} bp</div>${deltaHtml(t.v, t.pv, true, " bp", 0)}` +
+    `<div class="meta">高收益全體，${fmtDay(t.d)}（較一週前）</div>` +
+    `<div class="meta">投資級全體 ${ig.v.toFixed(0)} bp（${sign(ig.v - ig.pv)}${(ig.v - ig.pv).toFixed(0)}）</div>`;
+  const b = base(), moves = fedMoves();
+  const col = { oas_aaa: css("--text-muted"), oas_aa: css("--series-3"), oas_a: css("--series-1"), oas_bbb: css("--series-2"),
+    oas_bb: css("--series-1"), oas_b: css("--series-2"), oas_hy: css("--text-secondary") };
+  const mk = (list, gi) => list.map(([k, name], i) => line(name, DATA[k], col[k], {
+    xAxisIndex: gi, yAxisIndex: gi, endLabel: { show: false },
+    ...(k === "oas_hy" ? { lineStyle: { width: 2.5, color: col[k] } } : {}),
+    ...(i === 0 ? { markLine: { silent: true, symbol: "none", data: [...moves, { xAxis: WEEK_AGO, lineStyle: { color: css("--text-muted"), type: "dotted", width: 1 } }],
+      label: { show: gi === 0, color: css("--text-secondary"), fontSize: 10, position: "insideEndTop", formatter: (p) => p.name } } } : {}),
+  }));
+  charts.oas.setOption({
+    ...b,
+    legend: { ...legend(), data: [...OAS_IG, ...OAS_HY].map(x => x[1]) },
+    title: [
+      { text: "投資級", left: 8, top: 24, textStyle: { color: css("--text-muted"), fontSize: 12, fontWeight: 600 } },
+      { text: "高收益", left: 8, top: "53%", textStyle: { color: css("--text-muted"), fontSize: 12, fontWeight: 600 } },
+    ],
+    grid: [
+      { left: 8, right: 24, top: 52, height: "34%", containLabel: true },
+      { left: 8, right: 24, top: "62%", bottom: 28, containLabel: true },
+    ],
+    xAxis: [{ ...b.xAxis, gridIndex: 0, axisLabel: { show: false } }, { ...b.xAxis, gridIndex: 1 }],
+    yAxis: [
+      { ...b.yAxis, gridIndex: 0, axisLabel: { ...b.yAxis.axisLabel, formatter: (v) => v.toFixed(0) } },
+      { ...b.yAxis, gridIndex: 1, axisLabel: { ...b.yAxis.axisLabel, formatter: (v) => v.toFixed(0) } },
+    ],
+    axisPointer: { link: [{ xAxisIndex: "all" }] },
+    dataZoom: [{ ...b.dataZoom[0], xAxisIndex: [0, 1] }],
+    tooltip: { ...b.tooltip, formatter: multiTip(fmtDay, " bp", 0) },
+    series: [...mk(OAS_IG, 0), ...mk(OAS_HY, 1)],
+  }, true);
+}
+
+function renderOasd() {
+  const keys = [["oas_aaa", "AAA"], ["oas_aa", "AA"], ["oas_a", "A"], ["oas_bbb", "BBB"], ["oas_bb", "BB"], ["oas_b", "B"], ["oas_ccc", "CCC 以下"]];
+  const last = DATA.oas_hy[DATA.oas_hy.length - 1][0];
+  const from = new Date(new Date(last).getTime() - oasdDays * 864e5).toISOString().slice(0, 10);
+  const rows = keys.map(([k, name]) => {
+    const s = DATA[k], cur = s[s.length - 1][1];
+    let prev = s[0];
+    for (const x of s) if (x[0] <= from) prev = x;
+    return { name, cur, prev: prev[1], pd: prev[0], bp: cur - prev[1], pct: (cur / prev[1] - 1) * 100 };
+  });
+  const pdate = rows[0].pd;
+  const ig = DATA.oas_ig, hy = DATA.oas_hy;
+  const at = (s) => { let p = s[0]; for (const x of s) if (x[0] <= from) p = x; return p[1]; };
+  const dig = ig[ig.length - 1][1] - at(ig), dhy = hy[hy.length - 1][1] - at(hy);
+  document.getElementById("stat-oasd").innerHTML =
+    `<div class="value">${sign(dhy)}${dhy.toFixed(0)} bp</div><div class="meta">高收益全體（${fmtDay(pdate)} → ${fmtDay(last)}）</div>` +
+    `<div class="meta">投資級全體 ${sign(dig)}${dig.toFixed(0)} bp</div>`;
+  charts.oasd.setOption({
+    animation: false,
+    textStyle: { fontFamily: getComputedStyle(document.body).fontFamily },
+    grid: { left: 8, right: 96, top: 8, bottom: 8, containLabel: true },
+    xAxis: { type: "value", axisLabel: { color: css("--text-muted"), formatter: (v) => v + "%" },
+      splitLine: { lineStyle: { color: css("--grid") } } },
+    yAxis: { type: "category", inverse: true, data: rows.map(r => r.name), axisTick: { show: false },
+      axisLine: { lineStyle: { color: css("--grid") } }, axisLabel: { color: css("--text-secondary") } },
+    tooltip: { trigger: "item", backgroundColor: css("--surface"), borderColor: css("--border"),
+      textStyle: { color: css("--text-primary"), fontSize: 13 },
+      formatter: (p) => { const r = rows[p.dataIndex];
+        return `${r.name}<br>${r.prev} → <b>${r.cur} bp</b>（${sign(r.bp)}${r.bp.toFixed(0)} bp，${sign(r.pct)}${r.pct.toFixed(1)}%）`; } },
+    series: [{ type: "bar", barMaxWidth: 22,
+      data: rows.map(r => ({ value: Number(r.pct.toFixed(1)), itemStyle: { color: r.pct >= 0 ? css("--bad") : css("--good") } })),
+      label: { show: true, position: "right", color: css("--text-primary"), fontSize: 12, fontWeight: 600,
+        formatter: (p) => { const r = rows[p.dataIndex]; return `${sign(r.bp)}${r.bp.toFixed(0)} bp（${sign(r.pct)}${r.pct.toFixed(0)}%）`; } } }],
+  }, true);
+}
+
 function renderOil() {
   const t = weekPair(DATA.wti);
   document.getElementById("stat-oil").innerHTML =
@@ -728,7 +847,7 @@ function renderOil() {
 function applyRange() {
   const groups = {
     infl: Object.values(DATA.infl), fedview: [DATA.pce6], yields: [DATA.dgs10], curve: [DATA.t10y2y],
-    hy: [DATA.hy_ccc], oil: [DATA.wti],
+    hy: [DATA.hy_ccc], oas: [DATA.oas_hy], oil: [DATA.wti],
   };
   for (const [k, series] of Object.entries(groups)) {
     const start = startDate(series);
@@ -740,7 +859,7 @@ function applyRange() {
 
 function renderAll() {
   renderInfl(); renderFedview(); renderPath(); renderFwBars(); renderYields(); renderCurve();
-  renderHy(); renderOil(); applyRange();
+  renderHy(); renderOas(); renderOasd(); renderOil(); applyRange();
 }
 
 // ---------- 數據表 ----------
@@ -824,7 +943,7 @@ function renderSnapshot() {
   let h = `<thead><tr><th class="left">指標</th><th>前值</th><th>最新</th><th>變動</th><th>資料日期</th><th>下次發布</th></tr></thead><tbody>`;
   for (const r of rows) {
     const d = r.unit === "pct" ? r.delta * 100 : r.delta;
-    const txt = r.unit === "pct" ? `${sign(d)}${d.toFixed(0)} bp` : `${sign(d)}${d.toFixed(2)}${r.unit === "bp" ? " bp" : ""}`;
+    const txt = r.unit === "pct" || r.unit === "oas" ? `${sign(d)}${d.toFixed(0)} bp` : `${sign(d)}${d.toFixed(2)}${r.unit === "bp" ? " bp" : ""}`;
     const cls = Math.abs(d) < 1e-9 || r.upIsBad === null ? "flat" : ((d > 0) === r.upIsBad ? "bad" : "good");
     const nx = nextRelease(r.schedule);
     h += `<tr><td class="label">${r.label}</td><td>${r.prev}</td><td>${r.cur}</td><td class="${cls}">${txt}</td>` +
@@ -845,6 +964,14 @@ document.querySelectorAll(".toolbar button").forEach(btn => {
     years = Number(btn.dataset.years);
     document.querySelectorAll(".toolbar button").forEach(b => b.setAttribute("aria-pressed", b === btn));
     applyRange();
+  });
+});
+
+document.querySelectorAll("#oasd-tabs button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    oasdDays = Number(btn.dataset.d);
+    document.querySelectorAll("#oasd-tabs button").forEach(b => b.setAttribute("aria-pressed", b === btn));
+    renderOasd();
   });
 });
 
@@ -872,7 +999,7 @@ Promise.all([
     renderFedwatch();
     startFomcCountdown();
     renderNotes();
-    for (const k of ["infl", "fedview", "path", "fw0", "fw1", "yields", "curve", "hy", "oil"].filter(k => document.getElementById("chart-" + k))) charts[k] = echarts.init(document.getElementById("chart-" + k));
+    for (const k of ["infl", "fedview", "path", "fw0", "fw1", "yields", "curve", "hy", "oas", "oasd", "oil"].filter(k => document.getElementById("chart-" + k))) charts[k] = echarts.init(document.getElementById("chart-" + k));
     renderAll();
     const t = new Date(DATA.updated.replace("Z", ":00Z"));
     document.getElementById("updated").textContent =

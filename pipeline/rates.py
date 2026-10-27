@@ -79,8 +79,17 @@ SNAP = [
     ("高收益債殖利率（BB 級）", "hy_bb", "pct2", "daily"),
     ("高收益債殖利率（B 級）", "hy_b", "pct2", "daily"),
     ("高收益債殖利率（CCC 級以下）", "hy_ccc", "pct2", "daily"),
+    ("信用利差：投資級全體（OAS）", "oas_ig", "bp", "daily"),
+    ("信用利差：BBB 級（OAS）", "oas_bbb", "bp", "daily"),
+    ("信用利差：高收益全體（OAS）", "oas_hy", "bp", "daily"),
+    ("信用利差：CCC 級以下（OAS）", "oas_ccc", "bp", "daily"),
     ("WTI 原油（美元／桶）", "wti", "dec2", "daily"),
 ]
+
+# 信用利差（ICE BofA OAS，FRED 單位 %，換成 bp 取整數）
+OAS = {"oas_aaa": "BAMLC0A1CAAA", "oas_aa": "BAMLC0A2CAA", "oas_a": "BAMLC0A3CA", "oas_bbb": "BAMLC0A4CBBB",
+       "oas_ig": "BAMLC0A0CM", "oas_bb": "BAMLH0A1HYBB", "oas_b": "BAMLH0A2HYB", "oas_ccc": "BAMLH0A3HYC",
+       "oas_hy": "BAMLH0A0HYM2"}
 
 
 def fmt(v: float, kind: str) -> str:
@@ -88,6 +97,8 @@ def fmt(v: float, kind: str) -> str:
         return f"{half_up(v, 1)}%"
     if kind == "pct2":
         return f"{half_up(v, 2)}%"
+    if kind == "bp":
+        return f"{int(half_up(v, 0))} bp"
     if kind == "signed_pct1":
         d = half_up(v, 1)
         return f"+{d}%" if d > 0 else f"{d}%"
@@ -177,7 +188,7 @@ def build_snapshot(daily: dict) -> list:
         out.append({"label": label, "key": key, "schedule": sched,
                     "prev": fmt(pv, kind), "prevDate": pd_.strftime("%Y-%m-%d"),
                     "cur": fmt(v, kind), "date": d.strftime("%Y-%m-%d"),
-                    "delta": round(v - pv, 4), "unit": "usd" if kind == "dec2" else "pct"})
+                    "delta": round(v - pv, 4), "unit": {"dec2": "usd", "bp": "oas"}.get(kind, "pct")})
     return out
 
 
@@ -231,6 +242,7 @@ def main() -> None:
         "dgs2": dgs2, "dgs10": dgs10, "t10y2y": (dgs10 - dgs2).dropna().round(2),
         "hy_bb": fred("BAMLH0A1HYBBEY"), "hy_b": fred("BAMLH0A2HYBEY"), "hy_ccc": fred("BAMLH0A3HYCEY"),
         "wti": yahoo("CL=F"),
+        **{k: (fred(sid) * 100).round(0) for k, sid in OAS.items()},
     }
     # 那斯達克只畫趨勢，改週資料（週五收盤）縮小檔案
     nasdaq = fred("NASDAQCOM").resample("W-FRI").last().dropna()
@@ -252,7 +264,8 @@ def main() -> None:
         "ffr_lower": points(changes_only(ffr_l), 2),
         "dot_median": points(fred("FEDTARMD"), 2),
         "dot_median_lr": points(fred("FEDTARMDLR"), 2),
-        **{k: points(v, 2) for k, v in daily.items()},
+        **{k: points(v, 2) for k, v in daily.items() if not k.startswith("oas_")},
+        **{k: points(v, 0) for k, v in daily.items() if k.startswith("oas_")},
         "nasdaq": points(nasdaq, 0),
     }
     # 數據沒變就保留原本的更新時間，避免排程每次都產生空的提交
