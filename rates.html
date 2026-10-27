@@ -159,13 +159,26 @@ table.fwt tr.bx td:first-child { --bl: var(--series-1); }
 table.fwt tr.bx td:last-child { --br: var(--series-1); }
 table.fwt tr.bx-top td { --bt: var(--series-1); }
 table.fwt tr.bx-bot td { --bb: var(--series-1); }
-/* FOMC 倒數計時 */
-.cd .cd-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
-.cd .cd-boxes { display: flex; gap: 8px; }
-.cd .cd-box { min-width: 54px; padding: 6px 8px 5px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
-.cd .cd-num { font-size: 24px; font-weight: 500; line-height: 1.2; color: var(--text-primary); font-variant-numeric: tabular-nums; border-bottom: 1px solid var(--text-primary); padding-bottom: 2px; }
-.cd .cd-lab { font-size: 10px; letter-spacing: .06em; color: var(--text-secondary); margin-top: 3px; }
-.cd .cd-sub { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
+/* FOMC 倒數橫幅：深藍底，兩種主題都用同一組色 */
+.cd-banner { display: none; margin: 16px 0 18px; padding: 22px 28px; border-radius: 16px; color: #fff;
+  background: radial-gradient(120% 160% at 0% 0%, #2a527f 0%, #16335a 45%, #0d2140 100%);
+  box-shadow: 0 6px 20px rgba(13, 33, 64, .25); align-items: center; justify-content: space-between; gap: 20px 32px; flex-wrap: wrap; }
+.cd-banner.on { display: flex; }
+.cd-banner .cd-kick { font-size: 12px; font-weight: 700; letter-spacing: .14em; color: #8fb4e3; }
+.cd-banner .cd-title { font-size: 26px; font-weight: 700; line-height: 1.25; margin-top: 4px; }
+.cd-banner .cd-sub { font-size: 13px; color: #b9cde6; margin-top: 8px; }
+.cd-banner .cd-boxes { display: flex; gap: 12px; }
+.cd-banner .cd-box { width: 86px; padding: 12px 10px 9px; border-radius: 14px; background: #fff; color: #14243b; box-shadow: 0 2px 8px rgba(0, 0, 0, .25); }
+.cd-banner .cd-num { font-size: 40px; font-weight: 500; line-height: 1.1; font-variant-numeric: tabular-nums; border-bottom: 1.5px solid #14243b; padding-bottom: 4px; }
+.cd-banner .cd-lab { font-size: 11px; font-weight: 600; letter-spacing: .08em; margin-top: 5px; color: #3b4d66; }
+.cd-banner.soon .cd-num { color: #c2410c; }
+@media (max-width: 640px) {
+  .cd-banner { padding: 18px 16px; }
+  .cd-banner .cd-title { font-size: 20px; }
+  .cd-banner .cd-boxes { width: 100%; gap: 8px; }
+  .cd-banner .cd-box { flex: 1; width: auto; padding: 10px 6px 8px; }
+  .cd-banner .cd-num { font-size: 30px; }
+}
 @media (max-width: 860px) { .fw-week { grid-template-columns: 1fr; } }
 @media (max-width: 1100px) { table.fwt { min-width: 0; font-size: 11px; } table.fwt th, table.fwt td { padding: 4px 3px; } table.fwt th { font-size: 11px; } }
 .notes { margin: 8px 0 12px; font-size: 12px; color: var(--text-secondary); }
@@ -189,6 +202,8 @@ footer a { color: inherit; }
     <h1>美國貨幣成本</h1>
     <p>L1 貨幣成本：通膨是否壓得住、Fed 與市場對利率路徑的分歧、公債與信用市場的融資成本。</p>
   </header>
+
+  <section class="cd-banner" id="fomc-cd" aria-label="距離下次 FOMC 利率決議倒數"></section>
 
   <div class="toolbar" role="group" aria-label="時間範圍">
     <span>時間範圍</span>
@@ -259,7 +274,6 @@ footer a { color: inherit; }
         <h3><a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline dotted">CME FedWatch 各次會議機率 ↗</a></h3>
         <p class="desc">資料來源：芝加哥商品交易所（CME）FedWatch，芝商所 30 天期聯邦基金期貨交易反映出的隱含機率。<span id="fw-desc"></span></p>
       </div>
-      <div class="cd" id="fomc-cd" aria-live="off"></div>
     </div>
     <div id="fw-weeks"></div>
     <div class="notes" data-notes="policy"></div>
@@ -874,14 +888,17 @@ function startFomcCountdown() {
   const tick = () => {
     const now = new Date();
     const str = CAL.fomc.find(s => etToDate(s) > now);
-    if (!str) { el.innerHTML = ""; return; }
+    if (!str) { el.innerHTML = ""; el.classList.remove("on"); return; }
     const target = etToDate(str);
     let sec = Math.max(0, Math.floor((target - now) / 1000));
     const parts = [[Math.floor(sec / 86400), "DAY"], [Math.floor(sec % 86400 / 3600), "HRS"], [Math.floor(sec % 3600 / 60), "MIN"], [sec % 60, "SEC"]];
     const tw = target.toLocaleString("zh-TW", { timeZone: "Asia/Taipei", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
-    el.innerHTML = `<div class="cd-title">距離下次 FOMC 利率決議</div><div class="cd-boxes">` +
-      parts.map(([v, l]) => `<div class="cd-box"><div class="cd-num">${pad(v)}</div><div class="cd-lab">${l}</div></div>`).join("") +
-      `</div><div class="cd-sub">${str.slice(5, 7)}/${str.slice(8, 10)} 美東 14:00（台灣時間 ${tw}）</div>`;
+    el.classList.add("on");
+    el.classList.toggle("soon", sec < 86400);
+    el.innerHTML = `<div><div class="cd-kick">FOMC · 利率決議倒數</div><div class="cd-title">距離下次 FOMC 利率決議還有</div>` +
+      `<div class="cd-sub">${Number(str.slice(5, 7))}/${Number(str.slice(8, 10))} 美東 14:00（台灣時間 ${tw}）</div></div>` +
+      `<div class="cd-boxes">` +
+      parts.map(([v, l]) => `<div class="cd-box"><div class="cd-num">${pad(v)}</div><div class="cd-lab">${l}</div></div>`).join("") + `</div>`;
   };
   tick();
   setInterval(tick, 1000);
