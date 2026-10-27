@@ -144,7 +144,7 @@ table.data.snap { min-width: 640px; }
 .fw-week + .fw-week { border-top: 1px solid var(--grid); }
 .fw-week .wk { font-size: 20px; font-weight: 700; }
 .fw-bar { height: 280px; min-width: 0; }
-.fw-tbl { overflow-x: auto; }
+.fw-tbl { overflow-x: auto; padding: 2px; } /* 留邊讓 border-collapse 的 2px 外框不被捲動容器裁掉一半 */
 table.fwt { border-collapse: collapse; width: 100%; min-width: 440px; font-size: 12px; font-variant-numeric: tabular-nums; }
 table.fwt th, table.fwt td { border: 1px solid var(--border); padding: 4px 5px; text-align: right; white-space: nowrap; }
 table.fwt th { font-weight: 700; color: var(--text-primary); text-align: center; font-size: 12px; }
@@ -560,6 +560,10 @@ function renderFedwatch() {
       `<div class="fw-bar" id="chart-fw${i}" role="img" aria-label="${w.label}下次會議機率長條圖"></div>` +
       `<div class="fw-tbl"><table class="fwt">${h}</tbody></table></div></div>`;
   }).join("");
+  // 左圖高度對齊右表
+  document.querySelectorAll("#fw-weeks .fw-week").forEach(el => {
+    el.querySelector(".fw-bar").style.height = el.querySelector(".fw-tbl").offsetHeight + "px";
+  });
 }
 
 function renderFwBars() {
