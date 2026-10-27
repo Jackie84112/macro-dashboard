@@ -91,6 +91,11 @@ footer a { color: inherit; }
     <h2>跟著 AI 資本支出的錢走</h2>
     <p class="desc">示意性 100 美元資本支出在供應鏈上的分配，單位：美元。滑鼠移到流線上可看金額與占比。</p>
     <div class="chart-wrap"><div class="chart" id="chart-sankey" role="img" aria-label="每 100 美元 AI 資本支出流向桑基圖"></div></div>
+    <div class="notes">
+      <p>[註1]：紫色「台積電」節點為本站自行估算，非原圖（a16z／BNP Paribas）資料；總額取 $7（合理區間約 $5.5–8），代表台積電收到的晶圓與先進封裝（CoWoS）營收。</p>
+      <p>[註2]：估算依據：GPU／ASIC 毛利率取 70%／60%、台積電占 NVIDIA 等廠商成本約 38%／45%，並以台積電 2026 年營收（HPC 占 68%）反推交叉驗證；各流入金額（加速器 4.7、記憶體 0.3、CPU 等 1.0、網通處理器 0.5、交換器 0.3、光收發模組 0.2）為近似分配。</p>
+      <p>[註3]：假設 HBM 計入「記憶體 IC」、載板與測試計入「CPU、其他晶片及伺服器製造」，故「加速器」僅為邏輯晶片；電力中的電源管理晶片約不到 $0.1，未單獨列出。</p>
+    </div>
   </section>
 
   <section class="card">
@@ -98,7 +103,7 @@ footer a { color: inherit; }
     <p class="desc">晶片支出再往上游流到晶圓廠設備的估計，單位：美元。原圖標示 WFE 合計 $8。</p>
     <div class="wfe" id="chart-wfe" role="img" aria-label="半導體設備細項長條圖"></div>
     <div class="notes">
-      <p>[註]：原圖 WFE 合計標 $8，但五個細項加總為 $18（微影 $12 已超過 $8），原文數字不一致，故不併入上方桑基圖，僅照原圖列示；引用前建議回查 BNP Paribas 原始報告。</p>
+      <p>[註1]：原圖 WFE 合計標 $8，但五個細項加總為 $18（微影 $12 已超過 $8），原文數字不一致，故不併入上方桑基圖，僅照原圖列示；引用前建議回查 BNP Paribas 原始報告。</p>
     </div>
   </section>
 
@@ -123,6 +128,10 @@ const CATS = [
     ["土地及場址取得", 1], ["建物外殼及結構工程", 4], ["室內裝修及設施支援", 2.5] ] },
 ];
 const WFE = [["沉積", 2], ["微影", 12], ["蝕刻", 1], ["檢測", 1], ["封裝及其他", 2]];
+// 台積電（本站估算，非原圖資料）：由各晶片節點流入，合計 $7
+const TSMC = { name: "台積電", value: 7, color: "#7b5bc4", from: [
+  ["加速器", 4.7], ["記憶體 IC", 0.3], ["CPU、其他晶片及伺服器製造", 1.0],
+  ["網通處理器", 0.5], ["交換器", 0.3], ["光收發模組", 0.2] ] };
 const ROOT = "AI 資本支出";
 const ROOT_COLOR = "#f28b6b";
 
@@ -155,6 +164,15 @@ function render() {
         label: { formatter: (p) => `${p.name}  {v|${usd(p.value)}}` } });
       links.push({ source: c.name, target: n, value: v, lineStyle: { color: c.color } });
     }
+  }
+
+  nodes.push({ name: TSMC.name, value: TSMC.value, depth: 3, itemStyle: { color: TSMC.color },
+    label: { position: "right", fontWeight: 700, fontSize: 14,
+      formatter: `{t|台積電（估）}\n{v|${usd(TSMC.value)}}`,
+      rich: { t: { color: TSMC.color, fontSize: 14, fontWeight: 700, lineHeight: 20 },
+              v: { color: TSMC.color, fontSize: 14, fontWeight: 700, lineHeight: 20 } } } });
+  for (const [from, v] of TSMC.from) {
+    links.push({ source: from, target: TSMC.name, value: v, lineStyle: { color: TSMC.color, opacity: Math.min(alpha + 0.25, 0.8) } });
   }
 
   charts.sankey.setOption({
