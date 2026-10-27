@@ -153,10 +153,12 @@ table.fwt th.blank { border: none; }
 table.fwt td.hi { background: var(--tint-1); }
 table.fwt td.mid { background: var(--tint-2); }
 /* 今年剩餘會議加框（同 PPT） */
-table.fwt tr.bx td:first-child { border-left: 2px solid var(--series-1); }
-table.fwt tr.bx td:last-child { border-right: 2px solid var(--series-1); }
-table.fwt tr.bx-top td { border-top: 2px solid var(--series-1); }
-table.fwt tr.bx-bot td { border-bottom: 2px solid var(--series-1); }
+/* 用 inset 陰影畫框：border-collapse 的邊框衝突會在縮放 <100% 時讓 2px 藍線輸給 1px 灰線，陰影不受影響 */
+table.fwt tr.bx td { box-shadow: inset 2px 0 0 var(--bl, transparent), inset -2px 0 0 var(--br, transparent), inset 0 2px 0 var(--bt, transparent), inset 0 -2px 0 var(--bb, transparent); }
+table.fwt tr.bx td:first-child { --bl: var(--series-1); }
+table.fwt tr.bx td:last-child { --br: var(--series-1); }
+table.fwt tr.bx-top td { --bt: var(--series-1); }
+table.fwt tr.bx-bot td { --bb: var(--series-1); }
 @media (max-width: 860px) { .fw-week { grid-template-columns: 1fr; } }
 @media (max-width: 1100px) { table.fwt { min-width: 0; font-size: 11px; } table.fwt th, table.fwt td { padding: 4px 3px; } table.fwt th { font-size: 11px; } }
 .notes { margin: 8px 0 12px; font-size: 12px; color: var(--text-secondary); }
