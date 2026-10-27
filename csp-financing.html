@@ -83,8 +83,8 @@ button:focus-visible { outline: 2px solid #E8B04A; outline-offset: 2px; }
 .axis .plan { width: 120px; flex: none; font-size: 11px; color: var(--text-secondary); padding: 6px 8px; border-left: 1.5px dashed var(--border); display: flex; align-items: center; justify-content: center; text-align: center; }
 .axis .planhead { width: 120px; flex: none; border-left: 1.5px dashed var(--border); border-bottom: 1px solid var(--grid); }
 .lane .field { background-image:
-  repeating-linear-gradient(90deg, var(--grid) 0 1px, transparent 1px 7.6923%),
-  repeating-linear-gradient(90deg, var(--band) 0 23.0769%, transparent 23.0769% 46.1538%); }
+  repeating-linear-gradient(90deg, var(--grid) 0 1px, transparent 1px var(--mw, 6.25%)),
+  repeating-linear-gradient(90deg, var(--band) 0 var(--qw, 18.75%), transparent var(--qw, 18.75%) calc(var(--qw, 18.75%) * 2)); }
 .lane { display: flex; border-bottom: 1px solid var(--grid); min-height: 112px; position: relative; }
 .lane:last-child { border-bottom: none; }
 .lane .name { width: 110px; flex: none; padding: 10px 8px; border-right: 1px dashed var(--border); display: flex; flex-direction: column; justify-content: center; }
@@ -158,15 +158,16 @@ td.co { font-weight: 700; font-size: 14px; }
 <header>
   <h1>雲端算力公司（CSPs）融資狀況</h1>
   <p>五家公司(MSFT / AMZN / GOOGL / META / ORCL)2025 年中以來的每一筆公開市場融資,按時間、工具、金額鋪成一條「發行帶」。實心圓=已定價入袋;虛線圓=已宣布未定價。每個資料點可懸停查看來源編號,對應頁尾清單。</p>
-  <p style="margin-top:4px;font-size:12px;color:var(--text-muted)">資料截止 2026-07-14 · 全數據交叉核實 2026-07-21(SEC/IR 一手文件優先) · 金額單位 USD · 編號 [n] 對應資料來源</p>
+  <p style="margin-top:4px;font-size:12px;color:var(--text-muted)">資料截止 2026-10-27 · 2026-10-27 全面更新(7/21 版 → 納入 8 月 Alphabet 債、Meta El Paso SPV、Oracle ATM 完成、Q2 財報 capex 指引;Q3 財報尚未納入) · 金額單位 USD · 編號 [n] 對應資料來源</p>
 </header>
 
 <div class="kpis">
-  <div class="kpi"><div class="k">2026 前 5 個月五家發債</div><div class="v">$159B</div><div class="s">超過同五家之前五年總和</div><div class="src">[3] Dealogic</div></div>
-  <div class="kpi"><div class="k">2026 YTD AI 相關發債</div><div class="v">$270B</div><div class="s">其中 hyperscaler $194B</div><div class="src">[10] BofA</div></div>
-  <div class="kpi"><div class="k">2025 全年(對照)</div><div class="v">$109B</div><div class="s">2024 年僅 ~$20B</div><div class="src">[4] IESE/LSEG</div></div>
-  <div class="kpi"><div class="k">SPV/專案融資(表外)</div><div class="v">≥$115B</div><div class="s">Oracle 相關 ~$85B + Meta $30B</div><div class="src">[14][15][16][17]</div></div>
+  <div class="kpi"><div class="k">2026 YTD AI 相關債務(全市場)</div><div class="v">$489B</div><div class="s">高盛 10/5 估;摩根士丹利預估全年 ~$570B</div><div class="src">[28]</div></div>
+  <div class="kpi"><div class="k">2026 年內五家公司債(本頁彙總)</div><div class="v" id="kpiBond">—</div><div class="s">不含 SPV 與股權;LSEG 7月口徑 $182B</div><div class="src">[32] + 本頁事件加總</div></div>
+  <div class="kpi"><div class="k">六大 hyperscaler 債務(Moody's)</div><div class="v">$460B</div><div class="s">較 2024 底翻倍;租賃 $1.2T(其中 $820B 未入表)</div><div class="src">[27]</div></div>
+  <div class="kpi"><div class="k">SPV/專案融資(表外)</div><div class="v">≥$127B</div><div class="s">Oracle 相關 ~$85B + Meta $42.5B</div><div class="src">[14][15][16][17][27]</div></div>
   <div class="kpi"><div class="k">史上最大股權募資</div><div class="v">$84.75B</div><div class="s">Alphabet 2026/06(含 $40B ATM)</div><div class="src">[7] SEC 8-K</div></div>
+  <div class="kpi"><div class="k">2025 全年(對照)</div><div class="v">$109B</div><div class="s">2024 年僅 ~$20B</div><div class="src">[4] IESE/LSEG</div></div>
 </div>
 
 <!-- ═══════ ① 三燈預警 ═══════ -->
@@ -180,7 +181,7 @@ td.co { font-weight: 700; font-size: 14px; }
 <!-- ═══════ ② 發行帶 ═══════ -->
 <section>
   <div class="shead"><h2>圖 1 · 發行帶 — 時間 × 公司 × 工具</h2></div>
-  <p class="snote">看三件事:<b>密度</b>(2025 H2 起帶子變密)、<b>顏色遷移</b>(2026 年 6 月起綠色股權出現=債市階梯用盡)、<b>微軟的空白</b>(唯一不發債者,槓桿藏在融資租賃)。圓面積 ∝ 金額。</p>
+  <p class="snote">看三件事:<b>密度</b>(2025 H2 起帶子變密)、<b>顏色遷移</b>(2026 年 6 月起綠色股權出現=債市階梯用盡;8 月起紫色 SPV 與外幣債再現)、<b>微軟的空白</b>(唯一不發債者,槓桿藏在融資租賃)。圓面積 ∝ 金額。</p>
 
   <div class="controls">
     <button id="mAbs" aria-pressed="true">絕對金額</button>
@@ -214,7 +215,7 @@ td.co { font-weight: 700; font-size: 14px; }
 <!-- ═══════ ③ 資金缺口 ═══════ -->
 <section>
   <div class="shead"><h2>圖 2 · 融資依賴度 — 外部融資 ÷ 2026 資本支出</h2></div>
-  <p class="snote">絕對金額會騙人($92B 對 Amazon 和 $48B 對 Oracle 是不同重量),這個比率才是誠實的:<b>今年的建設,有幾成要靠外面的錢?</b> 斜線段=已宣布未入袋。</p>
+  <p class="snote">絕對金額會騙人($89B 對 Amazon 和 $50B 對 Oracle 是不同重量),這個比率才是誠實的:<b>今年的建設,有幾成要靠外面的錢?</b> 斜線段=已宣布未入袋。</p>
 
   <div class="gap-grid" id="gapGrid"></div>
 </section>
@@ -222,7 +223,7 @@ td.co { font-weight: 700; font-size: 14px; }
 <!-- ═══════ ④ 胃納明細 ═══════ -->
 <section>
   <div class="shead"><h2>表 1 · 市場胃納明細 — 逐家敘事層</h2></div>
-  <p class="snote">支撐①子燈判定的逐家明細。任一家兩欄以上轉黃,回到③重看它的缺口。目前的弱點排序:Oracle(評等×結構)> Amazon(認購動能)> 其他。</p>
+  <p class="snote">支撐①子燈判定的逐家明細。任一家兩欄以上轉黃,回到③重看它的缺口。目前的弱點排序:Oracle(評等×結構)> Meta(SPV 訂單轉弱)> Amazon(認購動能)> Alphabet(FCF 轉負)> Microsoft。</p>
 
   <div class="tblwrap"><table>
     <thead><tr><th>公司</th><th>信用評等</th><th>最近一筆認購/定價</th><th>CDS 動向</th><th>綜合判定</th></tr></thead>
@@ -232,35 +233,35 @@ td.co { font-weight: 700; font-size: 14px; }
         <td><span class="light g"></span>AAA 級資產負債表</td>
         <td class="note">未進債市 — 無新券可觀察 [11]</td>
         <td class="note">—</td>
-        <td><span class="light g"></span>無市場曝險;監控點在融資租賃入帳波動 [12]</td>
+        <td><span class="light g"></span>無市場曝險;CY2026 報表口徑 capex $175B(原 $190B,租賃年限 15→25 年的會計變更,支出計畫未變);FY27Q1 指引 ~$50B;未開始租約 $329B [12][29]</td>
       </tr>
       <tr>
         <td class="co">Alphabet</td>
         <td><span class="light g"></span>頂級 IG</td>
-        <td>股權 $84.75B 超額認購、上調規模 [7]</td>
-        <td class="note">發債量大、利差承壓但可吸收 [1]</td>
-        <td><span class="light g"></span>刻意轉向股權 = 保留債務空間,姿態最穩</td>
+        <td>8月 $25B 美元債 10 檔 + A$5.5B 澳幣首發(訂單未揭露);6月股權 $84.75B [7][25][26]</td>
+        <td class="note">7月 CDS 創歷史新高,水位未揭露 [32]</td>
+        <td><span class="light y"></span>股權後兩個月又發 ~$29B 債;Q2 FCF 轉負 −$5.9B、2026 capex 上調至 $195–205B;ATM $40B 截至 6/30 未售 [31][34]</td>
       </tr>
       <tr>
         <td class="co">Meta</td>
-        <td><span class="light g"></span>IG 穩固</td>
-        <td>10月 $30B 訂單簿 $125B(3.2 倍+)[4]</td>
+        <td><span class="light g"></span>IG 穩固(S&P 支持 SPV 結構;Moody's 警告表外結構使信用惡化)</td>
+        <td>8月 Sopaipilla SPV $12.5B:訂單僅 ~$20B(~1.6×)、2048 年券 7.50%;Beignet 現 7.10%(發行 5.60%)[27]</td>
         <td class="note">2025/6 起走寬 [1]</td>
-        <td><span class="light y"></span>表外 $27.3B + 評估股權增發(~$62B 未定案)→ 結構透明度下降 [13][14]</td>
+        <td><span class="light r"></span>SPV 佔總融資 ~44%(破 40% 紅線)+ 訂單轉弱 + 評估股權增發(~$62B 未正式宣布)+ capex 上調至 $130–145B [13][14][27][36]</td>
       </tr>
       <tr>
         <td class="co">Amazon</td>
         <td><span class="light g"></span>S&P AA · Moody's A1(2026/02 展望降穩定)</td>
         <td><b>認購 2.5×(3月 3.2×)· 長券加碼 18–21bp</b> [10]</td>
         <td class="note">—</td>
-        <td><span class="light y"></span>「今年不再發債」[8] — 主動退場 or 被動撞牆,Q3 財報見真章</td>
+        <td><span class="light y"></span>「今年不再發債」[8](7/9 後查無新發行)— 主動退場 or 被動撞牆;capex 上調至 ~$220B、TTM FCF −$7.6B,Q3 財報見真章 [35]</td>
       </tr>
       <tr>
         <td class="co">Oracle</td>
-        <td><span class="light r"></span><b>S&P BBB−(2026/07/09 降評, 垃圾級上一階)[2]</b><br><span class="note">Moody's Baa2 負面展望;S&P 降後展望未確認 [2][17]</span></td>
-        <td class="note">2月 $25B 需求強(~$129B 認購)[19];<b>但 4月密西根 SPV 案美系銀行集體退出,靠 PIMCO 錨定 ~$10B 才完成</b> [15]</td>
-        <td><b>CDS 走寬幅度五家之最</b> [1][2]</td>
-        <td><span class="light r"></span>評等最低 × 表外 SPV ~$85B × mini-perm 4年後再融資牆(2029–30)× RPO 近半 OpenAI — 全鏈最弱環節</td>
+        <td><span class="light r"></span><b>S&P BBB−(2026/07/09 降評, 垃圾級上一階)[2]</b><br><span class="note">Moody's Baa2 負面展望;S&P 降後展望穩定 [2][17][27]</span></td>
+        <td class="note">2月 $25B 需求強(~$129B 認購)[19];<b>但 4月密西根 SPV 案美系銀行集體退出,靠 PIMCO 錨定 ~$10B 才完成</b> [15];FY27Q1 $20B ATM 售罄 [30]</td>
+        <td><b>5年 CDS ~203bp,2008 年以來高點</b>(年初 144bp)[32]</td>
+        <td><span class="light r"></span>評等最低 × 表外 SPV ~$85B × mini-perm 4年後再融資牆(2029–30)× RPO $664B 近半 OpenAI × Q1 FCF −$5B、總債務 ~$125B — 全鏈最弱環節 [30]</td>
       </tr>
     </tbody>
   </table></div>
@@ -295,6 +296,19 @@ td.co { font-weight: 700; font-size: 14px; }
     <li>Amazon Form 424B5(2026-06-10,6/12 交割):加幣五檔合計 C$14B ≈ US$10B(C$1.25B 3.40%/2029、C$2.5B 3.70%/2031、C$2.0B 4.00%/2033、C$3.5B 4.35%/2036、C$4.75B 5.00%/2056),經 CDS 結算。<br><a href="https://www.sec.gov/Archives/edgar/data/1018724/000110465926071190/tm2613616-1_424b5.htm">sec.gov/.../tm2613616-1_424b5.htm</a></li>
     <li>Amazon Form 424B5(2026-07-08,7/9 交割):八檔合計 $25B(浮動 SOFR+0.58% $0.75B、4.6%/2029 $3.5B、4.8%/2031 $4.25B、5.1%/2033 $3B、5.3%/2036 $4.5B、6.0%/2046 $2.75B、6.1%/2056 $4B、6.25%/2066 $2.25B)。<br><a href="https://www.sec.gov/Archives/edgar/data/1018724/000110465926081786/tm2619352-2_424b5.htm">sec.gov/.../tm2619352-2_424b5.htm</a></li>
     <li>Cleary Gottlieb(交易律所)公告(2025-11):Alphabet 同步發行 $17.5B 美元債(8 檔,2028–2075)+ €6.5B 歐元債(6 檔,2028–2064),合計 ~$25B,11/6 交割。<br><a href="https://www.clearygottlieb.com/news-and-insights/news-listing/alphabet-in-17-5-billion-offering-and-6-5-billion-offering">clearygottlieb.com/...alphabet-in-17-5-billion-offering</a></li>
+    <li>Cleary Gottlieb 公告(2026-08-06):Alphabet $25B 美元債 10 檔(浮動 2028 $0.75B、4.5%/2028 $1.25B、浮動 2029 $0.5B、4.625%/2029 $2B、4.875%/2031 $3.5B、5.2%/2033 $2.5B、5.45%/2036 $4.5B、6.25%/2046 $3B、6.375%/2056 $4.5B、6.5%/2066 $2.5B),8/10 交割。<br><a href="https://www.clearygottlieb.com/news-and-insights/news-listing/alphabet-in-$25-billion-usd-denominated-bonds-offering">clearygottlieb.com/...alphabet-in-25-billion-usd</a></li>
+    <li>Cleary Gottlieb 公告(2026-08-27):Alphabet 澳幣首發 A$5.5B 6 檔(2029–2046)。美元換算 ~$3.6B 為本頁以約 0.66 匯率估算,待核。<br><a href="https://www.clearygottlieb.com/news-and-insights/news-listing/alphabet-in-inaugural-a-5-5-billion-aud-denominated-bonds-offering">clearygottlieb.com/...alphabet-a-5-5-billion-aud</a></li>
+    <li>IFR —「Bond market begins to question AI boom as Beignet sequel falls flat」(2026-08 第 1 週):Meta/BlackRock El Paso JV(Sopaipilla)$12.547bn、訂單 ~$20bn、2048 券 7.50%;Beignet 現 7.10%;Moody's 估六大 hyperscaler 債務 $460B(較 2024 底翻倍)、租賃 $1.2T(未入表 $820B)、capex $785B→近 $1T。<br><a href="https://www.ifre.com/bonds/2463746/bond-market-begins-to-question-ai-boom-as-beignet-sequel-falls-flat">ifre.com/...beignet-sequel-falls-flat</a></li>
+    <li>CryptoBriefing 轉引高盛/摩根士丹利(2026-10-05):高盛估 2026 年內 AI 相關債務 $489B、AI 槓桿融資 $88B、高收益 AI 基建 $40B;摩根士丹利預估全年 ~$570B、hyperscaler 總槓桿 0.9×→1.8×。<br><a href="https://cryptobriefing.com/goldman-morgan-stanley-ai-debt-binge/">cryptobriefing.com/goldman-morgan-stanley-ai-debt-binge</a></li>
+    <li>The Star(轉 Reuters,2026-07-31):Microsoft FY26Q4 capex $41B、FCF $19.6B;CY2026 報表口徑 capex $175B(原 $190B,資料中心租賃攤提 15→25 年);FY27Q1 指引 ~$50B;未開始資料中心租約 $329.1B。<br><a href="https://www.thestar.com.my/business/business-news/2026/07/31/microsoft-sees-strong-cash-flow-lower-capex">thestar.com.my/...microsoft-sees-strong-cash-flow-lower-capex</a></li>
+    <li>Oracle FY27 Q1 結果(2026-09-10)經 Techi / ERP Today 引述:$20B ATM 於 FY27Q1 售罄、RPO $664B(近半 OpenAI)、FCF 約 −$5B、capex 指引 $90–95B 不變、總債務 ~$125B(後者僅單一來源)。<br><a href="https://www.techi.com/oracle-backlog-664-billion-equity-funding-reversal/">techi.com/...oracle-backlog-664-billion</a> · <a href="https://erp.today/oracle-q1-fy27-results-664b-backlog-ai-contracts/">erp.today/...oracle-q1-fy27-results</a></li>
+    <li>Alphabet Form 10-Q(截至 2026-06-30):ATM $40B 尚未售出任何股份;Q3 起預計開始;ATM 用途「主要為員工股權稅款」;Berkshire $10B 為普通股私募(非可轉)。<br><a href="https://www.sec.gov/Archives/edgar/data/0001652044/000165204426000071/goog-20260630.htm">sec.gov/.../goog-20260630.htm</a></li>
+    <li>AI Weekly 轉引 LSEG(2026-07-28,8/10 更新):Oracle 5年 CDS ~203bp(18年高點,年初 144bp)、Alphabet CDS 創高(水位未揭露)、大型科技淨 CDS 名目 $12.5B(+500% vs 2025Q2,Oracle $6.5B、Amazon ~$2B)、2026 年內大型科技 IG 債 $182B。<br><a href="https://aiweekly.co/alerts/oracle-nvidia-alphabet-spacex-cds-hit-records-on-ai-debt">aiweekly.co/alerts/oracle-nvidia-alphabet-spacex-cds-hit-records</a></li>
+    <li>Invezz(2026-05-15):Alphabet 首發日圓債 ¥576.5B ≈ $3.6B(3–40年 7 檔),外國發行人史上最大日圓債。<br><a href="https://invezz.com/news/2026/05/15/google-parent-alphabet-completes-record-breaking-yen-bond-issuance/">invezz.com/...alphabet-record-breaking-yen-bond</a></li>
+    <li>W.Media(Alphabet Q2 電話會,2026-07-22):2026 capex 指引上調至 $195–205B(原 $180–190B)、Q2 capex $44.9B。<br><a href="https://w.media/ai-infrastructure-demand-pushes-alphabets-2026-capex-guidance-to-us-205-billion/">w.media/...alphabets-2026-capex-guidance-205-billion</a></li>
+    <li>LetsDataScience(Amazon Q2,2026-07-30):2026 現金 capex 指引上調至 ~$220B(原 $200B,主因記憶體成本)、Q2 購置 PP&E $54.2B、TTM FCF −$7.6B。<br><a href="https://letsdatascience.com/news/aws-revenue-growth-outruns-available-ai-capacity-b0361d90">letsdatascience.com/...aws-revenue-growth-outruns-capacity</a></li>
+    <li>Rallies.ai(Meta Q2,2026-07):2026 capex 指引下緣上調至 $130–145B(原 $125–145B)。<br><a href="https://rallies.ai/news/meta-lifts-2026-capex-guidance-to-125-145b-jpmorgan-cuts-target-to-725">rallies.ai/...meta-lifts-2026-capex-guidance</a></li>
+    <li>Quartz(2026-07-28)+ AI Weekly:Meta/BlackRock El Paso JV 結構(BlackRock 80%/Meta 20%、總成本 ~$14B、Meta 殘值保證 ~$13B、僅部分投保)。<br><a href="https://qz.com/meta-blackrock-el-paso-data-center-joint-venture-072826">qz.com/meta-blackrock-el-paso-data-center-joint-venture</a></li>
   </ol>
 
   <div class="caveats">
@@ -303,37 +317,44 @@ td.co { font-weight: 700; font-size: 14px; }
     ② AMZN 3月 $54B = 美元 11 檔 $37B(3/13 交割)+ €14.5B 8 檔(3/16 交割),均經 SEC 424B5 核實 [21]。
     ③ Alphabet $84.75B 中的 $40B ATM 自 Q3 起分批執行,圖中以虛線段/空心處理,<b>不可計入已入袋現金</b>。
     ④ Oracle FY27 的 $20B 股權與 ~$20B 債務為計畫值 [9]。
-    ⑤ Meta Hyperion(Beignet SPV):債券 $27.3B 於 2025/10/16 定價,加股權合計 ~$30B 總融資包,圖中氣泡以總包計。表外結構,但 Meta 保留租賃義務與殘值保證暴露,非零經濟曝險。
-    ⑥ 融資依賴度分母:AMZN $200B [8]、GOOGL $185B(180–190 中值)[7]、META $135B(125–145 中值)[13]、MSFT $190B [12]、ORCL 採 FY27 淨支出 $70B [9] — Oracle 為財年口徑,與others 日曆年不完全可比。
+    ⑤ Meta Hyperion(Beignet SPV):債券 $27.3B 於 2025/10/16 定價,加股權合計 ~$30B 總融資包,圖中氣泡以總包計;2026/08 另有 El Paso(Sopaipilla)$12.5B,同結構、BlackRock 取代 Blue Owl [27]。表外結構,但 Meta 保留租賃義務與殘值保證暴露,非零經濟曝險。
+    ⑥ 融資依賴度分母(2026-10-27 更新為 Q2 財報後指引):AMZN ~$220B [35]、GOOGL $200B(195–205 中值)[34]、META $137.5B(130–145 中值)[36]、MSFT $175B(報表口徑,會計變更後;原 $190B)[29]、ORCL 採 FY27 淨支出 $70B(總額 $90–95B 不變)[30] — MSFT 因租賃會計口徑改變,與他家不完全可比 — Oracle 為財年口徑,與others 日曆年不完全可比。
     ⑦ 本圖只含公開市場工具;銀行循環額度、供應商融資未含(揭露不足)。
     ⑧ 圓點的橫向位置精確到<b>月</b>;月內日期部分為近似(來源僅揭露月份者,置於月中)。精確定價日以 [n] 來源與各公司 8-K 為準。
     ⑨ <b>SPV 專案融資(紫色)在法律上是開發商/SPV 層級的債務,不直接掛在該公司資產負債表上</b>——但由該公司的長期租約支撐(如 Oracle 對 Abilene 的 15 年租約),設施交付後會以租賃負債形式逐步入表。這類貸款多為 4 年期 mini-perm(~T+250bp),到期須以「已證明的租金現金流」再融資 — <b>2029–30 年是集中再融資牆</b> [14]。
     ⑩ Oracle 2026/02 債券:IESE 載 $30B [4],SEC 文件與 DCD 為 $25B [19] — 本圖採 $25B。交叉驗證:$18B(9月)+$25B(2月)=$43B,與 Oracle 自報 FY26 債務融資一致 [9]。
     ⑪ 融資依賴度(②)只計公司層級的債+股;SPV 專案融資不在分子內。若把 Oracle 相關 SPV 債計入,其「總融資 ÷ capex」將遠超 100% — 這正是它與其他四家的本質差異。
-    ⑫ <b>一手來源核實狀態(2026-07-21 全面複核):</b>已直接對到公司自身文件(SEC 424B5 / 8-K / 10-Q / IR 新聞稿)的:AMZN 全部四筆(25/11 $15B 逐檔吻合 [20]、26/03 美元 $37B [21]、26/06 加幣 C$14B [22]、26/07 $25B [23])、GOOGL 股權 $84.75B [7]、ORCL ATM+$5B 特別股+$25B 債 [18][19]、ORCL FY26/FY27 計畫 [9]、MSFT 零公開發債(EDGAR 申報全清單核實)與租賃口徑 [12]。<b>仍依賴媒體/第三方的:</b>GOOGL 兩筆債(交易律所公告 [24]+媒體,未逐檔對 SEC)、Meta 兩筆債(8-K 在案但未逐檔加總)、全部 SPV 專案融資(私募交易,無公開發行文件,採 Bloomberg/法律備忘/開發商新聞稿 [14][15][16][17])、總量 KPI(Dealogic/BofA/LSEG 經媒體轉引,且機構口徑有落差:2025 年五家發債 LSEG 算 $109B、BofA 算 $121B)。
-    ⑬ <b>三燈預警(①)口徑:</b>門檻值錨定於已核實的歷史劣化區間(如認購倍數門檻參照 Apollo 統計:板塊認購從 2月 ~5× 掉至 7月 <2×;Amazon 7月 2.5× 恰落黃區)。CDS 水位為 3 月口徑,7 月精確值待補;標「定性」者無公開量化數據,以媒體描述歸類;AMZN 的 CDS 利差雖穩,但 MSFT/AMZN/ORCL 合計 CDS 對沖名目 Q1 達 $4.6B(去年同期 $0.76B),避險需求先於利差移動,列為觀察點。子燈灰=不適用或資料不足,不計入聚合。行為異化燈中 GOOGL 的股權轉向市場多解讀為「主動保留債務空間」(正面),但行為本身仍屬債市階梯後段動作,故計入事件數 — 解讀分歧見④表。
+    ⑫ <b>一手來源核實狀態(2026-07-21 全面複核;2026-10-27 新增項目另見⑭⑮):</b>已直接對到公司自身文件(SEC 424B5 / 8-K / 10-Q / IR 新聞稿)的:AMZN 全部四筆(25/11 $15B 逐檔吻合 [20]、26/03 美元 $37B [21]、26/06 加幣 C$14B [22]、26/07 $25B [23])、GOOGL 股權 $84.75B [7]、ORCL ATM+$5B 特別股+$25B 債 [18][19]、ORCL FY26/FY27 計畫 [9]、MSFT 零公開發債(EDGAR 申報全清單核實)與租賃口徑 [12]。<b>仍依賴媒體/第三方的:</b>GOOGL 兩筆債(交易律所公告 [24]+媒體,未逐檔對 SEC)、Meta 兩筆債(8-K 在案但未逐檔加總)、全部 SPV 專案融資(私募交易,無公開發行文件,採 Bloomberg/法律備忘/開發商新聞稿 [14][15][16][17])、總量 KPI(Dealogic/BofA/LSEG 經媒體轉引,且機構口徑有落差:2025 年五家發債 LSEG 算 $109B、BofA 算 $121B)。
+    ⑬ <b>三燈預警(①)口徑:</b>門檻值錨定於已核實的歷史劣化區間(如認購倍數門檻參照 Apollo 統計:板塊認購從 2月 ~5× 掉至 7月 <2×;Amazon 7月 2.5× 恰落黃區)。CDS 水位:Oracle 為 LSEG 7月口徑 ~203bp [32],其餘公司水位未揭露(Alphabet 創高但無 bp,列灰);標「定性」者無公開量化數據,以媒體描述歸類;AMZN 的 CDS 利差雖穩,但 MSFT/AMZN/ORCL 合計 CDS 對沖名目 Q1 達 $4.6B(去年同期 $0.76B),避險需求先於利差移動,列為觀察點。子燈灰=不適用或資料不足,不計入聚合。行為異化燈中 GOOGL 的股權轉向市場多解讀為「主動保留債務空間」(正面),但行為本身仍屬債市階梯後段動作,故計入事件數 — 解讀分歧見④表。
+    ⑭ <b>2026-10-27 更新範圍與限制:</b>本次搜尋<b>未能確認 9–10 月有新發行</b>(Amazon、Meta、Alphabet、Oracle 皆查無),但搜尋工具覆蓋有限,不代表沒有;請以各公司 8-K/424B 為準。Q3 財報(10 月底陸續發布)尚未納入;Alphabet ATM 在 Q3 實際售出量待 Q3 10-Q;Meta 股權增發截至今日查無正式宣布。三燈判定隨新數據重算:認購倍數燈由綠轉黃(Meta 8 月 SPV 僅 ~1.6×)、結構端由黃轉紅(Meta SPV 佔比 ~44% 破 40%)、價格端 Oracle CDS 轉紅;發行行為燈的 6 個月窗口前移,Oracle 2 月事件滑出,故由 2 降為 1。
+    ⑮ <b>新增項目的來源等級:</b>Alphabet 8/6 美元債與 8/27 澳幣債來自交易律所公告(未逐檔對 SEC);澳幣美元換算 ~$3.6B 為本頁估算。Oracle ATM $20B 售罄與總債務 ~$125B 取自 Oracle Q1 FY27 公告的二手引述(總債務僅單一來源),日期以 FY27Q1 區間中點近似。Meta Sopaipilla 訂單 ~$20B 採 IFR;另有來源載 ~$17B,倍數落在 1.4–1.6×,不影響紅燈判定。Amazon capex ~$220B 與 Meta/Alphabet capex 區間取自媒體報導,未逐一對公司新聞稿。
+  </div>
 </section>
 
 </main>
 
 <script>
-/* ── 時間軸:2025-07 → 2026-08 ── */
+/* ── 時間軸:2025-07 → 2026-10 ── */
 const T0 = new Date('2025-07-01').getTime();
-const T1 = new Date('2026-08-01').getTime();
+const T1 = new Date('2026-11-01').getTime();   // 16 個月:2025-07 → 2026-10
 const pos = d => ((new Date(d).getTime() - T0) / (T1 - T0)) * 100;
 
-const MONTHS = ["2025年7月","8月","9月","10月","11月","12月","2026年1月","2月","3月","4月","5月","6月","7月"];
+const MONTHS = ["2025年7月","8月","9月","10月","11月","12月","2026年1月","2月","3月","4月","5月","6月","7月","8月","9月","10月"];
 document.getElementById('axisMonths').innerHTML = MONTHS.map(m=>`<div class="m">${m}</div>`).join('');
-/* 季度列:跨欄顯示,寬度 = 月數/13 */
+/* 季度列:跨欄顯示,寬度 = 月數/總月數 */
+const NM = MONTHS.length;
+document.documentElement.style.setProperty('--mw', (100/NM)+'%');
+document.documentElement.style.setProperty('--qw', (300/NM)+'%');
 const QTRS = [
   {label:'2025Q3', months:3},
   {label:'2025Q4', months:3},
   {label:'2026Q1', months:3},
   {label:'2026Q2', months:3},
-  {label:'2026Q3', months:1},
+  {label:'2026Q3', months:3},
+  {label:'2026Q4', months:1},
 ];
 document.getElementById('axisQtrs').innerHTML = QTRS.map(q=>
-  `<div class="q" style="width:${q.months/13*100}%">${q.label}</div>`).join('');
+  `<div class="q" style="width:${q.months/NM*100}%">${q.label}</div>`).join('');
 
 /* 事件資料 — src 對應頁尾編號 */
 const EVENTS = {
@@ -347,17 +368,22 @@ const EVENTS = {
   GOOGL: [
     {d:'2025-11-06', amt:25,  type:'bond',   firm:false, tip:'公司債 ~$25B\n美元 $17.5B(8檔) + €6.5B(6檔)\n11/6 交割 · 交易律所公告核實 ✓\n(MUFG $17.5B 係純美元口徑, 見警告①)\n2025/11 [1][24]'},
     {d:'2026-02-10', amt:31.5,type:'bond',   firm:false, tip:'公司債 $31.5B\n美元/英鎊/瑞郎\n含數十年首檔科技業百年債\n2026/02 [5][6]'},
+    {d:'2026-05-15', amt:3.6, type:'bond',   firm:false, tip:'公司債 ¥576.5B ≈ US$3.6B · 日圓首發(Samurai)\n3/5/7/10/15/30/40 年 7 檔\n外國發行人史上最大日圓債\n2026/05 [33]'},
+    {d:'2026-08-06', amt:25,  type:'bond',   firm:false, tip:'公司債 $25B · 美元 10 檔 2028–2066\n(含浮動 $1.25B;4.5%/2028 至 6.5%/2066)\nSEC 註冊發行 · 8/10 交割\n訂單簿/NIC 未見公開數據\n2026/08/06 [25]'},
+    {d:'2026-08-27', amt:3.6, type:'bond',   firm:false, tip:'公司債 A$5.5B ≈ US$3.6B(依約 0.66 匯率估,待核)\n澳幣首發 · 6 檔 2029–2046\n2026/08/27 [26]'},
     {d:'2026-06-02', amt:44.75,type:'equity',firm:false, tip:'股權 $44.75B 已定價\n($18B 普通股 + $16.75B 6.25%強制可轉\n+ $10B Berkshire 私募, 均上調後)\n超額配售權 ~$5B 為額外選擇權(未含)\n6/2 宣布 · 6/4–5 交割 [7]'},
   ],
   META: [
     {d:'2025-10-30', amt:30,  type:'bond',   firm:false, tip:'公司債 $30B\n非併購史上最大\n訂單簿 $125B\n30yr T+98 / 40yr T+110\n2025/10/30 [4]'},
     {d:'2025-10-16', amt:30,  type:'pcredit',firm:false, tip:'SPV 私募信貸 ~$30B 總包(表外)\n債券 $27.3B 10/16 定價(T+225, S&P A+)\nHyperion 園區 · Beignet SPV\n(Meta 20% / Blue Owl 80%, PIMCO 錨定)\n史上最大私募信貸資料中心案\n2025/10/16 [14]'},
-    {d:'2026-04-25', amt:25,  type:'bond',   firm:false, tip:'公司債 $25B\n2026/04 [5]'},
+    {d:'2026-04-25', amt:25,  type:'bond',   firm:false, tip:'公司債 $25B · 6 檔 2031–2066\n訂單簿 ~$96B(10月那筆 $125B)\n2026/04 [5]'},
+    {d:'2026-08-03', amt:12.5,type:'pcredit',firm:false, tip:'SPV 私募信貸 $12.5B(表外)\nSopaipilla · 德州 El Paso ~1GW\nBlackRock 80% / Meta 20% · 總成本 ~$14B\n仿 Beignet 結構,Meta 提供殘值保證 ~$13B\n訂單僅 ~$20B(~1.6×),2048 年券殖利率 7.50%\nIFR 8/1–7 週報;日期為週內近似 [27][37]'},
   ],
   ORCL: [
     {d:'2025-09-24', amt:18,  type:'bond',   firm:false, tip:'公司債 $18B · 6檔 5–40年\n當時科技業史上最大\n(2025 美國 IG 第二大, 次於 Mars $26B)\n峰值需求 ~$88B\n2025/09 [1][4]'},
     {d:'2025-10-27', amt:38,  type:'pcredit',firm:false, tip:'SPV 專案融資 $38B(表外)\n德州 $23.25B + 威斯康辛 $14.75B\nJPMorgan/MUFG 主辦銀團\n4年期 mini-perm ~T+250bp\nVantage 開發、Oracle 承租\n2025/10 [14][16]'},
     {d:'2026-02-02', amt:25,  type:'bond',   firm:false, tip:'公司債 $25B · 8檔 3–40年\n整包認購需求 ~$129B(Bloomberg)\n(IESE 曾載 $30B, 以 SEC 為準)\n2026/02/02 [19]'},
+    {d:'2026-07-15', amt:20,  type:'equity', firm:false, tip:'ATM 普通股 $20B 售罄(稅前)\nFY27 Q1(6–8月)內分批完成,\n日期為區間中點近似\n來源:Oracle Q1 FY27 公告(經二手引述,見警告⑮)\n2026/09/10 揭露 [30]'},
     {d:'2026-02-02', amt:5,   type:'equity', firm:false, tip:'6.50% Series D 強制可轉特別股 $5B\n超額認購 · 2/5 發行\n2026/02 [18][19]'},
     {d:'2025-11-07', amt:18,  type:'pcredit',firm:false, tip:'SPV 專案融資 $18B(表外)\n新墨西哥 · STACK 開發(Project Jupiter)\nSMBC/MUFG/BNPP/GS 主辦 ~20 家銀團\nSOFR+~250bp · 4年 mini-perm\n2025/11/07 放款 [14][17]'},
     {d:'2026-04-24', amt:16.3,type:'pcredit',firm:false, tip:'SPV 專案融資 $16.3B(表外)\n密西根 Saline · 史上最大單一設施\nRelated Digital 開發(官方稿 $16B)\n美系銀行退出, PIMCO 錨定 ~$10B\n債 ~$14B(7.5%/19.5年)+股權 ~$2B\n2026/04/24 宣布 [15]'},
@@ -365,13 +391,12 @@ const EVENTS = {
 };
 /* 計畫區(未定價) */
 const PLANS = {
-  GOOGL:[{amt:40, type:'equity', tip:'ATM 計畫 $40B\nQ3 起分批執行\n未入袋 [7]'}],
-  META: [{amt:62, type:'equity', tip:'股權增發評估中\n~$62B(第三方推估)\n未定案 [13]'}],
-  ORCL: [{amt:20, type:'equity', tip:'ATM 股權計畫 $20B\n2026/02/02 建立\n截至 2/28 未售出任何股份 [18]\n(= FY27 計畫中的股權部分, 勿重複計算 [9])'},
-         {amt:20, type:'bond',   tip:'FY27 額外債務計畫 ~$20B [9]'}],
+  GOOGL:[{amt:40, type:'equity', tip:'ATM 計畫 $40B\n6/30 10-Q:尚未售出任何股份\n10-Q 載明用途「主要為員工股權稅款」\nQ3 實際售出量待 Q3 10-Q [7][31]'}],
+  META: [{amt:62, type:'equity', tip:'股權增發評估中\n~$62B(第三方推估)\n截至 10/27 查無正式宣布 [13]'}],
+  ORCL: [{amt:20, type:'bond',   tip:'FY27 額外債務計畫 ~$20B [9]\n(FY27 $40B 融資計畫中的債務部分;\n股權 $20B ATM 已於 FY27 Q1 完成 [30])'}],
   MSFT: [], AMZN: [],
 };
-const CAPEX = {MSFT:190, AMZN:200, GOOGL:185, META:135, ORCL:70};
+const CAPEX = {MSFT:175, AMZN:220, GOOGL:200, META:137.5, ORCL:70};
 const ORDER = ['MSFT','AMZN','GOOGL','META','ORCL'];
 const NAMES = {MSFT:'Microsoft', AMZN:'Amazon', GOOGL:'Alphabet', META:'Meta', ORCL:'Oracle'};
 const COLOR = {bond:'var(--bond)', equity:'var(--equity)', pcredit:'var(--pcredit)'};
@@ -429,11 +454,11 @@ function renderGaps(){
     const max = r.capex;
     const w = v => Math.min(100, v/max*100);
     const fcfNote = {
-      MSFT:'OCF 自給;租賃另計 [12]',
-      AMZN:'TTM FCF $1.2B(去年同期 $26B;Q1 8-K 口徑)[5]',
-      GOOGL:'OCF 強勁;股權係主動選擇 [7]',
-      META:'另有表外 SPV $27.3B 未計入 [14]',
-      ORCL:'FY26 FCF <b class="neg">−$23.7B</b> [9] · 債 $18B+$25B=$43B 與公司揭露相符 [9][19]<br>另有 SPV 專案融資 ~$85B <b>不在此比率內</b>(表外)[14][15]',
+      MSFT:'FY26Q4 FCF $19.6B;capex 為「報表口徑」(租賃年限會計變更),未開始租約 $329B [12][29]',
+      AMZN:'TTM FCF <b class="neg">−$7.6B</b>(去年同期 +$18.2B;Q2 口徑)· capex 上調至 ~$220B [35]',
+      GOOGL:'Q2 FCF <b class="neg">−$5.9B</b>、Q2 capex $44.9B;8月再發 $25B+A$5.5B 債 [25][26][34]',
+      META:'另有表外 SPV $27.3B(Beignet)+ $12.5B(Sopaipilla)未計入 [14][27]',
+      ORCL:'FY26 FCF <b class="neg">−$23.7B</b> [9];FY27Q1 FCF 約 <b class="neg">−$5B</b>、總債務 ~$125B [30]<br>另有 SPV 專案融資 ~$85B <b>不在此比率內</b>(表外)[14][15]',
     }[r.co];
     return `<div class="gcard">
       <h3>${NAMES[r.co]}</h3>
@@ -461,35 +486,35 @@ const LIGHTS = [
       MSFT:{c:'na', tip:'無公開發債 — 不適用 [12]'},
       AMZN:{c:'y', v:'2.5×', tip:'7月 $25B:認購 2.5×\n(3月 3.2× → 下行中)\n2026/07 [10]'},
       GOOGL:{c:'na', tip:'2月英鎊檔 ~10× 超額\n整體倍數無公開數 — 待補 [5]'},
-      META:{c:'g', v:'~3.8×', tip:'4月 $25B:峰值訂單 ~$96B ≈ 3.8×\n2026/04(媒體)'},
+      META:{c:'r', v:'~1.6×', tip:'8月 Sopaipilla SPV $12.5B:訂單僅 ~$20B ≈ 1.6×\n(SPV 結構債,非公司債;公司債最近一筆\n4月 $25B 為 ~3.8×)\n2026/08 [27]'},
       ORCL:{c:'g', v:'~4.3×', tip:'2月整包 $30B:認購 ~$129B ≈ 4.3×\n2026/02 [19]'},
     }},
     {name:'新發行溢價(NIC)', rule:'≤5bp 綠 · 5–15bp 黃 · >15bp 紅', vals:{
       MSFT:{c:'na', tip:'無公開發債 — 不適用'},
       AMZN:{c:'r', v:'+18–21bp', tip:'7月長券加碼 18–21bp\n「投資人開始推回」(BofA)\n2026/07 [10]'},
       GOOGL:{c:'na', tip:'無公開 NIC 數據 — 待補'},
-      META:{c:'y', v:'走寬', tip:'4月利差較 10月那筆走寬(定性)\n2026/04(媒體)'},
+      META:{c:'y', v:'走寬', tip:'4月利差較 10月那筆走寬(定性)\n8月 Sopaipilla 2048 券殖利率 7.50%;\nBeignet 發行 5.60% → 現 7.10% [27]'},
       ORCL:{c:'na', tip:'2月未見公開 NIC 數據 — 待補'},
     }},
     {name:'發行行為異化(6個月事件數)', rule:'0 綠 · 1 黃 · ≥2 紅', vals:{
       MSFT:{c:'g', v:'0', tip:'始終未進債市,無行為變化 [12]'},
       AMZN:{c:'r', v:'2', tip:'① 加幣首發(6月)[22]\n② 宣布年內不再發債(7月)[8]\n幣別多元化+主動退場'},
-      GOOGL:{c:'r', v:'2', tip:'① 英鎊/瑞郎首發+百年債(2月)[5][6]\n② 史上最大股權募資(6月)[7]\n註:市場解讀為主動保留債務空間,\n姿態穩但行為本身=債市階梯後段'},
+      GOOGL:{c:'r', v:'3', tip:'① 日圓首發(5月)[33]、澳幣首發(8月)[26]\n② 史上最大股權募資(6月)[7]\n(2月英鎊/瑞郎首發已滑出 6 個月窗口)\n註:市場解讀股權為主動保留債務空間,\n但股權後兩個月又發債,行為=債市階梯後段'},
       META:{c:'y', v:'1', tip:'評估 ~$62B 股權增發(未定案)[13]'},
-      ORCL:{c:'r', v:'2', tip:'① $20B ATM 首建(2月)[18]\n② $5B 強制可轉首發(2月)[19]\n債轉股工具全面啟用'},
+      ORCL:{c:'y', v:'1', tip:'① $20B ATM 於 FY27 Q1 售罄(6–8月)[30]\n(2月 ATM 建立+$5B 強制可轉已滑出\n6 個月窗口,故由 2 降為 1;工具仍全面啟用)'},
     }},
   ]},
   {name:'價格端 — 存量債重定價', tf:'更新頻率:每日連續 · CDS/評等', subs:[
     {name:'CDS 水位(5年期)', rule:'<75bp 綠 · 75–150bp 黃 · >150bp 紅', vals:{
       MSFT:{c:'g', v:'窄', tip:'顯著低於 Oracle(定性)\n精確值待補 [1]'},
       AMZN:{c:'g', v:'窄', tip:'顯著低於 Oracle(定性)\n但對沖名目量激增(見警告⑬)[1]'},
-      GOOGL:{c:'g', v:'窄', tip:'顯著低於 Oracle(定性)[1]'},
+      GOOGL:{c:'na', tip:'7月 CDS 創歷史新高(Q2 FCF 轉負後),\n但水位(bp)未揭露 — 待補 [32]'},
       META:{c:'g', v:'窄', tip:'顯著低於 Oracle(定性)[1]'},
-      ORCL:{c:'y', v:'>125bp', tip:'3月口徑 >125bp\n2009 年以來最高\n7月精確水位待補;>150bp 轉紅 [11]'},
+      ORCL:{c:'r', v:'~203bp', tip:'5年 CDS ~203bp(LSEG,2026/07)\n2008 年以來高點;年初 144bp\n>150bp 轉紅 [32]'},
     }},
     {name:'CDS 變速(發債後變化)', rule:'<+25% 綠 · +25–100% 黃 · >+100% 紅', vals:{
       MSFT:{c:'g', v:'穩', tip:'無顯著走寬(定性)[1]'},
-      AMZN:{c:'g', v:'穩', tip:'利差穩,但 MSFT/AMZN/ORCL 合計\nCDS 對沖名目 Q1 $4.6B(去年 $0.76B)\n= 機構避險需求 6 倍 [1]'},
+      AMZN:{c:'g', v:'穩', tip:'利差穩,但 AMZN 淨 CDS 名目 ~$2B;\n大型科技淨 CDS 名目合計 $12.5B\n(較 2025Q2 +500%,Oracle 占 $6.5B)[32]'},
       GOOGL:{c:'g', v:'穩', tip:'發債量大、利差承壓但可吸收 [1]'},
       META:{c:'y', v:'~2×', tip:'2025/6 起走寬\n年初以來約翻倍(定性)[1]'},
       ORCL:{c:'r', v:'~3×', tip:'9月發債後翻三倍\n五家之最 [1][2]'},
@@ -507,8 +532,8 @@ const LIGHTS = [
       MSFT:{c:'g', v:'0%', tip:'無 SPV;槓桿以融資租賃入表\n(口徑不同,另行監控)[12]'},
       AMZN:{c:'g', v:'0%', tip:'無已知 SPV 專案融資'},
       GOOGL:{c:'g', v:'0%', tip:'無已知 SPV 專案融資'},
-      META:{c:'y', v:'~35%', tip:'$30B ÷ ($55B 公司債 + $30B SPV)\n2025H2 起累計 [14]'},
-      ORCL:{c:'r', v:'~64%', tip:'~$85B ÷ ($48B 債+股 + $85B SPV)\n計入 SPV 後融資÷capex 遠超 100%\n(見警告⑪)[14][15][16][17]'},
+      META:{c:'r', v:'~44%', tip:'$42.5B SPV(Beignet $30B + Sopaipilla $12.5B)\n÷ ($55B 公司債 + $42.5B SPV)= 44%\n8月 Sopaipilla 後由 35% 升破 40% 紅線 [14][27]'},
+      ORCL:{c:'r', v:'~56%', tip:'~$85B ÷ ($68B 債+股 + $85B SPV)\n(ATM $20B 售罄後分母變大,64% → 56%)\n計入 SPV 後融資÷capex 遠超 100%\n(見警告⑪)[14][15][16][17][30]'},
     }},
     {name:'再融資牆(mini-perm 集中到期)', rule:'無牆 綠 · 牆≤1×年OCF 黃 · >1×年OCF 紅', vals:{
       MSFT:{c:'g', v:'無', tip:'租賃長期攤提,無集中到期'},
@@ -557,6 +582,7 @@ function setMode(m){ mode=m; mA.setAttribute('aria-pressed',m==='abs'); mC.setAt
 mA.addEventListener('click',()=>setMode('abs'));
 mC.addEventListener('click',()=>setMode('cap'));
 render();
+(function(){const t=Object.values(EVENTS).flat().filter(e=>e.type==='bond'&&new Date(e.d)>=new Date('2026-01-01')).reduce((a,e)=>a+e.amt,0);document.getElementById('kpiBond').textContent='$'+Math.round(t)+'B';})();
 </script>
 <script src="nav.js?v=20261027c"></script>
 </body>
