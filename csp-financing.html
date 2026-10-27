@@ -5,172 +5,160 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CSP 融資狀況｜宏觀監控儀表板</title>
 <style>
-  /* ── 財務印刷品風格:冷白紙面 + 藏青墨 ───────────────── */
-  :root{
-    --paper:#FAFBFC;
-    --paper-2:#F1F3F6;
-    --ink:#14243D;
-    --ink-2:#3D4E68;
-    --ink-3:#7C8AA0;
-    --rule:#D6DCE4;
-    --rule-2:#B9C2CF;
-
-    --bond:#1F4E8C;       /* 公司債 */
-    --equity:#1F8C6B;     /* 股權 */
-    --pcredit:#7A4FA3;    /* 私募信貸/表外 */
-    --warn:#C23B3B;
-    --amber:#B07C1F;
-
-    --mono:ui-monospace,'Cascadia Mono',Consolas,Menlo,monospace;
-    --disp:Georgia,'Times New Roman','Songti TC','PMingLiU','Microsoft JhengHei',serif;
-    --body:'Segoe UI','Microsoft JhengHei','PingFang TC','Noto Sans TC',system-ui,sans-serif;
+:root {
+  color-scheme: light;
+  --bg: #f5f5f3; --surface: #fcfcfb; --border: #e4e3de; --grid: #ecebe7;
+  --text-primary: #0b0b0b; --text-secondary: #52514e; --text-muted: #7a7973;
+  --bad: #c43131; --group-bg: #f3f2ee;
+  --bond: #2a78d6; --equity: #00a5a6; --pcredit: #8a5cc2;
+  --lg: #0ca30c; --ly: #fab219; --lr: #d03b3b;
+  --tip-shadow: rgba(0,0,0,.18); --band: rgba(11,11,11,.035);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211; --surface: #1a1a19; --border: #2e2e2b; --grid: #2a2a28;
+    --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #8f8e86;
+    --bad: #e66767; --group-bg: rgba(255,255,255,.05);
+    --bond: #3987e5; --equity: #1cc0c1; --pcredit: #a57bd6; --band: rgba(255,255,255,.04);
   }
-  *{box-sizing:border-box}
-  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);line-height:1.55;padding:30px 24px 70px}
-  .wrap{max-width:1220px;margin:0 auto}
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211; --surface: #1a1a19; --border: #2e2e2b; --grid: #2a2a28;
+  --text-primary: #ffffff; --text-secondary: #c3c2b7; --text-muted: #8f8e86;
+  --bad: #e66767; --group-bg: rgba(255,255,255,.05);
+  --bond: #3987e5; --equity: #1cc0c1; --pcredit: #a57bd6; --band: rgba(255,255,255,.04);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text-primary); line-height: 1.5;
+  font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+main { max-width: 1080px; margin: 0 auto; padding: 32px 16px 48px; }
+header h1 { font-size: 28px; margin: 0 0 4px; font-weight: 700; }
+header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
+b { font-weight: 600; }
 
-  header{border-bottom:2.5px solid var(--ink);padding-bottom:16px;margin-bottom:8px}
-  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin-bottom:8px}
-  h1{font-family:var(--disp);font-weight:700;font-size:clamp(23px,3.2vw,34px);margin:0 0 6px;letter-spacing:-.01em}
-  .sub{color:var(--ink-2);font-size:13.5px;max-width:76ch;margin:0}
-  .stamp{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:10px}
+/* 頂部數字卡（同站內燈號卡外觀） */
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 20px 0; }
+.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
+.kpi .k { font-size: 12px; color: var(--text-secondary); }
+.kpi .v { font-size: 22px; font-weight: 700; margin-top: 2px; }
+.kpi .s { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+.kpi .src { font-size: 11.5px; color: var(--text-muted); }
 
-  /* KPI strip */
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));border:1px solid var(--rule-2);border-top:none;margin-bottom:40px}
-  .kpi{padding:14px 16px;border-right:1px solid var(--rule)}
-  .kpi:last-child{border-right:none}
-  .kpi .k{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3)}
-  .kpi .v{font-family:var(--mono);font-size:22px;font-weight:600;margin-top:3px}
-  .kpi .s{font-size:11px;color:var(--ink-3);margin-top:2px}
-  .kpi .src{font-family:var(--mono);font-size:9.5px;color:var(--ink-3)}
+section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px 20px 12px; margin-bottom: 16px; }
+.shead h2 { font-size: 18px; margin: 0; font-weight: 700; }
+.snote { margin: 2px 0 0; color: var(--text-secondary); font-size: 13px; }
+.snote, .lnote { max-width: none; }
 
-  section{margin-top:44px}
-  .shead{display:flex;align-items:baseline;gap:12px}
-  .snum{font-family:var(--mono);font-size:11px;color:var(--warn);letter-spacing:.08em}
-  h2{font-family:var(--disp);font-weight:600;font-size:20px;margin:0}
-  .snote{color:var(--ink-2);font-size:13px;margin:6px 0 20px;max-width:80ch}
+.controls { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin: 12px 0 0; }
+button { font: inherit; font-size: 12px; padding: 2px 10px; border-radius: 6px; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text-secondary); cursor: pointer; }
+button[aria-pressed="true"] { background: var(--text-primary); color: var(--surface); border-color: var(--text-primary); }
+button:focus-visible { outline: 2px solid #E8B04A; outline-offset: 2px; }
 
-  /* controls */
-  .controls{display:flex;gap:8px;margin:0 0 14px;flex-wrap:wrap}
-  button{font-family:var(--mono);font-size:11px;letter-spacing:.05em;background:var(--paper);color:var(--ink-2);border:1px solid var(--rule-2);padding:6px 12px;cursor:pointer;border-radius:2px}
-  button:hover{border-color:var(--ink-2)}
-  button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-  button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.legend { display: flex; flex-wrap: wrap; gap: 4px 20px; margin: 10px 0 12px; font-size: 12px; color: var(--text-secondary); }
+.lg { display: flex; align-items: center; gap: 5px; }
+.chip { width: 8px; height: 8px; border-radius: 50%; }
+.chip.hollow { background: transparent !important; border: 1.5px dashed currentColor; width: 10px; height: 10px; }
 
-  .legend{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--ink-2);margin-bottom:16px}
-  .lg{display:flex;align-items:center;gap:6px}
-  .chip{width:13px;height:13px;border-radius:50%}
-  .chip.hollow{background:transparent!important;border:2px dashed currentColor}
+/* 提示框：同站內 #tip */
+[data-tip]:hover::after { content: attr(data-tip); position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(100% + 8px);
+  background: var(--surface); color: var(--text-primary); border: 1px solid var(--border); border-radius: 8px;
+  box-shadow: 0 4px 14px var(--tip-shadow); padding: 9px 13px 10px; font-size: 12px; font-weight: 400; line-height: 1.5;
+  white-space: pre; z-index: 60; pointer-events: none; text-align: left; }
 
-  /* ── ② 發行帶 ── */
-  .tape{border:1px solid var(--rule-2);background:#fff;position:relative;overflow-x:auto}
-  .tape-inner{min-width:860px;position:relative}
-  .axis{border-bottom:1px solid var(--rule-2);background:var(--paper-2)}
-  .axis .row{display:flex}
-  .axis .pre{width:110px;flex:none;font-family:var(--mono);font-size:9.5px;color:var(--ink-3);padding:6px 8px;border-right:1px dashed var(--rule-2);display:flex;align-items:center}
-  .axis .prehead{width:110px;flex:none;border-right:1px dashed var(--rule-2);border-bottom:1px solid var(--rule)}
-  .axis .months{flex:1;display:flex}
-  .axis .qtrs{flex:1;display:flex;border-bottom:1px solid var(--rule)}
-  .axis .q{font-family:var(--mono);font-size:10px;font-weight:600;color:var(--ink-2);padding:5px 4px;text-align:center;border-right:1.5px solid var(--rule-2)}
-  .axis .q:last-child{border-right:none}
-  .axis .m{flex:1;font-family:var(--mono);font-size:9px;color:var(--ink-3);padding:5px 3px;border-right:1px solid var(--rule);text-align:center}
-  .axis .plan{width:120px;flex:none;font-family:var(--mono);font-size:9.5px;color:var(--amber);padding:6px 8px;border-left:1.5px dashed var(--amber);text-align:center;display:flex;align-items:center;justify-content:center}
-  .axis .planhead{width:120px;flex:none;border-left:1.5px dashed var(--amber);border-bottom:1px solid var(--rule)}
-  /* 月格線 + 季度交替色帶(13 個月,每月 7.6923%,每季 23.0769%)*/
-  .lane .field{
-    background-image:
-      repeating-linear-gradient(90deg, var(--rule) 0 1px, transparent 1px 7.6923%),
-      repeating-linear-gradient(90deg, rgba(20,36,61,.030) 0 23.0769%, transparent 23.0769% 46.1538%);
-  }
-  .axis .plan{width:120px;flex:none;font-family:var(--mono);font-size:9.5px;color:var(--amber);padding:6px 8px;border-left:1.5px dashed var(--amber);text-align:center}
+/* 發行帶 */
+.tape { border: 1px solid var(--border); border-radius: 8px; background: var(--surface); position: relative; overflow-x: auto; }
+.tape-inner { min-width: 860px; position: relative; }
+.axis { border-bottom: 1px solid var(--border); background: var(--group-bg); }
+.axis .row { display: flex; }
+.axis .pre { width: 110px; flex: none; font-size: 11px; color: var(--text-muted); padding: 6px 8px; border-right: 1px dashed var(--border); display: flex; align-items: center; }
+.axis .prehead { width: 110px; flex: none; border-right: 1px dashed var(--border); border-bottom: 1px solid var(--grid); }
+.axis .months { flex: 1; display: flex; }
+.axis .qtrs { flex: 1; display: flex; border-bottom: 1px solid var(--grid); }
+.axis .q { font-size: 12px; font-weight: 600; color: var(--text-secondary); padding: 5px 4px; text-align: center; border-right: 1.5px solid var(--border); }
+.axis .q:last-child { border-right: none; }
+.axis .m { flex: 1; font-size: 11px; color: var(--text-muted); padding: 5px 3px; border-right: 1px solid var(--grid); text-align: center; }
+.axis .plan { width: 120px; flex: none; font-size: 11px; color: var(--text-secondary); padding: 6px 8px; border-left: 1.5px dashed var(--border); display: flex; align-items: center; justify-content: center; text-align: center; }
+.axis .planhead { width: 120px; flex: none; border-left: 1.5px dashed var(--border); border-bottom: 1px solid var(--grid); }
+.lane .field { background-image:
+  repeating-linear-gradient(90deg, var(--grid) 0 1px, transparent 1px 7.6923%),
+  repeating-linear-gradient(90deg, var(--band) 0 23.0769%, transparent 23.0769% 46.1538%); }
+.lane { display: flex; border-bottom: 1px solid var(--grid); min-height: 112px; position: relative; }
+.lane:last-child { border-bottom: none; }
+.lane .name { width: 110px; flex: none; padding: 10px 8px; border-right: 1px dashed var(--border); display: flex; flex-direction: column; justify-content: center; }
+.lane .name b { font-size: 14px; font-weight: 700; }
+.lane .name span { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.lane .field { flex: 1; position: relative; }
+.lane .planzone { width: 120px; flex: none; border-left: 1.5px dashed var(--border); position: relative; }
+.evt { position: absolute; top: 50%; border-radius: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; cursor: default; }
+.evt .amt { position: absolute; font-size: 11px; font-weight: 600; color: var(--text-primary); white-space: nowrap; top: calc(100% + 2px); left: 50%; transform: translateX(-50%); text-align: center; line-height: 1.25; }
+.empty-note { position: absolute; inset: 0; display: flex; align-items: center; padding-left: 16px; font-size: 12px; color: var(--text-muted); }
 
-  .lane{display:flex;border-bottom:1px solid var(--rule);min-height:78px;position:relative}
-  .lane:last-child{border-bottom:none}
-  .lane .name{width:110px;flex:none;padding:10px 8px;border-right:1px dashed var(--rule-2);display:flex;flex-direction:column;justify-content:center}
-  .lane .name b{font-family:var(--disp);font-size:14px;font-weight:600}
-  .lane .name span{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);margin-top:2px}
-  .lane .field{flex:1;position:relative}
-  .lane .planzone{width:120px;flex:none;border-left:1.5px dashed var(--amber);position:relative}
-  .evt{position:absolute;top:50%;border-radius:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;cursor:default}
-  .evt .amt{position:absolute;font-family:var(--mono);font-size:9.5px;font-weight:600;color:var(--ink);white-space:nowrap;top:calc(100% + 2px);left:50%;transform:translateX(-50%);text-align:center;line-height:1.25}
-  .evt[data-tip]:hover::after{
-    content:attr(data-tip);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
-    background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:10.5px;line-height:1.5;
-    padding:8px 10px;border-radius:2px;white-space:pre;z-index:30;pointer-events:none;box-shadow:0 3px 12px rgba(20,36,61,.25);
-  }
-  .empty-note{position:absolute;inset:0;display:flex;align-items:center;padding-left:16px;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);font-style:italic}
+/* 融資依賴度 */
+.gap-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 12px 0 8px; }
+.gcard { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 14px 16px; }
+.gcard h3 { font-size: 17px; font-weight: 700; margin: 0; line-height: 1.3; }
+.dep { font-size: 22px; font-weight: 700; margin: 4px 0 0; }
+.dep small { font-size: 12px; color: var(--text-muted); font-weight: 400; }
+.gbar { margin-top: 10px; }
+.gbar .lab { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 3px; }
+.gtrack { height: 14px; background: var(--group-bg); border: 1px solid var(--border); border-radius: 3px; display: flex; overflow: hidden; }
+.gseg { height: 100%; }
+.gseg.hollow { background-image: repeating-linear-gradient(135deg, transparent 0 3px, var(--text-muted) 3px 4px); }
+.gfoot { font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.6; }
+.gfoot b { color: var(--text-primary); }
+.gfoot .neg { color: var(--bad); font-weight: 600; }
 
-  /* ── ③ 資金缺口 ── */
-  .gap-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
-  .gcard{border:1px solid var(--rule-2);background:#fff;padding:14px 14px 12px}
-  .gcard h3{font-family:var(--disp);font-size:15px;font-weight:600;margin:0}
-  .dep{font-family:var(--mono);font-size:26px;font-weight:600;margin:6px 0 0}
-  .dep small{font-size:11px;color:var(--ink-3);font-weight:400}
-  .gbar{margin-top:12px}
-  .gbar .lab{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9.5px;color:var(--ink-3);margin-bottom:3px}
-  .gtrack{height:16px;background:var(--paper-2);border:1px solid var(--rule);display:flex;overflow:hidden}
-  .gseg{height:100%}
-  .gseg.hollow{background-image:repeating-linear-gradient(135deg,transparent 0 3px,rgba(20,36,61,.28) 3px 6px)}
-  .gfoot{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);margin-top:8px;line-height:1.6}
-  .gfoot b{color:var(--ink)}
-  .gfoot .neg{color:var(--warn);font-weight:600}
+/* 表格 */
+.tblwrap { overflow-x: auto; margin: 12px -20px 0; padding: 0 20px 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 760px; }
+th { text-align: left; padding: 6px 5px; color: var(--text-secondary); font-weight: 600; border-bottom: 1px solid var(--border); }
+td { padding: 8px 5px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+tbody tr:last-child td { border-bottom: none; }
+td.co { font-weight: 700; font-size: 14px; }
+.light { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.g { background: var(--lg); } .y { background: var(--ly); } .r { background: var(--lr); }
+.note { font-size: 12px; color: var(--text-muted); }
 
-  /* ── ④ 胃納明細 ── */
-  .tblwrap{overflow-x:auto;border:1px solid var(--rule-2);background:#fff}
-  table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;min-width:760px}
-  th{text-align:left;padding:10px 14px;background:var(--paper-2);color:var(--ink-3);font-weight:500;font-size:10px;text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--rule-2)}
-  td{padding:11px 14px;border-bottom:1px solid var(--rule);vertical-align:top}
-  tbody tr:last-child td{border-bottom:none}
-  td.co{font-family:var(--disp);font-weight:600;font-size:13px}
-  .light{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:1px}
-  .g{background:#2E8B57}.y{background:#D9A21B}.r{background:var(--warn)}
-  .note{font-size:10.5px;color:var(--ink-3)}
+/* 三燈預警（燈號外觀同站內 .signal） */
+.lights { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; margin: 12px 0 0; }
+.lcard { border: 1px solid var(--border); border-radius: 12px; background: var(--surface); padding: 14px 16px; }
+.lhead { display: flex; align-items: center; gap: 12px; border-bottom: 1px dashed var(--border); padding-bottom: 10px; margin-bottom: 6px; }
+.bigdot { width: 22px; height: 22px; border-radius: 50%; flex: none; box-shadow: 0 0 0 4px var(--halo, transparent); animation: lamp-blink 2s ease-in-out infinite; }
+@keyframes lamp-blink { 0%, 100% { opacity: 1; } 50% { opacity: .65; } }
+@media (prefers-reduced-motion: reduce) { .bigdot { animation: none; } }
+.lhead h3 { font-size: 17px; font-weight: 700; margin: 0; line-height: 1.3; }
+.lhead .tf { font-size: 12px; color: var(--text-secondary); margin-top: 1px; }
+.sub-l { padding: 9px 0; border-bottom: 1px dashed var(--border); }
+.sub-l:last-child { border-bottom: none; padding-bottom: 2px; }
+.sub-t { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 600; }
+.sdot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.sub-t .rule { font-size: 11.5px; font-weight: 400; color: var(--text-secondary); margin-left: auto; text-align: right; line-height: 1.4; }
+.chips { display: flex; gap: 5px; margin-top: 7px; flex-wrap: wrap; }
+.cchip { font-size: 12px; padding: 2px 8px; border-radius: 6px; color: #fff; cursor: default; position: relative; }
+.cchip.na { background: var(--group-bg); color: var(--text-muted); border: 1px dashed var(--border); }
+.lnote { font-size: 12px; color: var(--text-secondary); margin: 12px 0 8px; line-height: 1.7; }
+.lnote b { color: var(--text-primary); }
 
-  /* ── ① 三燈預警 ── */
-  .lights{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:12px}
-  .lcard{border:1px solid var(--rule-2);background:#fff;padding:14px 16px}
-  .lhead{display:flex;align-items:center;gap:11px;border-bottom:1px solid var(--rule);padding-bottom:10px;margin-bottom:6px}
-  .bigdot{width:22px;height:22px;border-radius:50%;flex:none;box-shadow:0 0 0 3px var(--paper-2)}
-  .lhead h3{font-family:var(--disp);font-size:15px;font-weight:600;margin:0}
-  .lhead .tf{font-family:var(--mono);font-size:9.5px;color:var(--ink-3);margin-top:1px}
-  .sub-l{padding:9px 0;border-bottom:1px dashed var(--rule)}
-  .sub-l:last-child{border-bottom:none;padding-bottom:2px}
-  .sub-t{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:500}
-  .sdot{width:11px;height:11px;border-radius:50%;flex:none}
-  .sub-t .rule{font-family:var(--mono);font-size:9px;color:var(--ink-3);margin-left:auto;text-align:right;line-height:1.4}
-  .chips{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
-  .cchip{font-family:var(--mono);font-size:9.5px;padding:2.5px 7px;border-radius:2px;color:#fff;cursor:default;position:relative}
-  .cchip.na{background:var(--paper-2);color:var(--ink-3);border:1px dashed var(--rule-2)}
-  .cchip[data-tip]:hover::after{
-    content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
-    background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:10.5px;line-height:1.5;
-    padding:8px 10px;border-radius:2px;white-space:pre;z-index:30;pointer-events:none;box-shadow:0 3px 12px rgba(20,36,61,.25);
-  }
-  .lnote{font-size:11px;color:var(--ink-3);margin:12px 2px 0;line-height:1.75;max-width:104ch}
-  .lnote b{color:var(--ink-2)}
-
-  /* sources */
-  .sources{margin-top:46px;border-top:2.5px solid var(--ink);padding-top:16px}
-  .sources h3{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-3);margin:0 0 12px}
-  .sources ol{margin:0;padding-left:22px;font-size:11.5px;color:var(--ink-2);column-count:2;column-gap:40px}
-  .sources li{margin-bottom:6px;break-inside:avoid}
-  .sources a{color:var(--bond);text-decoration:none;word-break:break-all}
-  .sources a:hover{text-decoration:underline}
-  .caveats{margin-top:18px;border:1px solid var(--amber);background:#FBF6EA;padding:12px 16px;font-size:12px;color:var(--ink-2)}
-  .caveats b{color:var(--ink)}
-
-  @media(max-width:640px){body{padding:20px 12px 50px}.sources ol{column-count:1}}
-  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+/* 資料來源／口徑 */
+.sources h3 { display: none; }
+.sources ol { margin: 12px 0 0; padding-left: 22px; font-size: 12px; color: var(--text-secondary); column-count: 2; column-gap: 40px; }
+.sources li { margin-bottom: 6px; break-inside: avoid; }
+.sources a { color: inherit; word-break: break-all; }
+.caveats { margin-top: 14px; border-top: 1px solid var(--grid); padding-top: 12px; font-size: 12px; color: var(--text-secondary); line-height: 1.7; }
+.caveats b { color: var(--text-primary); }
+@media (max-width: 720px) { .sources ol { column-count: 1; } }
 </style>
 </head>
 <body>
-<div class="wrap">
+<main>
 
 <header>
-  <div class="eyebrow">AI Capex Financing Monitor · Prospectus View</div>
-  <h1>Hyperscaler 融資總覽:誰在借、用什麼借、市場還買不買單</h1>
-  <p class="sub">五家公司(MSFT / AMZN / GOOGL / META / ORCL)2025 年中以來的每一筆公開市場融資,按時間、工具、金額鋪成一條「發行帶」。實心圓=已定價入袋;虛線圓=已宣布未定價。每個資料點可懸停查看來源編號,對應頁尾清單。</p>
-  <div class="stamp">資料截止 2026-07-14 · 全數據交叉核實 2026-07-21(SEC/IR 一手文件優先) · 金額單位 USD · 編號 [n] 對應資料來源</div>
+  <h1>雲端算力公司（CSPs）融資狀況</h1>
+  <p>五家公司(MSFT / AMZN / GOOGL / META / ORCL)2025 年中以來的每一筆公開市場融資,按時間、工具、金額鋪成一條「發行帶」。實心圓=已定價入袋;虛線圓=已宣布未定價。每個資料點可懸停查看來源編號,對應頁尾清單。</p>
+  <p style="margin-top:4px;font-size:12px;color:var(--text-muted)">資料截止 2026-07-14 · 全數據交叉核實 2026-07-21(SEC/IR 一手文件優先) · 金額單位 USD · 編號 [n] 對應資料來源</p>
 </header>
 
 <div class="kpis">
@@ -183,7 +171,7 @@
 
 <!-- ═══════ ① 三燈預警 ═══════ -->
 <section>
-  <div class="shead"><span class="snum">① </span><h2>三燈預警 — 需求 / 價格 / 結構</h2></div>
+  <div class="shead"><h2>三燈預警 — 需求 / 價格 / 結構</h2></div>
   <p class="snote">三個主燈各覆蓋一種時間尺度:<b>需求端</b>(每筆發行,最領先)、<b>價格端</b>(每日連續)、<b>結構端</b>(每季慢變,決定尾部)。子燈按量化門檻自動判定,懸停各家籌碼看數值與來源。聚合規則:公司籌碼 ≥2 紅 → 子燈紅;1 紅或 ≥2 黃 → 子燈黃;單一黃不升級(個別風險看籌碼色);主燈取子燈最差。灰虛框=不適用或資料不足,不計入判定(見警告⑬)。</p>
   <div class="lights" id="lightsGrid"></div>
   <p class="lnote">※ <b>「發行行為異化」的意涵</b> — 指發債金額之外的<b>行為證據</b>,三類事件計數:① <b>換新幣別發行</b>(美元池吃緊後,轉挖歐元/加幣/英鎊/瑞郎等新資金池);② <b>債轉股</b>(改用股權、ATM、強制可轉等工具 — 股權稀釋是最貴的資金,通常在債務空間變貴或變窄時才動用);③ <b>主動宣布退出債市</b>(可能是財務紀律,也可能是自知市場胃納見頂)。單獨一件都可有正面解讀 — 如 Alphabet 轉股權被市場視為「主動保留債務空間」— 但<b>多家同時出現 = 債市階梯集體走到後段</b>,對美元 IG 池的邊際依賴已達上限。這是需求端最早的定性訊號,通常領先認購倍數與利差惡化一至兩個季度。</p>
@@ -191,7 +179,7 @@
 
 <!-- ═══════ ② 發行帶 ═══════ -->
 <section>
-  <div class="shead"><span class="snum">② </span><h2>發行帶 — 時間 × 公司 × 工具</h2></div>
+  <div class="shead"><h2>圖 1 · 發行帶 — 時間 × 公司 × 工具</h2></div>
   <p class="snote">看三件事:<b>密度</b>(2025 H2 起帶子變密)、<b>顏色遷移</b>(2026 年 6 月起綠色股權出現=債市階梯用盡)、<b>微軟的空白</b>(唯一不發債者,槓桿藏在融資租賃)。圓面積 ∝ 金額。</p>
 
   <div class="controls">
@@ -225,7 +213,7 @@
 
 <!-- ═══════ ③ 資金缺口 ═══════ -->
 <section>
-  <div class="shead"><span class="snum">③ </span><h2>融資依賴度 — 外部融資 ÷ 2026 資本支出</h2></div>
+  <div class="shead"><h2>圖 2 · 融資依賴度 — 外部融資 ÷ 2026 資本支出</h2></div>
   <p class="snote">絕對金額會騙人($92B 對 Amazon 和 $48B 對 Oracle 是不同重量),這個比率才是誠實的:<b>今年的建設,有幾成要靠外面的錢?</b> 斜線段=已宣布未入袋。</p>
 
   <div class="gap-grid" id="gapGrid"></div>
@@ -233,7 +221,7 @@
 
 <!-- ═══════ ④ 胃納明細 ═══════ -->
 <section>
-  <div class="shead"><span class="snum">④ </span><h2>市場胃納明細 — 逐家敘事層</h2></div>
+  <div class="shead"><h2>表 1 · 市場胃納明細 — 逐家敘事層</h2></div>
   <p class="snote">支撐①子燈判定的逐家明細。任一家兩欄以上轉黃,回到③重看它的缺口。目前的弱點排序:Oracle(評等×結構)> Amazon(認購動能)> 其他。</p>
 
   <div class="tblwrap"><table>
@@ -279,7 +267,8 @@
 </section>
 
 <!-- ═══════ 來源 ═══════ -->
-<div class="sources">
+<section class="sources">
+  <div class="shead"><h2>資料來源與口徑</h2></div>
   <h3>資料來源(點內編號對應)</h3>
   <ol>
     <li>Reuters via Yahoo Finance —「AI hyperscalers will drive higher US corporate bond supply in 2026」(2026-01):2025 各筆發行、Barclays 供給預估、CDS 走寬。<br><a href="https://finance.yahoo.com/news/ai-hyperscalers-drive-higher-us-225314460.html">finance.yahoo.com/...ai-hyperscalers-drive-higher-us</a></li>
@@ -323,9 +312,9 @@
     ⑪ 融資依賴度(②)只計公司層級的債+股;SPV 專案融資不在分子內。若把 Oracle 相關 SPV 債計入,其「總融資 ÷ capex」將遠超 100% — 這正是它與其他四家的本質差異。
     ⑫ <b>一手來源核實狀態(2026-07-21 全面複核):</b>已直接對到公司自身文件(SEC 424B5 / 8-K / 10-Q / IR 新聞稿)的:AMZN 全部四筆(25/11 $15B 逐檔吻合 [20]、26/03 美元 $37B [21]、26/06 加幣 C$14B [22]、26/07 $25B [23])、GOOGL 股權 $84.75B [7]、ORCL ATM+$5B 特別股+$25B 債 [18][19]、ORCL FY26/FY27 計畫 [9]、MSFT 零公開發債(EDGAR 申報全清單核實)與租賃口徑 [12]。<b>仍依賴媒體/第三方的:</b>GOOGL 兩筆債(交易律所公告 [24]+媒體,未逐檔對 SEC)、Meta 兩筆債(8-K 在案但未逐檔加總)、全部 SPV 專案融資(私募交易,無公開發行文件,採 Bloomberg/法律備忘/開發商新聞稿 [14][15][16][17])、總量 KPI(Dealogic/BofA/LSEG 經媒體轉引,且機構口徑有落差:2025 年五家發債 LSEG 算 $109B、BofA 算 $121B)。
     ⑬ <b>三燈預警(①)口徑:</b>門檻值錨定於已核實的歷史劣化區間(如認購倍數門檻參照 Apollo 統計:板塊認購從 2月 ~5× 掉至 7月 <2×;Amazon 7月 2.5× 恰落黃區)。CDS 水位為 3 月口徑,7 月精確值待補;標「定性」者無公開量化數據,以媒體描述歸類;AMZN 的 CDS 利差雖穩,但 MSFT/AMZN/ORCL 合計 CDS 對沖名目 Q1 達 $4.6B(去年同期 $0.76B),避險需求先於利差移動,列為觀察點。子燈灰=不適用或資料不足,不計入聚合。行為異化燈中 GOOGL 的股權轉向市場多解讀為「主動保留債務空間」(正面),但行為本身仍屬債市階梯後段動作,故計入事件數 — 解讀分歧見④表。
-</div>
+</section>
 
-</div>
+</main>
 
 <script>
 /* ── 時間軸:2025-07 → 2026-08 ── */
@@ -465,7 +454,7 @@ function renderGaps(){
 /* ── ③ 三燈預警:資料 + 判定 ──
    c: g/y/r/na · v: 顯示值 · tip: 懸停(數值+來源)
    更新方式:只改 LIGHTS 內的 c/v/tip,燈色與聚合自動重算 */
-const LCOLOR = {g:'#2E8B57', y:'#D9A21B', r:'#C23B3B'};
+const LCOLOR = {g:'#0ca30c', y:'#fab219', r:'#d03b3b'};
 const LIGHTS = [
   {name:'A · 需求端 — 一級市場胃納', tf:'更新頻率:每筆發行 · 領先性最強', subs:[
     {name:'認購倍數(最近一筆)', rule:'≥3× 綠 · 2–3× 黃 · <2× 紅', vals:{
@@ -547,7 +536,7 @@ function renderLights(){
     const subCols = L.subs.map(s=>subAgg(s.vals));
     const master = subCols.includes('r') ? 'r' : subCols.includes('y') ? 'y' : 'g';
     return `<div class="lcard">
-      <div class="lhead"><span class="bigdot" style="background:${LCOLOR[master]}"></span>
+      <div class="lhead"><span class="bigdot" style="background:${LCOLOR[master]};--halo:${LCOLOR[master]}2b"></span>
         <div><h3>${L.name}</h3><div class="tf">${L.tf}</div></div></div>
       ${L.subs.map((s,i)=>`<div class="sub-l">
         <div class="sub-t"><span class="sdot" style="background:${LCOLOR[subCols[i]]}"></span>${s.name}<span class="rule">${s.rule}</span></div>
@@ -555,7 +544,7 @@ function renderLights(){
           const v = s.vals[co];
           return v.c==='na'
             ? `<span class="cchip na" data-tip="${v.tip}">${co} —</span>`
-            : `<span class="cchip" data-tip="${v.tip}" style="background:${LCOLOR[v.c]}">${co}${v.v? ' '+v.v : ''}</span>`;
+            : `<span class="cchip" data-tip="${v.tip}" style="background:${LCOLOR[v.c]};color:${v.c==='y'?'#0b0b0b':'#fff'}">${co}${v.v? ' '+v.v : ''}</span>`;
         }).join('')}</div>
       </div>`).join('')}
     </div>`;
