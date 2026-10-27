@@ -16,6 +16,7 @@
       { href: "asml.html", label: "ASML產能分配", desc: "邏輯 vs 記憶體系統銷售金額與占比" },
       { href: "capex.html", label: "AI半導體產業看板", desc: "雲端大廠 CapEx 季度趨勢與 YoY" },
       { href: "csp-cashflow.html", label: "CSP 現金流", desc: "雲端大廠 OCF vs CapEx、FCF 與燈號" },
+      { href: "csp-financing.html", label: "CSP 融資狀況", desc: "雲端大廠發債／股權／SPV 發行帶與融資依賴度" },
     ] },
   ];
   const here = location.pathname.split("/").pop() || "index.html";
