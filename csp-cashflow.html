@@ -157,7 +157,7 @@ footer a { color: inherit; }
 <main>
   <header>
     <h1>雲端算力公司（CSPs）現金流趨勢</h1>
-    <p>Microsoft、Amazon、Google、Meta、Oracle 合計的現金資本支出成長（約 +70%／年）遠快於營業現金流（約 +23%／年）；三顆燈號追蹤融資行為、現金自給能力與投資轉化。數據取自 SEC EDGAR XBRL，實際數據至 2026 Q1（Oracle 至 2026 Q2）。</p>
+    <p>Microsoft、Amazon、Google、Meta、Oracle 合計的現金資本支出成長（約 +72%／年）遠快於營業現金流（約 +24%／年）；三顆燈號追蹤融資行為、現金自給能力與投資轉化。數據取自 SEC EDGAR XBRL，實際數據至 2026 Q2（Meta、Oracle 至 2026 Q3）。</p>
   </header>
 
   <section class="signals" id="signals" aria-label="三大警示燈號">
@@ -189,10 +189,10 @@ footer a { color: inherit; }
     </div>
     <div class="notes">
       <p>[註1]：取自 SEC 10-K／10-Q iXBRL 申報；Oracle 財季對映至最近日曆季；純現金口徑，不含融資租賃。</p>
-      <p>[註2]：虛線為指數趨勢——對 2023 Q2（GPT-4 發布）至 2026 Q1 的數據取對數後以 OLS 擬合再外推；TTM 檢視之趨勢與成長率以 TTM 數據按同法重新擬合。</p>
-      <p>[註3]：合計趨勢數據參照 <a href="https://epoch.ai/data-insights/hyperscaler-capex-vs-cash-flow" target="_blank" rel="noopener">Epoch AI</a>（CC-BY）。</p>
-      <p>[註4]：最新一季（2026 Q1）行業合計資本支出已達營業現金流的 94%，三年前僅 36%；單季自由現金流緩衝只剩 $9.5B，上一季為 $50B。以滾動四季（TTM）計算，比率為 75%。</p>
-      <p>[註5]：Oracle（TTM 比率 174%）與 Amazon（102%）已跨越交叉點，資本支出超過自身造血能力，須依賴發債與外部融資；Google、Meta、Microsoft 仍有緩衝，但缺口都在收窄。</p>
+      <p>[註2]：虛線為指數趨勢——對 2023 Q2（GPT-4 發布）至 2026 Q2 的數據取對數後以 OLS 擬合再外推；季度與 TTM 檢視各以自己的序列於載入時擬合，成長率與交叉點隨之不同。行業合計僅納五家皆已公布的季度，故止於 2026 Q2。</p>
+      <p>[註3]：擬合方法與口徑參照 <a href="https://epoch.ai/data-insights/hyperscaler-capex-vs-cash-flow" target="_blank" rel="noopener">Epoch AI</a>（CC-BY）。</p>
+      <p>[註4]：最新一季（2026 Q2）行業合計資本支出已達營業現金流的 97%，三年前（2023 Q2）僅 36%；單季自由現金流緩衝只剩 $4.8B，上一季為 $9.5B。以滾動四季（TTM）計算，比率為 82%。</p>
+      <p>[註5]：Oracle（TTM 比率 161%）與 Amazon（107%）已跨越交叉點，資本支出超過自身造血能力，須依賴發債與外部融資；Google（71%）、Meta（78%）TTM 仍低於 100%，但最新單季已分別升至 115%、104%；Microsoft（63%）仍有緩衝。</p>
     </div>
   </section>
 
@@ -225,6 +225,9 @@ footer a { color: inherit; }
       <span><i class="dotl" style="background:var(--error)"></i>TTM ＞ 100%</span>
     </div>
     <div class="table-wrap"><table class="data" id="qtable"></table></div>
+    <div class="notes">
+      <p>[註1]：各家取最新一季並排，非同一季度：Microsoft、Amazon、Google 至 2026 Q2，Meta、Oracle 至 2026 Q3（三家 Q3 財報預計 10 月底公布）。</p>
+    </div>
   </section>
 
   <section class="card" id="card-co">
@@ -235,6 +238,9 @@ footer a { color: inherit; }
       </div>
     </div>
     <div id="cards"></div>
+    <div class="notes">
+      <p>[註1]：Microsoft、Amazon、Google 的 2026 Q3 尚未公布，圖中 26Q3 為空。</p>
+    </div>
   </section>
 
   <section class="card" id="card-detail">
@@ -267,14 +273,14 @@ footer a { color: inherit; }
     <details>
       <summary>資料來源與口徑<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
       <div class="dbody">
-        <p>數據取自五家公司向 SEC 申報的 10-Q／10-K 現金流量表（2021Q2–2026Q2），經 SEC EDGAR XBRL API 以結構化標籤直接解析，不採用新聞稿或法說會口頭數字，確保五家口徑一致。</p>
+        <p>數據取自五家公司向 SEC 申報的 10-Q／10-K 現金流量表（2021Q2–2026Q3），經 SEC EDGAR XBRL API 以結構化標籤直接解析，不採用新聞稿或法說會口頭數字，確保五家口徑一致。</p>
         <ul>
           <li><b>營業現金流（OCF）</b>：<code>NetCashProvidedByUsedInOperatingActivities</code>，即經營活動淨現金流入，未扣除任何投資支出。</li>
           <li><b>資本支出（Capex）</b>：純現金口徑 <code>PaymentsToAcquirePropertyPlantAndEquipment</code>（Amazon 為 <code>PaymentsToAcquireProductiveAssets</code>）。與 Epoch AI 相同，<b>不含融資租賃</b>——租賃簽約當下幾乎不動用現金，本頁量測的是「當期真金白銀的缺口」。</li>
           <li><b>季度化</b>：10-Q 現金流為年初至今（YTD）累計制，已逐季差分還原為單季；同期若有重述，以最新申報值為準。驗證：Microsoft 直接申報的 3 個月值（$46.68B）與 9M−6M 差分結果完全一致；四大的單季 OCF 均有直接申報的 3M 標籤可對照。</li>
-          <li><b>曆季對齊</b>：Oracle 財季止於 2／5／8／11 月，按最大重疊歸入曆法季度（止於 5 月的財季計入 Q2）；行業合計僅納五家皆有數據的季度，故合計止於 2026Q1、Oracle 單家先行至 2026Q2。</li>
+          <li><b>曆季對齊</b>：Oracle 財季止於 2／5／8／11 月，按最大重疊歸入曆法季度（止於 5 月的財季計入 Q2）；行業合計僅納五家皆有數據的季度，故合計止於 2026Q2，Meta、Oracle 單家先行至 2026Q3。</li>
           <li><b>TTM 回看</b>：滾動四季序列需前三季墊底，已補入 2021Q2–Q4 合計（OCF $75.4／$76.9／$75.9B、Capex $31.6／$33.8／$37.5B），使 TTM 自 2022Q1 起完整。</li>
-          <li><b>融資項目（融資行為燈）</b>：回購 <code>PaymentsForRepurchaseOfCommonStock</code>、股息 <code>PaymentsOfDividends（CommonStock）</code>、發債／還債 <code>ProceedsFromIssuanceOf（Senior）LongTermDebt</code>／<code>RepaymentsOfLongTermDebt</code>（Google 用 <code>ProceedsFromDebtNetOfIssuanceCosts</code>／<code>RepaymentsOfDebt</code>；Microsoft 未以標準標籤申報發債，計 0——其歷史為淨還債方）。同樣經 YTD 差分為單季。</li>
+          <li><b>融資項目（融資行為燈）</b>：回購 <code>PaymentsForRepurchaseOfCommonStock</code>、股息 <code>PaymentsOfDividends（CommonStock）</code>、發債／還債 <code>ProceedsFromIssuanceOf（Senior）LongTermDebt</code>／<code>RepaymentsOfLongTermDebt</code>（Google 用 <code>ProceedsFromDebtNetOfIssuanceCosts</code>／<code>RepaymentsOfDebt</code>；Microsoft 未以標準標籤申報發債，計 0——其歷史為淨還債方）。同樣經 YTD 差分為單季。還債僅計 <code>RepaymentsOfLongTermDebt</code>；Google、Oracle 另有以其他標籤申報的還債（如 Oracle 2026Q3 <code>RepaymentsOfDebt</code> $4.2B）未計入，淨發債略為高估，不影響燈號判定。</li>
           <li><b>交叉驗證</b>：合計序列與 Epoch AI 同口徑 CSV 逐季比對一致（如 2023Q2：本頁 $96.87B vs 其 $96.9B）。</li>
         </ul>
       </div>
@@ -282,11 +288,11 @@ footer a { color: inherit; }
 <details>
       <summary>分析方法<svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
       <div class="dbody">
-        <p>主圖虛線為指數增長模型：對 2023Q2（GPT-4 發布後首個完整季度）至 2026Q1 的數據取自然對數後，以普通最小二乘法（OLS）擬合再外推。季度檢視沿用 Epoch 擬合——Capex +70%／年 vs OCF +23%／年，兩線交叉於 2026Q3；TTM 檢視以 TTM 數據按同法於頁面載入時重新擬合——Capex 約 +56%／年 vs OCF 約 +26%／年，交叉約 2027Q4（$947B 附近），黑點畫在兩條擬合線的精確交點上。</p>
+        <p>主圖虛線為指數增長模型：對 2023Q2（GPT-4 發布後首個完整季度）至 2026Q2 的數據取自然對數後，以普通最小二乘法（OLS）擬合再外推；季度與 TTM 檢視均於頁面載入時以各自序列重新擬合。季度檢視——Capex +72%／年 vs OCF +24%／年，兩線交叉於 2026Q3；TTM 檢視——Capex 約 +59%／年 vs OCF 約 +27%／年，交叉約 2027Q3（$909B 附近），黑點畫在兩條擬合線的精確交點上。</p>
         <ul>
           <li><b>為什麼用對數座標</b>：固定百分比成長在對數座標上是直線，斜率即增速；Capex 線更陡，兩條直線必然相交——「趨勢交叉」由此而來。</li>
-          <li><b>兩個交叉日期的解讀</b>：季度交叉（2026Q3）＝首季入不敷出的領先訊號；TTM 交叉（2027Q4）＝滾動全年入不敷出的結構確認。五個季度的差距中約 1.5–2 季是 TTM 的機械滯後，其餘量測的是 capex 增速的「加速度」——兩日期逐季靠近＝加速持續、時間表壓縮；拉開＝減速、跑道延長。</li>
-          <li><b>比率長條圖</b>：逐季 Capex ÷ OCF，自 2023Q1 的 52% 攀至 2026Q1 的 94%；100% 虛線即當季收支平衡線。</li>
+          <li><b>兩個交叉日期的解讀</b>：季度交叉（2026Q3）＝首季入不敷出的領先訊號；TTM 交叉（2027Q3）＝滾動全年入不敷出的結構確認。四個季度的差距中約 1.5–2 季是 TTM 的機械滯後，其餘量測的是 capex 增速的「加速度」——兩日期逐季靠近＝加速持續、時間表壓縮；拉開＝減速、跑道延長。</li>
+          <li><b>比率長條圖</b>：逐季 Capex ÷ OCF，自 2023Q1 的 52% 攀至 2026Q2 的 97%；100% 虛線即當季收支平衡線。</li>
           <li><b>表格衍生指標</b>：TTM 比率＝TTM Capex ÷ TTM OCF；FCF＝OCF − Capex；YoY＝對前一年同季（帶正負號）。</li>
         </ul>
       </div>
@@ -298,8 +304,8 @@ footer a { color: inherit; }
           <li><b>不含融資租賃</b>：Microsoft 大量以 finance lease 建置資料中心（2025 年約 $25B 量級），純現金口徑會系統性低估其真實投資強度——其綠燈比表面更緊。</li>
           <li><b>FCF ≥ 0 ≠ 資金無虞</b>：本頁未扣股息與回購；真正的自給線是 OCF ≥ Capex ＋ 股息 ＋ 回購。回購縮水通常是管理層最早的讓步訊號。</li>
           <li><b>季節性</b>：Amazon 的 OCF 高度集中於 Q4、Q1 偏低（2026Q1 單季比率 170% 部分屬季節性）；Oracle 亦有明顯財季節奏。單季破線可能是假訊號，結構判斷以 TTM 為準。</li>
-          <li><b>OCF 增速的時間差</b>：capex 需 1–2 年才轉為折舊加回與變現，擴產最晚者（Google，Capex YoY +107%）的 OCF 增速天然被低估；「capex 放緩後 OCF 仍不回升」才是投資轉化失敗的訊號。</li>
-          <li><b>Oracle 單季為差分推導</b>：其現金流無直接 3M 標籤，單季以 12M−9M 推得；OCF YoY +137% 受低基期（去年同季 $6.16B）放大，宜以 TTM（$31.98B，10-K 直接申報值）為準。</li>
+          <li><b>OCF 增速的時間差</b>：capex 需 1–2 年才轉為折舊加回與變現，擴產最晚者（Google，Capex YoY +100%）的 OCF 增速天然被低估；「capex 放緩後 OCF 仍不回升」才是投資轉化失敗的訊號。</li>
+          <li><b>Oracle 部分單季為差分推導</b>：其現金流無直接 3M 標籤，第二～四財季單季以 YTD 差分（如止於 5 月之季＝12M−9M）推得，首季為直接值。最新季 OCF YoY +184% 受低基期（去年同季 $8.14B）放大，宜以 TTM（$46.9B）為準。</li>
           <li><b>趨勢為單點外推</b>：對擬合窗口敏感、未計置信區間；交叉時點屬情境推估而非預測。XBRL 明細於 10-Q 申報後才可得，行業合計須等最慢申報者到齊。</li>
         </ul>
       </div>
@@ -313,10 +319,10 @@ footer a { color: inherit; }
           <li><i class="dot" style="background:var(--yellow)"></i>　黃：最新季 ＞ 100% 且 TTM ＜ 100% —— 單季入不敷出，可能為季節性，觀察下一季是否延續。</li>
           <li><i class="dot" style="background:var(--error)"></i>　紅：TTM ＞ 100% —— 結構性入不敷出，擴張依賴外部融資（無論最新季是否回落）。</li>
         </ul>
-        <p>現況（2026Q1；Oracle 至 2026Q2）：Microsoft 綠 57%、Google 綠 63%、Meta 綠 61%、Amazon 紅 102%、Oracle 紅 174%（皆為 TTM 比率）。</p>
-        <p><b>融資行為燈（單家判定）</b>：綠＝OCF 足付 Capex＋股息＋回購且回購維持常態；黃＝回購 TTM YoY 縮水逾 10%、或轉為淨發債、或覆蓋不足；紅＝回購縮水逾 30% 且淨發債較前一年擴大。特例：股息削減無條件紅；Amazon 無回購與股息，以淨發債單軌判定（轉正為黃、超過 TTM Capex 的 20% 為紅）。總燈＝深度（合計覆蓋率）與廣度（紅燈 ≥2 家至少黃、≥3 家紅）取較嚴重者。現況（TTM）：Microsoft 綠（回購 +23%）；Google 紅（回購 −50%、淨發債 $91B，另有 $30B 股權增資）、Meta 紅（−52%、$30B，另有 SPV 表外融資）、Oracle 紅（回購近停、發債 $46B）、Amazon 紅（淨發債 $63B，前一年為淨還債）→ 總燈紅。此燈屬領先指標——管理層依內部預算提前行動，融資轉向出現在比率破線之前。</p>
-        <p><b>投資轉化燈（單家判定，TTM）</b>：此燈是「等待觸發的碼錶」——capex 加速期內效果仍在 4–8 季的轉化時滯管道中，無法定罪。綠＝OCF TTM YoY 上升、或 Capex 仍在加速（轉化期內）；黃＝Capex TTM YoY 連 2 季放緩且 OCF YoY 未跟進上升（兌現窗口開啟）；紅＝Capex 放緩滿 4 季而 OCF 增速仍未回升、或 OCF YoY 轉負（無條件紅）。輔助指標「增量轉化比」＝ΔOCF TTM ÷ 四季前 ΔCapex TTM。現況全綠：合計 Capex TTM YoY 仍在加速（+70%→+78%），OCF TTM YoY 同步升至 +30%，五家皆為正——「借錢擴張」（融資行為紅燈）目前仍有現金流兌現支撐；此燈轉黃之日，即融資紅燈被市場重新定價之時。</p>
-        <p><b>前瞻監測</b>：每季更新後看主圖兩個交叉日期（季度 2026Q3 vs TTM 2027Q4）如何漂移——靠近＝加速、拉開＝減速；紅燈家數增加、或行業合計 TTM 比率（現 75%）逼近 100%，即為板塊級警訊，屆時長端利率與信用利差將成為板塊估值的一階變數。</p>
+        <p>現況（2026Q2；Meta、Oracle 至 2026Q3）：Microsoft 綠 63%、Google 黃 71%（最新季 115%）、Meta 黃 78%（最新季 104%）、Amazon 紅 107%、Oracle 紅 161%（皆為 TTM 比率）。</p>
+        <p><b>融資行為燈（單家判定）</b>：綠＝OCF 足付 Capex＋股息＋回購且回購維持常態；黃＝回購 TTM YoY 縮水逾 10%、或轉為淨發債、或覆蓋不足；紅＝回購縮水逾 30% 且淨發債較前一年擴大。特例：股息削減無條件紅；Amazon 無回購與股息，以淨發債單軌判定（轉正為黃、超過 TTM Capex 的 20% 為紅）。總燈＝深度（合計覆蓋率）與廣度（紅燈 ≥2 家至少黃、≥3 家紅）取較嚴重者。現況（TTM）：Microsoft 綠（回購 +21%）；Google 紅（回購 −71%、淨發債 $89B，另有 $30B 股權增資）、Meta 紅（回購歸零、淨發債 $55B，另有 SPV 表外融資）、Oracle 紅（回購停止、發債 $46B）、Amazon 紅（淨發債 $77B，前一年為淨還債）→ 紅燈 4 家，總燈紅。此燈屬領先指標——管理層依內部預算提前行動，融資轉向出現在比率破線之前。</p>
+        <p><b>投資轉化燈（單家判定，TTM）</b>：此燈是「等待觸發的碼錶」——capex 加速期內效果仍在 4–8 季的轉化時滯管道中，無法定罪。綠＝OCF TTM YoY 上升、或 Capex 仍在加速（轉化期內）；黃＝Capex TTM YoY 連 2 季放緩且 OCF YoY 未跟進上升（兌現窗口開啟）；紅＝Capex 放緩滿 4 季而 OCF 增速仍未回升、或 OCF YoY 轉負（無條件紅）。輔助指標「增量轉化比」＝ΔOCF TTM ÷ 四季前 ΔCapex TTM。現況：合計 Capex TTM YoY 仍在加速（+78%→+81%），OCF TTM YoY 升至 +35%，總燈綠；單家僅 Meta 轉紅（Capex 放緩已滿 4 季而 OCF YoY 僅 +24%，未回升）——「借錢擴張」（融資行為紅燈）目前仍有行業合計的現金流兌現支撐；此燈轉黃之日，即融資紅燈被市場重新定價之時。</p>
+        <p><b>前瞻監測</b>：每季更新後看主圖兩個交叉日期（季度 2026Q3 vs TTM 2027Q3）如何漂移——靠近＝加速、拉開＝減速；紅燈家數增加、或行業合計 TTM 比率（現 82%）逼近 100%，即為板塊級警訊，屆時長端利率與信用利差將成為板塊估值的一階變數。</p>
       </div>
     </details>
   </section>
@@ -327,16 +333,16 @@ footer a { color: inherit; }
 </main>
 <script>
 // ======== data ========
-// Aggregate incl. Epoch trend series (CY2022Q1–CY2028Q1); actuals validated against SEC EDGAR pulls
+// Aggregate quarterly actuals (CY2022Q1–CY2028Q1 axis); validated against SEC EDGAR pulls. ocfT/capexT 為舊 Epoch 趨勢，已不使用（季度檢視改為即時擬合）
 const AGG = {
   quarters:["2022 Q1","2022 Q2","2022 Q3","2022 Q4","2023 Q1","2023 Q2","2023 Q3","2023 Q4","2024 Q1","2024 Q2","2024 Q3","2024 Q4","2025 Q1","2025 Q2","2025 Q3","2025 Q4","2026 Q1","2026 Q2","2026 Q3","2026 Q4","2027 Q1","2027 Q2","2027 Q3","2027 Q4","2028 Q1"],
-  ocf:  [65.6,69.2,74.0,79.3,71.0,96.9,109.8,99.8,104.5,114.6,123.0,136.3,120.2,134.6,167.1,180.9,157.9,null,null,null,null,null,null,null,null],
-  capex:[36.6,38.4,41.0,41.9,36.6,35.4,38.3,44.1,46.0,55.6,61.2,76.3,77.8,97.3,105.8,130.7,148.4,null,null,null,null,null,null,null,null],
+  ocf:  [65.6,69.2,74.0,79.3,71.0,96.9,109.8,99.8,104.5,114.6,123.0,136.3,120.2,134.6,167.1,180.9,157.9,186.38,null,null,null,null,null,null,null],
+  capex:[36.6,38.4,41.0,41.9,36.6,35.4,38.3,44.1,46.0,55.6,61.2,76.3,77.8,97.3,105.8,130.7,148.4,181.54,null,null,null,null,null,null,null],
   ocfT: [null,null,null,null,null,94.7,99.8,105.1,110.8,116.7,123.0,129.6,136.6,144.0,151.7,159.9,168.5,177.5,187.1,197.2,207.8,218.9,230.7,243.1,256.2],
   capexT:[null,null,null,null,null,33.2,37.8,43.2,49.3,56.3,64.3,73.4,83.8,95.7,109.3,124.8,142.4,162.6,185.7,212.0,242.0,276.3,315.5,360.2,411.2]
 };
 // Per-company quarterly [ocf, capex] from SEC EDGAR, 2023 Q2 onward
-const DATA = {"quarters":["2023 Q2","2023 Q3","2023 Q4","2024 Q1","2024 Q2","2024 Q3","2024 Q4","2025 Q1","2025 Q2","2025 Q3","2025 Q4","2026 Q1","2026 Q2"],"companies":{"MSFT":[[28.77,8.94],[30.58,9.92],[18.85,9.73],[31.92,10.95],[37.2,13.87],[34.18,14.92],[22.29,15.8],[37.04,16.75],[42.65,17.08],[45.06,19.39],[35.76,29.88],[46.68,30.88],null],"AMZN":[[16.48,11.46],[21.22,12.48],[42.47,14.59],[18.99,14.93],[25.28,17.62],[25.97,22.62],[45.64,27.83],[17.02,25.02],[32.52,32.18],[35.52,35.09],[54.46,39.52],[26.03,44.2],null],"GOOGL":[[28.67,6.89],[30.66,8.05],[18.91,11.02],[28.85,12.01],[26.64,13.19],[30.7,13.06],[39.11,14.28],[36.15,17.2],[27.75,22.45],[48.41,23.95],[52.4,27.85],[45.79,35.67],null],"META":[[17.31,6.13],[20.4,6.5],[19.4,7.59],[19.25,6.4],[19.37,8.17],[24.72,8.26],[27.99,14.43],[24.03,12.94],[25.56,16.54],[30,18.83],[36.21,21.38],[32.23,19],null],"ORCL":[[5.65,1.91],[6.97,1.31],[0.14,1.08],[5.47,1.67],[6.08,2.8],[7.43,2.3],[1.3,3.97],[5.93,5.86],[6.16,9.08],[8.14,8.5],[2.07,12.03],[7.15,18.64],[14.62,16.49]]},"aggregate":[[96.87,35.33],[109.83,38.26],[99.78,44.01],[104.47,45.96],[114.57,55.65],[123,61.16],[136.33,76.31],[120.17,77.76],[134.63,97.33],[167.13,105.77],[180.9,130.66],[157.88,148.38],null]};
+const DATA = {"quarters":["2023 Q2","2023 Q3","2023 Q4","2024 Q1","2024 Q2","2024 Q3","2024 Q4","2025 Q1","2025 Q2","2025 Q3","2025 Q4","2026 Q1","2026 Q2","2026 Q3"],"companies":{"MSFT":[[28.77,8.94],[30.58,9.92],[18.85,9.73],[31.92,10.95],[37.2,13.87],[34.18,14.92],[22.29,15.8],[37.04,16.75],[42.65,17.08],[45.06,19.39],[35.76,29.88],[46.68,30.88],[55.44,35.8],null],"AMZN":[[16.48,11.46],[21.22,12.48],[42.47,14.59],[18.99,14.93],[25.28,17.62],[25.97,22.62],[45.64,27.83],[17.02,25.02],[32.52,32.18],[35.52,35.09],[54.46,39.52],[26.03,44.2],[45.39,54.21],null],"GOOGL":[[28.67,6.89],[30.66,8.05],[18.91,11.02],[28.85,12.01],[26.64,13.19],[30.7,13.06],[39.11,14.28],[36.15,17.2],[27.75,22.45],[48.41,23.95],[52.4,27.85],[45.79,35.67],[39.07,44.92],null],"META":[[17.31,6.13],[20.4,6.5],[19.4,7.59],[19.25,6.4],[19.37,8.17],[24.72,8.26],[27.99,14.43],[24.03,12.94],[25.56,16.54],[30,18.83],[36.21,21.38],[32.23,19],[31.86,30.12],[32.78,33.94]],"ORCL":[[5.65,1.91],[6.97,1.31],[0.14,1.08],[5.47,1.67],[6.08,2.8],[7.43,2.3],[1.3,3.97],[5.93,5.86],[6.16,9.08],[8.14,8.5],[2.07,12.03],[7.15,18.64],[14.62,16.49],[23.1,28.5]]},"aggregate":[[96.87,35.33],[109.83,38.26],[99.78,44.01],[104.47,45.96],[114.57,55.65],[123,61.16],[136.33,76.31],[120.17,77.76],[134.63,97.33],[167.13,105.77],[180.9,130.66],[157.88,148.38],[186.38,181.54],null]};
 const NAMES = {MSFT:"Microsoft", AMZN:"Amazon", GOOGL:"Google", META:"Meta", ORCL:"Oracle"};
 const V = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const BLUE=V('--series-1'), RED=V('--series-2'), C200=V('--grid'), C400=V('--group-rule'), C700=V('--text-secondary');
@@ -361,7 +367,7 @@ const fmtB = v => "$"+v.toFixed(1)+"B";
     });
   };
   const tOcf = ttmFrom(AGG.ocf,PRE.ocf), tCap = ttmFrom(AGG.capex,PRE.capex);
-  // OLS on log-transformed TTM data, fit window 2023 Q2 – 2026 Q1 (post GPT-4, same as Epoch)
+  // OLS on log-transformed TTM data, fit window 2023 Q2 – latest actual (post GPT-4, same as Epoch)
   const I0 = AGG.quarters.indexOf('2023 Q2');
   const fit = arr => {
     const xs=[],ys=[];
@@ -371,21 +377,25 @@ const fmtB = v => "$"+v.toFixed(1)+"B";
     const b=nu/de; return {a:my-b*mx, b};
   };
   const fO=fit(tOcf), fC=fit(tCap);
+  const fQO=fit(AGG.ocf), fQC=fit(AGG.capex);
   const trend = f => AGG.quarters.map((_,i)=> i>=I0 ? Math.exp(f.a+f.b*i) : null);
-  const tOcfT=trend(fO), tCapT=trend(fC);
+  const tOcfT=trend(fO), tCapT=trend(fC), qOcfT=trend(fQO), qCapT=trend(fQC);
   // exact intersection of the two fitted lines
   const tstar=(fO.a-fC.a)/(fC.b-fO.b), tval=Math.exp(fO.a+fO.b*tstar);
   const qX=AGG.quarters[Math.min(24,Math.ceil(tstar))];
   const crossLbl='Q'+qX.split(' Q')[1]+' '+qX.split(' ')[0];
   const gr = f => '+'+((Math.exp(4*f.b)-1)*100).toFixed(0)+'%/年';
+  const qstar=(fQO.a-fQC.a)/(fQC.b-fQO.b), qval=Math.exp(fQO.a+fQO.b*qstar);
+  const qX2=AGG.quarters[Math.min(24,Math.ceil(qstar))], qLbl='Q'+qX2.split(' Q')[1]+' '+qX2.split(' ')[0];
+  window.__fit={Q:{o:gr(fQO),c:gr(fQC),cross:qLbl,val:qval,xi:qstar},T:{o:gr(fO),c:gr(fC),cross:crossLbl,val:tval,xi:tstar}};
   const CFG = {
-    Q:{ ocf:AGG.ocf, capex:AGG.capex, ocfT:AGG.ocfT, capexT:AGG.capexT,
-        ymin:27, ymax:430, ticks:[30,40,80,100,150,200,300],
-        cross:{xi:18.09, val:187, label:'Q3 2026'},
+    Q:{ ocf:AGG.ocf, capex:AGG.capex, ocfT:qOcfT, capexT:qCapT,
+        ymin:27, ymax:Math.max(430,Math.ceil(qCapT[24]*1.05/10)*10), ticks:[30,40,80,100,150,200,300],
+        cross:{xi:qstar, val:qval, label:qLbl},
         lblO:{xi:6.2, val:155}, lblC:{xi:10.2, val:40.5},
-        gOv:400, gCv:232, gCapexTxt:'+70%/年', gOcfTxt:'+23%/年', ttm:false },
+        gOv:qCapT[24], gCv:qOcfT[24], gCvOff:42, gCapexTxt:gr(fQC), gOcfTxt:gr(fQO), ttm:false },
     T:{ ocf:tOcf, capex:tCap, ocfT:tOcfT, capexT:tCapT,
-        ymin:120, ymax:1600, ticks:[150,200,300,500,800,1200],
+        ymin:120, ymax:Math.max(1600,Math.ceil(tCapT[24]*1.1/100)*100), ticks:[150,200,300,500,800,1200],
         cross:{xi:tstar, val:tval, label:crossLbl},
         lblO:{xi:6.4, val:470}, lblC:{xi:10.4, val:150},
         gOv:tCapT[24], gCv:tOcfT[24], gCvOff:46, gCapexTxt:gr(fC), gOcfTxt:gr(fO), ttm:true }
@@ -657,7 +667,7 @@ function ttm(s){
 
 // ======== B signal: 融資行為 ========
 // quarterly [buyback, dividend, debtIssued, debtRepaid] in $B, aligned to DATA.quarters (SEC EDGAR)
-const BDATA = {"MSFT":[[5.7,5.05,0,0],[4.83,5.05,0,0],[4,5.57,0,0],[4.21,5.57,0,0],[4.21,5.57,0,0],[4.11,5.57,0,0],[4.99,6.17,0,0],[4.78,6.17,0,0],[4.55,6.17,0,0],[5.65,6.17,0,0],[7.42,6.76,0,0],[4.63,6.76,0,0],null],"AMZN":[[0,0,0,2],[0,0,0,0],[0,0,0,0.29],[0,0,0,0.33],[0,0,0,4.17],[0,0,0,2.18],[0,0,0,2.5],[0,0,0.75,0],[0,0,0,2.75],[0,0,0,1.01],[0,0,14.93,1.26],[0,0,53.44,0],null],"GOOGL":[[14.97,0,1.12,0],[15.79,0,1.25,0],[16.19,0,1.49,0],[15.7,0,1.98,0],[15.68,2.47,2.89,0],[15.29,2.46,3.82,0],[15.55,2.44,4.89,0],[15.07,2.43,4.53,0],[13.64,2.54,26.85,0],[11.5,2.54,6.62,0],[5.5,2.54,26.56,0],[0,2.54,31.38,0],null],"META":[[0.9,0,0,0],[3.57,0,0,0],[5.94,0,0,0],[15.01,1.27,0,0],[6.3,1.27,0,0],[8.82,1.26,10.43,0],[0,1.27,0,0],[12.75,1.33,0,0],[10.17,1.33,0,0],[3.33,1.33,0,0],[0,1.34,29.91,0],[0,1.35,0,0],null],"ORCL":[[0.15,1.08,0,0],[0.15,1.09,0,0],[0.45,1.1,0,0],[0.45,1.1,0,0],[0.15,1.1,0,0],[0.15,1.1,5.63,0],[0.15,1.12,6.21,0],[0.15,1.12,7.71,0],[0.15,1.4,0,0],[0.1,1.41,0,0],[0,1.44,17.88,0],[0,1.44,26.66,0],[0,1.5,1.55,0]]};
+const BDATA = {"MSFT":[[5.7,5.05,0,0],[4.83,5.05,0,0],[4,5.57,0,0],[4.21,5.57,0,0],[4.21,5.57,0,0],[4.11,5.57,0,0],[4.99,6.17,0,0],[4.78,6.17,0,0],[4.55,6.17,0,0],[5.65,6.17,0,0],[7.42,6.76,0,0],[4.63,6.76,0,0],[4.58,6.76,0.0,0.0],null],"AMZN":[[0,0,0,2],[0,0,0,0],[0,0,0,0.29],[0,0,0,0.33],[0,0,0,4.17],[0,0,0,2.18],[0,0,0,2.5],[0,0,0.75,0],[0,0,0,2.75],[0,0,0,1.01],[0,0,14.93,1.26],[0,0,53.44,0],[0.0,0.0,13.56,2.75],null],"GOOGL":[[14.97,0,1.12,0],[15.79,0,1.25,0],[16.19,0,1.49,0],[15.7,0,1.98,0],[15.68,2.47,2.89,0],[15.29,2.46,3.82,0],[15.55,2.44,4.89,0],[15.07,2.43,4.53,0],[13.64,2.54,26.85,0],[11.5,2.54,6.62,0],[5.5,2.54,26.56,0],[0,2.54,31.38,0],[0.0,2.69,24.85,0.0],null],"META":[[0.9,0,8.46,0],[3.57,0,0,0],[5.94,0,0,0],[15.01,1.27,0,0],[6.3,1.27,0,0],[8.82,1.26,10.43,0],[0,1.27,0,0],[12.75,1.33,0,0],[10.17,1.33,0,0],[3.33,1.33,0,0],[0,1.34,29.91,0],[0,1.35,0,0],[0.0,1.35,24.91,0.0],[0.0,1.36,0.0,0.0]],"ORCL":[[0.15,1.08,0,0],[0.15,1.09,0,0],[0.45,1.1,0,0],[0.45,1.1,0,0],[0.15,1.1,0,0],[0.15,1.1,5.63,0],[0.15,1.12,6.21,0],[0.15,1.12,7.71,0],[0.15,1.4,0,0],[0.1,1.41,0,0],[0,1.44,17.88,0],[0,1.44,26.66,0],[0.0,1.5,1.55,0.0],[0.0,1.56,0.0,0.0]]};
 (function(){
   const T=(b,k,j)=>{ if(j<3) return null; let x=0; for(let i=j-3;i<=j;i++){ if(!b[i]) return null; x+=b[i][k]; } return x; };
   let reds=0, aggBB=0, aggDV=0, aggND=0, aggOCF=0, aggCX=0;
