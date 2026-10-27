@@ -159,6 +159,13 @@ table.fwt tr.bx td:first-child { --bl: var(--series-1); }
 table.fwt tr.bx td:last-child { --br: var(--series-1); }
 table.fwt tr.bx-top td { --bt: var(--series-1); }
 table.fwt tr.bx-bot td { --bb: var(--series-1); }
+/* FOMC 倒數計時 */
+.cd .cd-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+.cd .cd-boxes { display: flex; gap: 8px; }
+.cd .cd-box { min-width: 54px; padding: 6px 8px 5px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+.cd .cd-num { font-size: 24px; font-weight: 500; line-height: 1.2; color: var(--text-primary); font-variant-numeric: tabular-nums; border-bottom: 1px solid var(--text-primary); padding-bottom: 2px; }
+.cd .cd-lab { font-size: 10px; letter-spacing: .06em; color: var(--text-secondary); margin-top: 3px; }
+.cd .cd-sub { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
 @media (max-width: 860px) { .fw-week { grid-template-columns: 1fr; } }
 @media (max-width: 1100px) { table.fwt { min-width: 0; font-size: 11px; } table.fwt th, table.fwt td { padding: 4px 3px; } table.fwt th { font-size: 11px; } }
 .notes { margin: 8px 0 12px; font-size: 12px; color: var(--text-secondary); }
@@ -252,6 +259,7 @@ footer a { color: inherit; }
         <h3><a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline dotted">CME FedWatch 各次會議機率 ↗</a></h3>
         <p class="desc">資料來源：芝加哥商品交易所（CME）FedWatch，芝商所 30 天期聯邦基金期貨交易反映出的隱含機率。<span id="fw-desc"></span></p>
       </div>
+      <div class="cd" id="fomc-cd" aria-live="off"></div>
     </div>
     <div id="fw-weeks"></div>
     <div class="notes" data-notes="policy"></div>
@@ -845,6 +853,7 @@ Promise.all([
     renderTable();
     renderSnapshot();
     renderFedwatch();
+    startFomcCountdown();
     renderNotes();
     for (const k of ["infl", "fedview", "path", "fw0", "fw1", "yields", "curve", "hy", "oil"].filter(k => document.getElementById("chart-" + k))) charts[k] = echarts.init(document.getElementById("chart-" + k));
     renderAll();
@@ -856,6 +865,27 @@ Promise.all([
       ? "本次更新內容：<ul class=\"changes\">" + ch.map(c => `<li><b>${c.label}</b>：${c.items.join("；")}</li>`).join("") + "</ul>"
       : "";
   });
+
+// ---------- FOMC 倒數：下次利率決議（美東 14:00）----------
+function startFomcCountdown() {
+  const el = document.getElementById("fomc-cd");
+  if (!el || !CAL || !CAL.fomc) return;
+  const pad = (n) => String(n).padStart(2, "0");
+  const tick = () => {
+    const now = new Date();
+    const str = CAL.fomc.find(s => etToDate(s) > now);
+    if (!str) { el.innerHTML = ""; return; }
+    const target = etToDate(str);
+    let sec = Math.max(0, Math.floor((target - now) / 1000));
+    const parts = [[Math.floor(sec / 86400), "DAY"], [Math.floor(sec % 86400 / 3600), "HRS"], [Math.floor(sec % 3600 / 60), "MIN"], [sec % 60, "SEC"]];
+    const tw = target.toLocaleString("zh-TW", { timeZone: "Asia/Taipei", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
+    el.innerHTML = `<div class="cd-title">距離下次 FOMC 利率決議</div><div class="cd-boxes">` +
+      parts.map(([v, l]) => `<div class="cd-box"><div class="cd-num">${pad(v)}</div><div class="cd-lab">${l}</div></div>`).join("") +
+      `</div><div class="cd-sub">${str.slice(5, 7)}/${str.slice(8, 10)} 美東 14:00（台灣時間 ${tw}）</div>`;
+  };
+  tick();
+  setInterval(tick, 1000);
+}
 
 window.addEventListener("resize", () => Object.values(charts).forEach(c => c.resize()));
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => DATA && renderAll());
