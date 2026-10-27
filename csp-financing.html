@@ -33,7 +33,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--bg); color: var(--text-primary); line-height: 1.5;
   font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif; font-variant-numeric: tabular-nums; }
-main { max-width: 1080px; margin: 0 auto; padding: 32px 16px 48px; }
+main { max-width: 1480px; margin: 0 auto; padding: 32px 16px 48px; }
 header h1 { font-size: 28px; margin: 0 0 4px; font-weight: 700; }
 header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
 b { font-weight: 600; }
@@ -456,7 +456,7 @@ function renderGaps(){
    更新方式:只改 LIGHTS 內的 c/v/tip,燈色與聚合自動重算 */
 const LCOLOR = {g:'#0ca30c', y:'#fab219', r:'#d03b3b'};
 const LIGHTS = [
-  {name:'A · 需求端 — 一級市場胃納', tf:'更新頻率:每筆發行 · 領先性最強', subs:[
+  {name:'需求端 — 一級市場胃納', tf:'更新頻率:每筆發行 · 領先性最強', subs:[
     {name:'認購倍數(最近一筆)', rule:'≥3× 綠 · 2–3× 黃 · <2× 紅', vals:{
       MSFT:{c:'na', tip:'無公開發債 — 不適用 [12]'},
       AMZN:{c:'y', v:'2.5×', tip:'7月 $25B:認購 2.5×\n(3月 3.2× → 下行中)\n2026/07 [10]'},
@@ -479,7 +479,7 @@ const LIGHTS = [
       ORCL:{c:'r', v:'2', tip:'① $20B ATM 首建(2月)[18]\n② $5B 強制可轉首發(2月)[19]\n債轉股工具全面啟用'},
     }},
   ]},
-  {name:'B · 價格端 — 存量債重定價', tf:'更新頻率:每日連續 · CDS/評等', subs:[
+  {name:'價格端 — 存量債重定價', tf:'更新頻率:每日連續 · CDS/評等', subs:[
     {name:'CDS 水位(5年期)', rule:'<75bp 綠 · 75–150bp 黃 · >150bp 紅', vals:{
       MSFT:{c:'g', v:'窄', tip:'顯著低於 Oracle(定性)\n精確值待補 [1]'},
       AMZN:{c:'g', v:'窄', tip:'顯著低於 Oracle(定性)\n但對沖名目量激增(見警告⑬)[1]'},
@@ -502,7 +502,7 @@ const LIGHTS = [
       ORCL:{c:'r', v:'BBB−', tip:'S&P 2026/07/09 降至 BBB−(距垃圾 1 階)\nMoody’s Baa2 負面展望 [2][17]\n再降一級=逐出 IG 指數 → 強制賣壓'},
     }},
   ]},
-  {name:'C · 結構端 — 隱藏槓桿與時間炸彈', tf:'更新頻率:每季 · 慢變但決定尾部', subs:[
+  {name:'結構端 — 隱藏槓桿與時間炸彈', tf:'更新頻率:每季 · 慢變但決定尾部', subs:[
     {name:'表外 SPV 佔總融資比', rule:'<15% 綠 · 15–40% 黃 · >40% 紅', vals:{
       MSFT:{c:'g', v:'0%', tip:'無 SPV;槓桿以融資租賃入表\n(口徑不同,另行監控)[12]'},
       AMZN:{c:'g', v:'0%', tip:'無已知 SPV 專案融資'},
