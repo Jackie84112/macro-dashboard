@@ -165,6 +165,9 @@
       <button class="tog" data-s="ncNew" style="--dc:#E11D48"><span class="dot"></span>IBKR 暫估（最新）</button>
       <button class="tog" data-s="ncHist" style="--dc:#E11D48"><span class="dot"></span>IBKR 暫估（歷史）</button>
     </div>
+    <div class="grp"><span class="lbl">底色區間</span>
+      <button class="tog" data-s="divZone" style="--dc:#60A5FA" title="年增率曾 ≥40% 後自高點回落，且 SPX／NDX／SOX 任一個較 3 個月前持平或上漲（未跌超過 3%）"><span class="dot"></span>背離區間（淡藍）</button>
+    </div>
   </section>
 
   <section class="card chartbox">
@@ -267,12 +270,28 @@ function stageSeries(){
   }
   return out;
 }
+// 背離區間底色：年增率曾 ≥40% 後自本輪高點回落（且已低於 40%，與紅區不重疊），SPX/NDX/SOX 任一個較 3 個月前持平或上漲（> −3%）
+function divSeries(){
+  const nc = {}; NCS.forEach(o => nc[o.month] = o.yoy);
+  const flatUp = i => ["spx","ndx","sox"].some(k => { const a=RAW[k][i], b=RAW[k][i-3];
+    return a!=null && b!=null && a/b-1 >= -0.03; });
+  const out = []; let peak = null;
+  for(let i=0;i<N;i++){
+    const y = RAW.yoy[i]!=null ? RAW.yoy[i] : (nc[M[i]]!=null ? nc[M[i]] : null);
+    if(y==null){ out.push(false); continue; }
+    if(y < 0) peak = null;
+    out.push(peak!=null && y < peak && y < 40 && flatUp(i));
+    if(y >= 40) peak = Math.max(peak ?? y, y);
+  }
+  return out;
+}
+const DIV = divSeries();
 const STAGES = stageSeries();
 const STAGE_NOW = (() => { for(let i=N-1;i>=0;i--) if(STAGES[i]) return {k:STAGES[i], i}; return {k:null, i:-1}; })();
 // 該筆暫估是否顯示：FINRA 已出實際值＝歷史，未出＝最新
 const ncOn = nc => { const i = M.indexOf(nc.month);
   return i>=0 && (RAW.yoy[i]!=null ? state.show.ncHist : state.show.ncNew); };
-const state = {range:"all", show:{spx:true,ndx:true,sox:true,mar:true,yoy:true,ncNew:true,ncHist:true,ratio:false}};
+const state = {range:"all", show:{spx:true,ndx:true,sox:true,mar:true,yoy:true,ncNew:true,ncHist:true,ratio:false,divZone:true}};
 const cv = document.getElementById("cv"), tip = document.getElementById("tip");
 const ctx = cv.getContext("2d");
 let LAY = null, hoverI = -1;
@@ -337,6 +356,15 @@ function draw(){
     }
   }
   ctx.restore();
+  // 背離區間（淡藍底色，可開關）
+  if(state.show.divZone){
+    ctx.save(); ctx.fillStyle="rgba(59,130,246,0.11)";
+    for(let i=i0;i<=i1;i++){ if(!DIV[i]) continue;
+      const x0=X(Math.max(i-0.5,i0)), x1=X(Math.min(i+0.5,i1));
+      ctx.fillRect(x0,h1t,x1-x0,h1b-h1t); ctx.fillRect(x0,h2t,x1-x0,h2b-h2t);
+    }
+    ctx.restore();
+  }
 
   // grid + ticks panel1
   ctx.font="11px 'Microsoft JhengHei',sans-serif"; ctx.fillStyle="#8A9097";
