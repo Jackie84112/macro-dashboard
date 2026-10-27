@@ -140,7 +140,7 @@ table.data td.updated { background: var(--group-bg); }
 table.data tbody.gap td { height: 14px; padding: 0; border: none; background: transparent; }
 table.data.snap { min-width: 640px; }
 /* FedWatch：照 PPT 版面，每週一列＝週別｜下次會議長條圖｜各次會議機率表 */
-.fw-week { display: grid; grid-template-columns: 48px minmax(0, 0.8fr) minmax(0, 1.3fr); gap: 12px; align-items: center; padding: 14px 0; }
+.fw-week { display: grid; grid-template-columns: 48px minmax(0, 0.55fr) minmax(0, 1.5fr); gap: 12px; align-items: center; padding: 14px 0; }
 .fw-week + .fw-week { border-top: 1px solid var(--grid); }
 .fw-week .wk { font-size: 20px; font-weight: 700; }
 .fw-bar { height: 280px; min-width: 0; }
@@ -158,6 +158,7 @@ table.fwt tr.bx td:last-child { border-right: 2px solid var(--series-1); }
 table.fwt tr.bx-top td { border-top: 2px solid var(--series-1); }
 table.fwt tr.bx-bot td { border-bottom: 2px solid var(--series-1); }
 @media (max-width: 860px) { .fw-week { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) { table.fwt { min-width: 0; font-size: 11px; } table.fwt th, table.fwt td { padding: 4px 3px; } table.fwt th { font-size: 11px; } }
 .notes { margin: 8px 0 12px; font-size: 12px; color: var(--text-secondary); }
 .notes p { margin: 2px 0; }
 footer { color: var(--text-muted); font-size: 12px; margin-top: 24px; }
