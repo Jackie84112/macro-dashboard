@@ -315,6 +315,10 @@ footer a { color: inherit; }
       </div>
       <div class="stat" id="stat-oas"></div>
     </div>
+    <div class="tabs credit-range" role="group" aria-label="信用圖時間範圍">
+      <button data-m="3" aria-pressed="false">3 個月</button>
+      <button data-m="6" aria-pressed="false">6 個月</button>
+    </div>
     <div class="chart tall" id="chart-oas" role="img" aria-label="投資級與高收益信用利差折線圖"></div>
     <div class="notes" data-notes="oas"></div>
   </section>
@@ -331,6 +335,7 @@ footer a { color: inherit; }
       <button data-d="14" aria-pressed="true">近 2 週</button>
       <button data-d="30" aria-pressed="false">近 1 個月</button>
       <button data-d="90" aria-pressed="false">近 3 個月</button>
+      <button data-d="180" aria-pressed="false">近 6 個月</button>
     </div>
     <div class="chart" id="chart-oasd" role="img" aria-label="各評級信用利差變化長條圖" style="height:300px"></div>
     <div class="notes" data-notes="oasd"></div>
@@ -343,6 +348,10 @@ footer a { color: inherit; }
         <p class="desc">日資料，單位 %。ICE 美銀美林 BB／B／CCC 級以下（FRED 只提供近 3 年）。</p>
       </div>
       <div class="stat" id="stat-hy"></div>
+    </div>
+    <div class="tabs credit-range" role="group" aria-label="信用圖時間範圍">
+      <button data-m="3" aria-pressed="false">3 個月</button>
+      <button data-m="6" aria-pressed="false">6 個月</button>
     </div>
     <div class="chart" id="chart-hy" role="img" aria-label="高收益公司債殖利率折線圖"></div>
     <div class="notes" data-notes="credit"></div>
@@ -844,13 +853,26 @@ function renderOil() {
   }), true);
 }
 
+// 信用圖（OAS、高收益殖利率）的 3／6 個月開關：再按一次取消，回到跟隨上方「時間範圍」
+let creditMonths = null;
+function startDateMonths(allSeries, m) {
+  const last = allSeries.map(s => s[s.length - 1][0]).sort().pop();
+  const d = new Date(last);
+  d.setMonth(d.getMonth() - m);
+  return d.toISOString().slice(0, 10);
+}
+function syncCreditTabs() {
+  document.querySelectorAll(".credit-range button").forEach(b =>
+    b.setAttribute("aria-pressed", String(creditMonths === Number(b.dataset.m))));
+}
+
 function applyRange() {
   const groups = {
     infl: Object.values(DATA.infl), fedview: [DATA.pce6], yields: [DATA.dgs10], curve: [DATA.t10y2y],
     hy: [DATA.hy_ccc], oas: [DATA.oas_hy], oil: [DATA.wti],
   };
   for (const [k, series] of Object.entries(groups)) {
-    const start = startDate(series);
+    const start = creditMonths && (k === "oas" || k === "hy") ? startDateMonths(series, creditMonths) : startDate(series);
     charts[k].dispatchAction(start
       ? { type: "dataZoom", startValue: start, end: 100 }
       : { type: "dataZoom", start: 0, end: 100 });
@@ -962,7 +984,17 @@ function renderNotes() {
 document.querySelectorAll(".toolbar button").forEach(btn => {
   btn.addEventListener("click", () => {
     years = Number(btn.dataset.years);
+    creditMonths = null; syncCreditTabs();
     document.querySelectorAll(".toolbar button").forEach(b => b.setAttribute("aria-pressed", b === btn));
+    applyRange();
+  });
+});
+
+document.querySelectorAll(".credit-range button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const m = Number(btn.dataset.m);
+    creditMonths = creditMonths === m ? null : m;
+    syncCreditTabs();
     applyRange();
   });
 });
