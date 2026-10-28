@@ -834,7 +834,7 @@ function renderOasd() {
       formatter: (p) => { const r = rows[p.dataIndex];
         return `${r.name}<br>${r.prev} → <b>${r.cur} bp</b>（${sign(r.bp)}${r.bp.toFixed(0)} bp，${sign(r.pct)}${r.pct.toFixed(1)}%）`; } },
     series: [{ type: "bar", barMaxWidth: 22,
-      data: rows.map(r => ({ value: Number(r.pct.toFixed(1)), itemStyle: { color: r.pct >= 0 ? css("--bad") : css("--good") } })),
+      data: rows.map(r => ({ value: Number(r.pct.toFixed(1)), itemStyle: { color: css("--series-1") } })),
       label: { show: true, position: "right", color: css("--text-primary"), fontSize: 12, fontWeight: 600,
         formatter: (p) => { const r = rows[p.dataIndex]; return `${sign(r.bp)}${r.bp.toFixed(0)} bp（${sign(r.pct)}${r.pct.toFixed(0)}%）`; } } }],
   }, true);
