@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>持倉分布｜宏觀監控儀表板</title>
+<style>:root{color-scheme:light}body{margin:0;padding:0;background:#f7f6f9}img{max-width:100%}</style>
+</head>
+<body>
+<script src="nav.js?v=20261028a"></script>
+
+
+<title>L3 持倉分布儀表板</title>
+<style>
+  #l3 { --ink:#1d1a2b; --muted:#6b6478; --paper:#f7f6f9; --panel:#ffffff;
+        --line:#e6e2ec; --accent:#6d4fa1; --good:#1f8a54; --warn:#c08117; --crit:#c23b33;
+        color:var(--ink); background:var(--paper); font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+        line-height:1.5; padding:32px 20px 56px; }
+  #l3 .wrap { max-width:980px; margin:0 auto; }
+  #l3 .num { font-variant-numeric:tabular-nums; font-feature-settings:"tnum"; }
+  #l3 .eyebrow { text-transform:uppercase; letter-spacing:.14em; font-size:11px; font-weight:700;
+                 color:var(--muted); }
+  #l3 h1 { font-size:26px; font-weight:800; letter-spacing:-.01em; margin:.2em 0 .1em; text-wrap:balance; }
+  #l3 .sub { color:var(--muted); font-size:13px; margin-bottom:22px; }
+  #l3 .verdict { display:flex; align-items:baseline; gap:14px; border-radius:12px; padding:16px 20px;
+                 margin:0 0 26px; border:1px solid var(--line); background:var(--panel);
+                 border-left:6px solid var(--line); }
+  #l3 .verdict.good { border-left-color:var(--good); }
+  #l3 .verdict.warn { border-left-color:var(--warn); }
+  #l3 .verdict.crit { border-left-color:var(--crit); }
+  #l3 .verdict.flatv { border-left-color:var(--accent); }
+  #l3 .verdict b { font-size:22px; font-weight:800; }
+  #l3 .verdict.good b { color:var(--good); } #l3 .verdict.warn b { color:var(--warn); }
+  #l3 .verdict.crit b { color:var(--crit); } #l3 .verdict.flatv b { color:var(--accent); }
+  #l3 .verdict span { color:var(--muted); font-size:13px; }
+  #l3 section { margin:28px 0; }
+  #l3 .sechead { font-size:13px; font-weight:700; color:var(--accent); margin:0 0 12px;
+                 padding-bottom:6px; border-bottom:1px solid var(--line); letter-spacing:.02em; }
+  #l3 .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  #l3 .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 18px; }
+  #l3 .card .lab { font-size:12px; color:var(--muted); font-weight:600; }
+  #l3 .card .big { font-size:30px; font-weight:800; letter-spacing:-.02em; margin:.15em 0 .05em; }
+  #l3 .card .delta { font-size:13px; font-weight:700; }
+  #l3 .prev { font-size:11.5px; color:var(--muted); margin-top:3px; }
+  #l3 .good { color:var(--good); } #l3 .crit { color:var(--crit); }
+  #l3 .warn { color:var(--warn); } #l3 .flat { color:var(--muted); }
+  #l3 canvas { display:block; width:100%; height:44px; margin-top:10px; }
+  #l3 .chips { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  #l3 .chip { font-size:11px; font-weight:700; color:var(--muted); background:var(--paper);
+              border:1px solid var(--line); border-radius:999px; padding:3px 10px; }
+  #l3 .tile { display:flex; flex-direction:column; gap:6px; background:var(--panel);
+              border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+  #l3 .pill { align-self:flex-start; font-size:11px; font-weight:800; border-radius:999px;
+              padding:3px 12px; letter-spacing:.03em; }
+  #l3 .pill.good { background:rgba(31,138,84,.12); color:var(--good); }
+  #l3 .pill.warn { background:rgba(192,129,23,.12); color:var(--warn); }
+  #l3 .pill.crit { background:rgba(194,59,51,.12); color:var(--crit); }
+  #l3 .pill.flat { background:var(--paper); color:var(--muted); }
+  #l3 .tile .t { font-weight:700; font-size:14px; } #l3 .tile .r { font-size:13px; }
+  #l3 .tile .th { font-size:11px; color:var(--muted); }
+  #l3 .bg { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; }
+  #l3 .stat { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; }
+  #l3 .stat .k { font-size:12px; color:var(--muted); } #l3 .stat .v { font-size:20px; font-weight:800; }
+  #l3 .stat .d { font-size:11px; color:var(--muted); margin-top:2px; }
+  #l3 .notes { margin-top:30px; font-size:12px; color:var(--muted); line-height:1.7;
+               border-top:1px solid var(--line); padding-top:16px; }
+  #l3 .notes b { color:var(--ink); }
+  @media (max-width:640px){ #l3 .grid3{grid-template-columns:1fr;} }
+</style>
+<div id="l3"><div class="wrap">
+  <div class="eyebrow">L3 持倉分布監控 · 錢押了多少、口袋剩多少</div>
+  <h1>持倉擁擠度儀表板</h1>
+  <div class="sub">週錨 <b>2026-10-08</b>（上期 2026-10-01）　·　資料源 NAAIM / AAII / ICI / FINRA / Z.1 / Slickcharts　·　產生 2026-10-14 10:15</div>
+
+  <div class="verdict crit">
+    <b>FMS 現金賣出訊號</b><span>經理人現金 3.9% < 4.0%——BofA 官方經驗法則的賣訊，倉位偏保守</span>
+  </div>
+
+  <section>
+    <div class="sechead">主訊號層 — 百分位是主要輸出，原始值是附註</div>
+    <div class="grid3">
+      <div class="card">
+        <div class="lab">NAAIM 經理人曝險 · 10年百分位（本期數據週 07-29）</div>
+        <div class="big num flat">P48</div>
+        <div class="delta num flat">原始值 79.7（−200～+200）</div>
+        <div class="prev num">上一期數據（07-22）：P57・原始 84.0</div>
+        <canvas data-k="naaim"></canvas>
+      </div>
+      <div class="card">
+        <div class="lab">AAII 多空差 · 10年百分位（本期數據週 10-08）</div>
+        <div class="big num flat">P49</div>
+        <div class="delta num flat">原始值 1.3 pp</div>
+        <div class="prev num">上一期數據（10-01）：P25・原始 -11.8 pp</div>
+        <canvas data-k="spread"></canvas>
+      </div>
+      <div class="card">
+        <div class="lab">國內股票資金流 · 4 週合計（ICI，數據週至 09-30）</div>
+        <div class="big num">-26.3<span style="font-size:14px">B</span></div>
+        <div class="delta num flat">百分位 —（ICI 歷史累積中）</div>
+        <div class="prev num">逐週（B）：09/09 -13.3・09/16 -11.5・09/23 +5.8・09/30 -7.3</div>
+        <div class="prev num">上期錨（2026-10-01）：-26.3B・來源自 09-30 未出新數據，兩期同值</div>
+        <canvas data-k="flow"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead">警報層 — 成對確認才觸發，單一極端只記錄</div>
+    <div class="grid3"><div class="tile"><span class="pill good">正常</span><span class="t">擁擠（利空）</span><span class="r num">NAAIM ≥P90 且 AAII ≥P90</span><span class="th">成對確認・上期（2026-10-01）正常</span></div><div class="tile"><span class="pill good">正常</span><span class="t">投降（利多）</span><span class="r num">NAAIM ≤P10 且 AAII ≤P10</span><span class="th">成對確認・上期（2026-10-01）正常</span></div><div class="tile"><span class="pill crit">觸發</span><span class="t">FMS 現金過低</span><span class="r num">現 3.9%</span><span class="th"><4.0% 賣訊・上期（2026-10-01）觸發</span></div><div class="tile"><span class="pill good">正常</span><span class="t">FMS 現金過高</span><span class="r num">現 3.9%</span><span class="th">>5.0% 買訊・上期（2026-10-01）正常</span></div></div>
+  </section>
+
+  <section>
+    <div class="sechead">融資槓桿 — 增速看美股、水位看比率、即時看台股</div>
+    <div class="grid3">
+      <div class="card">
+        <div class="lab">美股融資餘額 年增率（FINRA，數據月 2026-08）</div>
+        <div class="big num flat">37.2%</div>
+        <div class="delta flat">門檻 &gt;+40%・百分位 P86</div>
+        <div class="prev num">上期（2026-10-01）：37.2%・餘額 $1.45T（單月 +2.6%）</div>
+        <canvas data-k="margin"></canvas>
+      </div>
+      <div class="card">
+        <div class="lab">美股融資餘額 / 總市值比（數據月 2026-08，手動維護）</div>
+        <div class="big num">1.91%</div>
+        <div class="delta good">正常：常態 1.5–2.2%，&gt;2.5% 過度槓桿</div>
+        <div class="prev num">2000 高點 ~2.3%・2007 紀錄 ~2.9–3.0%（分母=美股總市值）</div>
+      </div>
+      <div class="card">
+        <div class="lab">台股融資維持率（數據日 2026-10-13）</div>
+        <div class="big num">189.9%</div>
+        <div class="delta good">正常：≥170% 正常（低=恐慌，反向讀）</div>
+        <div class="prev num">上期錨（2026-10-01）：195.1%・警戒 &lt;160、恐慌 &lt;150、斷頭 &lt;140</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead">月頻核心＋背景層 — 掃一眼即可</div>
+    <div class="bg">
+      <div class="stat"><div class="k">FMS 現金水位（2026-09 月調查，手動月更）</div><div class="v num">3.9%</div>
+        <div class="d">科技 OW —%·半導體最擁擠⚠・上期 3.9%</div></div>
+      <div class="stat"><div class="k">Equity P/C 10日均（數據日 10-13）</div><div class="v num flat">0.56</div>
+        <div class="d">百分位 P41（低=貪婪）・上期 0.52</div></div>
+      <div class="stat"><div class="k">SOXL/SOXS 資產比（週錨）</div><div class="v num">9.9</div>
+        <div class="d">散戶賭性・上期 15.8</div></div>
+      <div class="stat"><div class="k">家庭股票配置（Z.1，數據季至 2026-04）</div><div class="v num">48.2%</div>
+        <div class="d">全歷史百分位 P100・上期 48.2%</div></div>
+      <div class="stat"><div class="k">前十大權重（數據日 10-08）</div><div class="v num">39.2%</div>
+        <div class="d">結構集中度・上期 39.0%</div></div>
+      <div class="stat"><div class="k">MMF / 市值比率（ICI，數據週至 10-07）</div><div class="v num">0.0644</div>
+        <div class="d">上升 ↑・上期 0.0638</div></div>
+      <div class="stat"><div class="k">回購 blackout</div><div class="v num" style="font-size:16px">blackout 中（回購暫停）</div>
+        <div class="d">市場最大單一買盤的開關</div></div>
+    </div>
+  </section>
+
+  <div class="notes">
+    <b>解讀脈絡</b>：L3 是反向邏輯且只在極端值有意義——百分位 10–90 之間一律視為「無訊號」，不做多空解讀。
+    L3 不改變方向判斷（那是 L2 的工作），只調倉位大小與風控鬆緊：
+    L2 順風＋L3 擁擠＝參與但減碼；L2 逆風＋L3 擁擠＝最危險組合，防禦優先。
+    MMF 絕對值不是乾火藥，只有 <b>MMF/市值比率</b>在降息週期中快速下降才是「火藥點燃」；
+    融資餘額看<b>年增率</b>不看水位；<b>融資/市值比</b>是水位口徑補充（手動維護，分母為美股總市值
+    而非 S&amp;P 500，門檻須配同口徑），增速與水位雙破線才是 2000/2007 級別訊號。
+    「上期錨」一律指前一週錨的值；月頻/季頻指標兩錨之間未更新時上期＝本期屬正常。
+    ⚠ <b>NAAIM 自 2026-08 起改訂閱制</b>，官方免費 xlsx 停在 2026-07-22；現以 <b>CEIC 公開頁</b>補最新值
+    （每次可補到最新一、兩期，更新節奏取決於 CEIC，可能落後或中斷——資料日期以卡片標註為準）。
+    blackout 期間若 L2 同時抽水，流量真空疊加。
+    <b>台股融資維持率</b>是唯一的絕對水位口徑：≥170% 正常、160–170 留意、150–160 警戒（斷頭風險）、
+    140–150 恐慌（歷史相對低檔，可觀察分批）、&lt;140 多殺多區；2008 極端約 120%。
+  </div>
+</div></div>
+
+<script>
+(function(){
+  var D = {"naaim": [84.87, 90.35, 100.83, 90.06, 87.87, 86.56, 89.92, 98.57, 97.13, 100.7, 95.08, 92.93, 97.72, 96.01, 88.46, 92.58, 84.93, 80.61, 82.87, 74.93, 79.29, 66.99, 60.24, 68.52, 68.36, 69.38, 79.49, 94.15, 93.79, 96.67, 77.34, 82.02, 98.39, 86.82, 79.27, 92.83, 98.59, 84.69, 82.95, 95.64, 84.02, 79.7, 79.7, 79.7, 79.7, 79.7, 79.7, 79.7, 79.7, 79.7, 79.7, 79.7], "spread": [-12.4183, -5.802, 7.1672, 1.6949, -17.5258, -10.9848, -10.6761, 13.4949, 14.0128, 10.9375, 2.6431, 15.0442, 12.4601, 21.2625, 10.4317, 13.6, 10.667, 0.3891, -2.4096, -6.5574, -2.4793, -14.4486, -21.6, -17.6954, -17.8572, -7.2398, -11.0577, 11.6279, -1.5564, 5.364, 2.7118, -11.8942, -6.2959, -0.7326, -17.2898, -2.7778, 8.8106, -10.9091, -0.9302, 12.037, -12.7551, -11.1111, -0.926, -3.1963, -4.4335, -11.5226, 2.1834, -1.3851, -24.5283, -15.3846, -11.8421, 1.2693], "flow": [59.728, 44.273, 68.532, 10.679, 23.0, 47.108, 6.708, 7.494, 18.845, -17.743, -24.61, -29.84, -47.824, -23.729, -26.336, -26.336], "margin": [2.5357, 2.5357, -2.2078, -2.2078, -2.2078, -2.2078, 2.6568, 2.6568, 2.6568, 2.6568, 2.6568, 15.5137, 15.5137, 15.5137, 15.5137, 9.4735, 9.4735, 9.4735, 9.4735, 18.9923, 18.9923, 18.9923, 18.9923, 18.9923, 21.4907, 21.4907, 21.4907, 21.4907, 22.7099, 22.7099, 22.7099, 22.7099, 22.7099, 25.6549, 25.6549, 25.6549, 25.6549, 18.8034, 18.8034, 18.8034, 18.8034, 14.2288, 14.2288, 14.2288, 14.2288, 14.2288, 15.6673, 15.6673, 15.6673, 15.6673, 19.4413, 19.4413, 19.4413, 19.4413, 28.3488, 28.3488, 28.3488, 28.3488, 28.3488, 34.7964, 34.7964, 34.7964, 34.7964, 28.3107, 28.3107, 28.3107, 28.3107, 28.3107, 33.5166, 33.5166, 33.5166, 33.5166, 23.5787, 23.5787, 23.5787, 23.5787, 12.2657, 12.2657, 12.2657, 12.2657, 9.6838, 9.6838, 9.6838, 9.6838, 9.6838, 13.7787, 13.7787, 13.7787, 13.7787, 24.5439, 24.5439, 24.5439, 24.5439, 26.1105, 26.1105, 26.1105, 26.1105, 26.1105, 32.937, 32.937, 32.937, 32.937, 38.5242, 38.5242, 38.5242, 38.5242, 38.5242, 45.1679, 45.1679, 45.1679, 45.1679, 36.3101, 36.3101, 36.3101, 36.3101, 36.3034, 36.3034, 36.3034, 36.3034, 36.3034, 36.4671, 36.4671, 36.4671, 36.4671, 36.4919, 36.4919, 36.4919, 36.4919, 38.6913, 38.6913, 38.6913, 38.6913, 53.3442, 53.3442, 53.3442, 53.3442, 53.3442, 53.7045, 53.7045, 53.7045, 53.7045, 49.0208, 49.0208, 49.0208, 49.0208, 49.0208, 38.5974, 38.5974, 38.5974, 38.5974, 37.1898, 37.1898, 37.1898, 37.1898, 37.1898, 37.1898], "ratio": [0.0737, 0.0738, 0.0741, 0.0736, 0.0632, 0.0632, 0.0618, 0.0618, 0.0617, 0.0627, 0.0627, 0.0628, 0.0629, 0.0638, 0.0637, 0.064, 0.0639, 0.0643, 0.0643, 0.0638, 0.0638, 0.0638, 0.0638, 0.0638, 0.0641, 0.0642, 0.0645, 0.0645, 0.064, 0.0642, 0.0638, 0.0644], "pc": [0.55, 0.548, 0.56, 0.592, 0.565, 0.554, 0.55, 0.528, 0.551, 0.544, 0.535, 0.565, 0.497, 0.515, 0.514, 0.558, 0.538, 0.55, 0.557, 0.605, 0.618, 0.635, 0.619, 0.6, 0.651, 0.678, 0.647, 0.624, 0.57, 0.558, 0.532, 0.528, 0.552, 0.579, 0.555, 0.608, 0.599, 0.527, 0.532, 0.549, 0.545, 0.596, 0.643, 0.639, 0.611, 0.573, 0.597, 0.619, 0.577, 0.527, 0.503, 0.515, 0.536, 0.56, 0.529, 0.538, 0.595, 0.634, 0.655, 0.583, 0.543, 0.601, 0.605, 0.631, 0.611, 0.592, 0.546, 0.514, 0.581, 0.634, 0.671, 0.653, 0.64, 0.666, 0.704, 0.683, 0.615, 0.607, 0.548, 0.495, 0.503, 0.507, 0.5, 0.51, 0.499, 0.455, 0.525, 0.587, 0.584, 0.632, 0.671, 0.647, 0.652, 0.67, 0.619, 0.579, 0.589, 0.57, 0.581, 0.574, 0.582, 0.561, 0.517, 0.557]};
+  var css = getComputedStyle(document.getElementById('l3'));
+  document.querySelectorAll('#l3 canvas').forEach(function(cv){
+    var arr = D[cv.getAttribute('data-k')]; if(!arr||arr.length<2){ cv.style.display='none'; return; }
+    var dpr = window.devicePixelRatio||1, W=cv.clientWidth, H=cv.clientHeight;
+    cv.width=W*dpr; cv.height=H*dpr; var x=cv.getContext('2d'); x.scale(dpr,dpr);
+    var mn=Math.min.apply(null,arr), mx=Math.max.apply(null,arr), rng=(mx-mn)||1, pad=4;
+    var X=function(i){return pad+i*(W-2*pad)/(arr.length-1);};
+    var Y=function(v){return H-pad-(v-mn)/rng*(H-2*pad);};
+    var acc = css.getPropertyValue('--accent').trim()||'#6d4fa1';
+    x.beginPath(); x.moveTo(X(0),Y(arr[0]));
+    for(var i=1;i<arr.length;i++) x.lineTo(X(i),Y(arr[i]));
+    x.lineTo(X(arr.length-1),H); x.lineTo(X(0),H); x.closePath();
+    x.fillStyle='rgba(109,79,161,.10)'; x.fill();
+    x.beginPath(); x.moveTo(X(0),Y(arr[0]));
+    for(var j=1;j<arr.length;j++) x.lineTo(X(j),Y(arr[j]));
+    x.strokeStyle=acc; x.lineWidth=1.6; x.stroke();
+    x.beginPath(); x.arc(X(arr.length-1),Y(arr[arr.length-1]),2.6,0,7); x.fillStyle=acc; x.fill();
+  });
+})();
+</script>
+
+</body></html>

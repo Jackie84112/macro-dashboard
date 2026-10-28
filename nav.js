@@ -10,6 +10,8 @@
       { href: "rates.html", label: "貨幣成本", desc: "通膨、Fed 利率路徑、公債與信用利率" },
       { href: "index.html", label: "就業狀況", desc: "初領失業金、非農、失業率 vs u*" },
       { href: "margin.html", label: "融資槓桿", desc: "FINRA 融資年增、槓桿熱度、Fed 救援空間" },
+      { href: "l2.html", label: "流動性潮水", desc: "L2 準備金、RRP、TGA 與 Fed 資產負債表" },
+      { href: "l3.html", label: "持倉分布", desc: "L3 持倉擁擠度與分布" },
     ] },
     { label: "產業數據", items: [
       { href: "datacenter.html", label: "資料中心成本", desc: "每 $100 AI 資本支出沿供應鏈的流向" },
