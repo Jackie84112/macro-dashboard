@@ -151,6 +151,7 @@ table.data td.good { color: var(--good); font-weight: 700; }
 table.data td.bad { color: var(--bad); font-weight: 700; }
 table.data td.flat { color: var(--series-1); font-weight: 700; }
 table.data td.muted { color: var(--text-muted); }
+table.data td.cons { color: var(--text-muted); opacity: .65; font-weight: 400; }
 table.data tbody.gap + tbody tr:first-child td { border-top: 2px solid var(--group-rule); }
 table.data tbody tr:last-child td { border-bottom: none; }
 table.data td.updated { background: var(--group-bg); }
@@ -256,6 +257,7 @@ footer a { color: inherit; }
     <div class="notes">
       <p>[註1]：Warsh 強調關注趨勢和速度，非單一數據點。</p>
       <p>[註2]：失業率穩定，主因需求和供給結構性減少。</p>
+      <p id="cons-note" hidden></p>
     </div>
   </section>
 
@@ -503,6 +505,7 @@ function nextRelease(sched) {
   return { text: hit ? twDate(hit) : "待公布" };
 }
 
+let CONS = null;
 function renderTable() {
   const T = DATA.table;
   if (!tableYear) tableYear = T.latestYear;
@@ -535,7 +538,8 @@ function renderTable() {
     const upd = new Set((DATA.changedCells || {})[r.key] || []);
     r.cells[String(tableYear)].forEach((c, m) => {
       const cls = [c && (c.c || (c.v === "–" ? "muted" : "")), upd.has(`${tableYear}-${m + 1}`) && "updated"].filter(Boolean).join(" ");
-      h += c ? `<td class="${cls}">${c.v}</td>` : `<td></td>`;
+      const cons = !c && ((CONS && CONS.values[r.key]) || {})[`${tableYear}-${m + 1}`];   // 沒實際值才顯示市場共識
+      h += c ? `<td class="${cls}">${c.v}</td>` : cons ? `<td class="cons" title="市場共識">${cons}</td>` : `<td></td>`;
     });
     // 同群組、同發布排程的連續列合併「下次發布」
     if (!same(rows[i - 1], r)) {
@@ -601,10 +605,17 @@ function renderWeek() {
 Promise.all([
   fetch("data/labor.json", { cache: "no-store" }).then(r => r.json()),
   fetch("data/calendar.json", { cache: "no-store" }).then(r => r.json()).catch(() => null),
+  fetch("data/consensus.json", { cache: "no-store" }).then(r => r.json()).catch(() => null),
 ])
-  .then(([json, cal]) => {
+  .then(([json, cal, cons]) => {
     DATA = json;
     CAL = cal;
+    CONS = cons;
+    if (CONS) {
+      const n = document.getElementById("cons-note");
+      n.textContent = `[註3]：淺灰色數字為市場共識，實際值公布後自動取代。${CONS.note}。`;
+      n.hidden = false;
+    }
     renderSignals();
     renderTable();
     renderWeek();
