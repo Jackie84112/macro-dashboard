@@ -223,7 +223,9 @@ def main() -> None:
     core_cpi_sa = monthly(fred("CPILFESL"))
     pce, core_pce = monthly(fred("PCEPI")), monthly(fred("PCEPILFE"))
     ppi, core_ppi = monthly(fred("PPIFID")), monthly(fred("PPIFES"))
-    yoy = lambda s: (s.pct_change(12) * 100).dropna()
+    # 先補齊月份再算：2025/10 CPI 因政府停擺缺值，直接 pct_change(12) 會變成跟 13 個月前比
+    full = lambda s: s.reindex(pd.period_range(s.index[0], s.index[-1], freq="M"))
+    yoy = lambda s: (full(s).pct_change(12, fill_method=None) * 100).dropna()
     src = {
         "ppi": yoy(ppi), "core_ppi": yoy(core_ppi),
         "cpi": yoy(cpi), "core_cpi": yoy(core_cpi),
@@ -231,7 +233,7 @@ def main() -> None:
         "trim": monthly(fred("PCETRIM12M159SFRBDAL")),
         "pce6": annualized(pce, 6).dropna(),
         "core_pce3": annualized(core_pce, 3).dropna(),
-        "core_cpi_mom": (core_cpi_sa.pct_change() * 100).dropna(),
+        "core_cpi_mom": (full(core_cpi_sa).pct_change(fill_method=None) * 100).dropna(),
     }
 
     # 2) 日資料：政策利率、公債、高收益債、油價、那斯達克
