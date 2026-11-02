@@ -624,10 +624,9 @@ function renderFedwatch() {
       `<div class="fw-bar" id="chart-fw${i}" role="img" aria-label="${w.label}下次會議機率長條圖"></div>` +
       `<div class="fw-tbl"><table class="fwt">${h}</tbody></table></div></div>`;
   }).join("");
-  // 左圖高度對齊右表
-  document.querySelectorAll("#fw-weeks .fw-week").forEach(el => {
-    el.querySelector(".fw-bar").style.height = el.querySelector(".fw-tbl").offsetHeight + "px";
-  });
+  // 兩週的圖一律等高：取右表較高者，會議場次不同時比例也一致
+  const barH = Math.max(...[...document.querySelectorAll("#fw-weeks .fw-tbl")].map(t => t.offsetHeight));
+  document.querySelectorAll("#fw-weeks .fw-bar").forEach(el => { el.style.height = barH + "px"; });
 }
 
 function renderFwBars() {
