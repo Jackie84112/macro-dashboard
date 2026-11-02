@@ -163,6 +163,17 @@ footer a { color: inherit; }
   .stat { text-align: left; }
   .chart { height: 280px; }
 }
+#week-card .card-head { margin-bottom: 12px; }
+.week-cal { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.week-day { border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; min-height: 86px; min-width: 0; }
+.week-day.today { border: 2px solid var(--series-1); padding: 9px 11px; }
+.week-day .wd { font-size: 13px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.week-day .period { margin-top: 6px; font-size: 17px; font-weight: 700; color: var(--text-primary); }
+.week-day .what { font-size: 14px; color: var(--text-secondary); }
+@media (max-width: 720px) {
+  .week-cal { grid-template-columns: minmax(0, 1fr); }
+  .week-day { min-height: 0; }
+}
 </style>
 </head>
 <body>
@@ -234,6 +245,11 @@ footer a { color: inherit; }
       <p>[註1]：Warsh 強調關注趨勢和速度，非單一數據點。</p>
       <p>[註2]：失業率穩定，主因需求和供給結構性減少。</p>
     </div>
+  </section>
+
+  <section class="card" id="week-card" hidden>
+    <div class="card-head"><div><h2 id="week-title"></h2></div></div>
+    <div class="week-cal" id="week-cal"></div>
   </section>
 
   <footer>
@@ -529,6 +545,43 @@ document.querySelectorAll(".toolbar button").forEach(btn => {
   });
 });
 
+// 本週數據日曆：讀 calendar.json 的發布日。陣列從 2026 年第一次發布起算，第 i 筆對應的資料月份由起始月往後推 i 個月
+function renderWeek() {
+  if (!CAL) return;
+  const pad = (n) => String(n).padStart(2, "0");
+  const iso = (d) => `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei" }).format(new Date());
+  const now = new Date(today + "T00:00:00Z");
+  const dow = now.getUTCDay();                       // 週末直接看下週
+  const monday = new Date(now);
+  monday.setUTCDate(now.getUTCDate() + (dow === 0 ? 1 : dow === 6 ? 2 : 1 - dow));
+  const refMonth = (list, first, day) => {           // first = 第一筆發布對應的資料月份索引（1 月 = 0）
+    const i = list.findIndex(d => d.startsWith(day));
+    return i < 0 ? null : ((first + i) % 12) + 1;
+  };
+  const cells = ["週一", "週二", "週三", "週四", "週五"].map((name, k) => {
+    const d = new Date(monday);
+    d.setUTCDate(monday.getUTCDate() + k);
+    const day = iso(d), items = [];
+    const jolts = refMonth(CAL.jolts, 10, day);      // 2026/1 發布的是 2025/11
+    if (jolts) items.push([`${jolts} 月`, "JOLTS 職缺"]);
+    if (k === 3) {                                   // 初領每週四，資料為上週六結束的當週
+      const sat = new Date(d);
+      sat.setUTCDate(d.getUTCDate() - 5);
+      items.push([`${sat.getUTCMonth() + 1}/${sat.getUTCDate()} 當週`, "初領失業金"]);
+    }
+    const emp = refMonth(CAL.empsit, 11, day);       // 2026/1 發布的是 2025/12
+    if (emp) items.push([`${emp} 月`, "非農、失業率、時薪"]);
+    const body = items.length
+      ? items.map(([p, w]) => `<div class="period">${p}</div><div class="what">${w}</div>`).join("")
+      : "";
+    return `<div class="week-day${day === today ? " today" : ""}"><div class="wd">${name} ${d.getUTCMonth() + 1}/${d.getUTCDate()}</div>${body}</div>`;
+  });
+  document.getElementById("week-title").textContent = dow === 0 || dow === 6 ? "下週數據日曆" : "本週數據日曆";
+  document.getElementById("week-cal").innerHTML = cells.join("");
+  document.getElementById("week-card").hidden = false;
+}
+
 Promise.all([
   fetch("data/labor.json", { cache: "no-store" }).then(r => r.json()),
   fetch("data/calendar.json", { cache: "no-store" }).then(r => r.json()).catch(() => null),
@@ -538,6 +591,7 @@ Promise.all([
     CAL = cal;
     renderSignals();
     renderTable();
+    renderWeek();
     for (const k of ["claims", "nfp", "unrate"]) charts[k] = echarts.init(document.getElementById("chart-" + k));
     renderAll();
     const t = new Date(DATA.updated.replace("Z", ":00Z"));
