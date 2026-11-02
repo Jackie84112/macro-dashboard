@@ -273,7 +273,7 @@ footer a { color: inherit; }
     <div class="card-head">
       <div>
         <h3><a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline dotted">CME FedWatch 各次會議機率 ↗</a></h3>
-        <p class="desc">資料來源：芝加哥商品交易所（CME）FedWatch，芝商所 30 天期聯邦基金期貨交易反映出的隱含機率。<span id="fw-desc"></span></p>
+        <p class="desc">資料來源：芝加哥商品交易所（CME）FedWatch，芝商所 30 天期聯邦基金期貨交易反映出的隱含機率。</p>
       </div>
     </div>
     <div id="fw-weeks"></div>
@@ -608,7 +608,6 @@ function renderFedwatch() {
   const ranges = [...new Set(weeks.flatMap(w => w.meetings.flatMap(m => Object.keys(m.p))))]
     .sort((a, b) => parseInt(a) - parseInt(b));
   const year = weeks[0].meetings[0].date.slice(0, 4);
-  document.getElementById("fw-desc").textContent = `（${MAN.report}）`;
   document.getElementById("fw-weeks").innerHTML = weeks.map((w, i) => {
     const thisYear = w.meetings.filter(m => m.date.startsWith(year)).length;
     let h = `<thead><tr><th class="blank"></th><th colspan="${ranges.length}">CME FEDWATCH TOOL - AGGREGATED MEETING PROBABILITIES</th></tr>` +
@@ -974,9 +973,24 @@ function renderSnapshot() {
   document.getElementById("snap-table").innerHTML = h + "</tbody>";
 }
 
+// FOMC 全年日程（依季分組、台灣時間），讀 calendar.json；跨年自動換成當年，補隔年日期即可
+function fomcYearNote() {
+  if (!CAL || !CAL.fomc) return "";
+  const fmt = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei", year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  const year = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Taipei", year: "numeric" }).format(new Date());
+  const qs = [[], [], [], []];
+  CAL.fomc.forEach(str => {
+    const p = Object.fromEntries(fmt.formatToParts(etToDate(str)).map(x => [x.type, x.value]));
+    if (p.year === year) qs[Math.floor((Number(p.month) - 1) / 3)].push(`${Number(p.month)}/${Number(p.day)} ${p.hour}:${p.minute}`);
+  });
+  const body = qs.map((q, i) => q.length ? `Q${i + 1} ${q.join("、")}` : "").filter(Boolean).join("｜");
+  return body ? `Fed ${year} 利率會議（台灣時間）：${body}。` : "";
+}
+
 function renderNotes() {
   document.querySelectorAll("[data-notes]").forEach(el => {
-    const list = (MAN.notes || {})[el.dataset.notes] || [];
+    const list = [...((MAN.notes || {})[el.dataset.notes] || [])];
+    if (el.dataset.notes === "policy") { const f = fomcYearNote(); if (f) list.unshift(f); }
     el.replaceChildren(...list.map(t => Object.assign(document.createElement("p"), { textContent: t })));
   });
 }
