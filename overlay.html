@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>股債信用疊圖｜宏觀監控儀表板</title>
+<meta name="description" content="S&P 500、Nasdaq-100、SOX 與 10 年期公債殖利率、投資級與垃圾級信用利差，以同一基期疊在一張圖。">
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #f5f5f3;
+  --surface: #fcfcfb;
+  --border: #e4e3de;
+  --grid: #ecebe7;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #7a7973;
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --bar-neutral: #c9c8c2;
+  --band-critical: rgba(208, 59, 59, 0.17);
+  --warn-line: #d03b3b;
+  --band-neutral: rgba(82, 81, 78, 0.10);
+  --good: #0a7d0a;
+  --bad: #c43131;
+  --group-bg: #f3f2ee;
+  --group-rule: #b9b8b1;
+  --tint-1: rgba(42, 120, 214, 0.16);
+  --tint-2: rgba(237, 161, 0, 0.20);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #121211;
+    --surface: #1a1a19;
+    --border: #2e2e2b;
+    --grid: #2a2a28;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8f8e86;
+    --series-1: #3987e5;
+    --series-2: #d95926;
+    --series-3: #199e70;
+    --bar-neutral: #55544f;
+    --band-critical: rgba(230, 103, 103, 0.22);
+    --warn-line: #e66767;
+    --band-neutral: rgba(195, 194, 183, 0.12);
+    --good: #4cc24c;
+    --bad: #e66767;
+    --group-bg: rgba(255, 255, 255, 0.05);
+    --group-rule: #5c5b56;
+    --tint-1: rgba(57, 135, 229, 0.26);
+    --tint-2: rgba(201, 133, 0, 0.28);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #121211;
+  --surface: #1a1a19;
+  --border: #2e2e2b;
+  --grid: #2a2a28;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #8f8e86;
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --bar-neutral: #55544f;
+  --band-critical: rgba(230, 103, 103, 0.22);
+  --warn-line: #e66767;
+  --band-neutral: rgba(195, 194, 183, 0.12);
+  --good: #4cc24c;
+  --bad: #e66767;
+  --group-bg: rgba(255, 255, 255, 0.05);
+  --group-rule: #5c5b56;
+  --tint-1: rgba(57, 135, 229, 0.26);
+  --tint-2: rgba(201, 133, 0, 0.28);
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif;
+  line-height: 1.5;
+}
+main { max-width: 1080px; margin: 0 auto; padding: 32px 16px 48px; }
+header h1 { font-size: 28px; margin: 0 0 4px; font-weight: 700; }
+header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
+.toolbar { display: flex; gap: 8px; align-items: center; margin: 24px 0 8px; flex-wrap: wrap; }
+.toolbar span { color: var(--text-muted); font-size: 13px; margin-right: 4px; }
+.toolbar button, .tabs button {
+  font: inherit; font-size: 13px; padding: 4px 12px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer;
+}
+.toolbar button[aria-pressed="true"], .tabs button[aria-pressed="true"] { background: var(--text-primary); color: var(--surface); border-color: var(--text-primary); }
+h2.sec { font-size: 22px; font-weight: 700; color: var(--text-primary); margin: 36px 0 12px; letter-spacing: 1px; }
+h2.sec small { font-weight: 400; color: var(--text-muted); letter-spacing: 0; margin-left: 10px; font-size: 13px; }
+.card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 20px 20px 8px; margin-bottom: 16px;
+}
+.card-head { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+.card h3 { font-size: 18px; margin: 0; font-weight: 700; }
+.card .desc { margin: 2px 0 0; color: var(--text-secondary); font-size: 13px; }
+.stat { text-align: right; }
+.stat .value { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat .meta { font-size: 12px; color: var(--text-muted); }
+.stat .delta { font-size: 13px; font-weight: 600; }
+.delta.good { color: var(--good); }
+.delta.bad { color: var(--bad); }
+.delta.flat { color: var(--series-1); }
+.tabs { display: flex; gap: 6px; margin: 12px 0 0; flex-wrap: wrap; }
+.tabs button { font-size: 12px; padding: 2px 10px; }
+.chart { width: 100%; height: 340px; }
+.chart.tall { height: 420px; }
+#chart-oas { height: 720px; }
+.legend-chips { display: flex; gap: 12px; font-size: 12px; color: var(--text-secondary); align-items: center; }
+.legend-chips i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
+.table-wrap { overflow-x: auto; margin: 0 -20px; padding: 0 20px 12px; }
+table.data { border-collapse: collapse; width: 100%; min-width: 860px; font-size: 13px; font-variant-numeric: tabular-nums; }
+table.data th, table.data td { padding: 6px 5px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
+table.data thead th { font-weight: 600; color: var(--text-secondary); text-align: right; border-bottom: 1px solid var(--border); }
+table.data thead th.left { text-align: left; }
+table.data thead th.fomc { background: var(--tint-2); border-radius: 4px; }
+table.data thead th.now { color: var(--text-primary); box-shadow: inset 0 0 0 2px var(--series-1); border-radius: 4px; }
+table.data td { text-align: right; color: var(--text-primary); }
+table.data td.group { white-space: normal; width: 96px; min-width: 96px; text-align: left; color: var(--text-primary); font-size: 14px; font-weight: 700; vertical-align: middle; background: var(--group-bg); border-left: 4px solid var(--group-rule); border-right: 1px solid var(--grid); padding-left: 10px; }
+table.data td.label { text-align: left; }
+table.data td.next { text-align: center; color: var(--text-secondary); border-left: 1px solid var(--grid); vertical-align: middle; }
+table.data td.next.weekly { color: var(--bad); font-weight: 600; }
+table.data tr.key td.label { font-weight: 600; }
+table.data td.good { color: var(--good); font-weight: 700; }
+table.data td.bad { color: var(--bad); font-weight: 700; }
+table.data td.flat { color: var(--series-1); font-weight: 700; }
+table.data td.muted { color: var(--text-muted); }
+table.data tbody.gap + tbody tr:first-child td { border-top: 2px solid var(--group-rule); }
+table.data tbody tr:last-child td { border-bottom: none; }
+table.data td.updated { background: var(--group-bg); }
+table.data tbody.gap td { height: 14px; padding: 0; border: none; background: transparent; }
+table.data.snap { min-width: 640px; }
+/* FedWatch：照 PPT 版面，每週一列＝週別｜下次會議長條圖｜各次會議機率表 */
+.fw-week { display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 2fr); gap: 12px; align-items: center; padding: 14px 0; }
+.fw-week + .fw-week { border-top: 1px solid var(--grid); }
+.fw-week .wk { font-size: 20px; font-weight: 700; }
+.fw-bar { height: 280px; min-width: 0; }
+.fw-tbl { overflow-x: auto; padding: 2px; } /* 留邊讓 border-collapse 的 2px 外框不被捲動容器裁掉一半 */
+table.fwt { border-collapse: collapse; width: 100%; min-width: 440px; font-size: 12px; font-variant-numeric: tabular-nums; }
+table.fwt th, table.fwt td { border: 1px solid var(--border); padding: 4px 5px; text-align: right; white-space: nowrap; }
+table.fwt th { font-weight: 700; color: var(--text-primary); text-align: center; font-size: 12px; }
+table.fwt td:first-child { text-align: right; }
+table.fwt th.blank { border: none; }
+table.fwt td.hi { background: var(--tint-1); }
+table.fwt td.mid { background: var(--tint-2); }
+/* 今年剩餘會議加框（同 PPT） */
+/* 用 inset 陰影畫框：border-collapse 的邊框衝突會在縮放 <100% 時讓 2px 藍線輸給 1px 灰線，陰影不受影響 */
+table.fwt tr.bx td { box-shadow: inset 2px 0 0 var(--bl, transparent), inset -2px 0 0 var(--br, transparent), inset 0 2px 0 var(--bt, transparent), inset 0 -2px 0 var(--bb, transparent); }
+table.fwt tr.bx td:first-child { --bl: var(--series-1); }
+table.fwt tr.bx td:last-child { --br: var(--series-1); }
+table.fwt tr.bx-top td { --bt: var(--series-1); }
+table.fwt tr.bx-bot td { --bb: var(--series-1); }
+/* FOMC 倒數橫幅：深藍底，兩種主題都用同一組色 */
+.cd-banner { display: none; margin: 16px 0 18px; padding: 22px 28px; border-radius: 16px; color: #fff;
+  background: radial-gradient(120% 160% at 0% 0%, #2a527f 0%, #16335a 45%, #0d2140 100%);
+  box-shadow: 0 6px 20px rgba(13, 33, 64, .25); align-items: center; justify-content: space-between; gap: 20px 32px; flex-wrap: wrap; }
+.cd-banner.on { display: flex; }
+.cd-banner .cd-kick { font-size: 12px; font-weight: 700; letter-spacing: .14em; color: #8fb4e3; }
+.cd-banner .cd-title { font-size: 26px; font-weight: 700; line-height: 1.25; margin-top: 4px; }
+.cd-banner .cd-sub { font-size: 13px; color: #b9cde6; margin-top: 8px; }
+.cd-banner .cd-boxes { display: flex; gap: 12px; }
+.cd-banner .cd-box { width: 86px; padding: 12px 10px 9px; border-radius: 14px; background: #fff; color: #14243b; box-shadow: 0 2px 8px rgba(0, 0, 0, .25); }
+.cd-banner .cd-num { font-size: 40px; font-weight: 500; line-height: 1.1; font-variant-numeric: tabular-nums; border-bottom: 1.5px solid #14243b; padding-bottom: 4px; }
+.cd-banner .cd-lab { font-size: 11px; font-weight: 600; letter-spacing: .08em; margin-top: 5px; color: #3b4d66; }
+.cd-banner.soon .cd-num { color: #c2410c; }
+@media (max-width: 640px) {
+  .cd-banner { padding: 18px 16px; }
+  .cd-banner .cd-title { font-size: 20px; }
+  .cd-banner .cd-boxes { width: 100%; gap: 8px; }
+  .cd-banner .cd-box { flex: 1; width: auto; padding: 10px 6px 8px; }
+  .cd-banner .cd-num { font-size: 30px; }
+}
+@media (max-width: 860px) { .fw-week { grid-template-columns: 1fr; } }
+@media (max-width: 1100px) { table.fwt { min-width: 0; font-size: 11px; } table.fwt th, table.fwt td { padding: 4px 3px; } table.fwt th { font-size: 11px; } }
+.notes { margin: 8px 0 12px; font-size: 12px; color: var(--text-secondary); }
+.notes p { margin: 2px 0; }
+footer { color: var(--text-muted); font-size: 12px; margin-top: 24px; }
+footer a { color: inherit; }
+.changes { margin: 6px 0 10px; padding-left: 18px; }
+.changes li { margin: 2px 0; }
+.changes b { font-weight: 600; color: var(--text-secondary); }
+@media (max-width: 600px) {
+  .stat { text-align: left; }
+  .chart { height: 280px; }
+  .chart.tall { height: 360px; }
+  #chart-oas { height: 580px; }
+}
+/* 本頁：六條線依固定順序配色（dataviz 參考色盤，已驗證） */
+:root { --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; }
+}
+:root[data-theme="dark"] { --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; }
+#chart-overlay { width: 100%; height: 600px; }
+@media (max-width: 600px) { #chart-overlay { height: 440px; } }
+.ov-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 16px; font-variant-numeric: tabular-nums; }
+.ov-table th, .ov-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
+.ov-table th { color: var(--text-muted); font-weight: 500; font-size: 13px; }
+.ov-table th:first-child, .ov-table td:first-child { text-align: left; }
+.ov-table .sw { display: inline-block; width: 14px; height: 0; border-top: 2px solid; margin-right: 8px; vertical-align: 3px; }
+.ov-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<script src="nav.js?v=20261103a"></script>
+<main>
+  <header>
+    <h1>股債信用疊圖</h1>
+    <p>三大指數、10 年期公債殖利率與投資級、垃圾級信用利差放在同一基期，比較同一段時間誰動得多、方向是否一致。</p>
+  </header>
+
+  <div class="toolbar" role="group" aria-label="時間範圍">
+    <span>時間範圍</span>
+    <button data-m="3">3 個月</button>
+    <button data-m="6">6 個月</button>
+    <button data-m="12" aria-pressed="true">1 年</button>
+    <button data-m="0">全部</button>
+  </div>
+
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <h3>指數、殖利率與信用利差（區間起點＝100）</h3>
+        <p class="desc" id="ov-desc"></p>
+      </div>
+    </div>
+    <div id="chart-overlay" role="img" aria-label="S&P 500、Nasdaq-100、SOX、10 年期公債殖利率、投資級與垃圾級信用利差同基期折線圖"></div>
+    <div class="ov-wrap"><table class="ov-table" id="ov-table"></table></div>
+    <div class="notes">
+      <p>[註1]：各線以區間起點＝100 換算後疊圖，採對數座標，實際數值見滑鼠提示與上表；切換時間範圍時基期跟著改變。</p>
+      <p>[註2]：投資級、垃圾級各一條，為 ICE 美銀全體指數 OAS（已按市值加權整合各評級），FRED 僅提供近 3 年。</p>
+    </div>
+  </section>
+
+  <footer>
+    <div>資料來源：Yahoo Finance（^GSPC、^NDX、^SOX）、FRED／美國財政部（DGS10）、FRED（BAMLC0A0CM、BAMLH0A0HYM2）。</div>
+    <div id="updated"></div>
+  </footer>
+</main>
+
+<script>
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const SERIES = [
+  { k: "spx", name: "S&P 500", color: "--s1", fmt: (v) => v.toLocaleString("en-US", { maximumFractionDigits: 0 }) },
+  { k: "ndx", name: "Nasdaq-100", color: "--s2", fmt: (v) => v.toLocaleString("en-US", { maximumFractionDigits: 0 }) },
+  { k: "sox", name: "SOX", color: "--s3", fmt: (v) => v.toLocaleString("en-US", { maximumFractionDigits: 0 }) },
+  { k: "dgs10", name: "10 年期殖利率", color: "--s4", dash: true, fmt: (v) => v.toFixed(2) + "%", bp: 100 },
+  { k: "oas_ig", name: "投資級 OAS", color: "--s5", fmt: (v) => v.toFixed(0) + " bp", bp: 1 },
+  { k: "oas_hy", name: "垃圾級 OAS", color: "--s6", fmt: (v) => v.toFixed(0) + " bp", bp: 1 },
+];
+const STEPS = [1.02, 1.05, 1.1, 1.25, 1.5, 2];   // 對數座標每格倍數，依區間漲跌幅挑選
+let DATA = null, months = 12, chart = null;
+
+function startOf(m) {
+  const last = SERIES.map(s => DATA[s.k][DATA[s.k].length - 1][0]).sort().pop();
+  if (!m) return SERIES.map(s => DATA[s.k][0][0]).sort().pop();   // 全部＝六條線都有資料的第一天
+  const d = new Date(last); d.setMonth(d.getMonth() - m);
+  return d.toISOString().slice(0, 10);
+}
+const fmtDay = (d) => d.replaceAll("-", "/");
+const pct = (x) => (x >= 0 ? "+" : "") + x.toFixed(1) + "%";
+
+function render() {
+  const start = startOf(months), narrow = chart.getWidth() < 600;
+  const rows = SERIES.map(s => {
+    const pts = DATA[s.k].filter(p => p[0] >= start);
+    return { ...s, pts, base: pts[0], last: pts[pts.length - 1] };
+  });
+  const all = rows.flatMap(r => r.pts.map(p => p[1] / r.base[1]));
+  const lo = Math.min(...all), hi = Math.max(...all);
+  const step = STEPS.find(x => Math.log(hi / lo) / Math.log(x) <= 8) || 2;
+  const toY = (ratio) => Math.log(ratio) / Math.log(step);
+
+  chart.setOption({
+    animation: false,
+    textStyle: { fontFamily: getComputedStyle(document.body).fontFamily },
+    legend: { top: 0, left: 0, itemWidth: 16, itemHeight: 2, icon: "rect",
+      textStyle: { color: css("--text-secondary"), fontSize: 12 } },
+    grid: { left: 8, right: narrow ? 16 : 150, top: narrow ? 60 : 36, bottom: 28, containLabel: true },
+    xAxis: { type: "time", min: start, axisLine: { lineStyle: { color: css("--grid") } }, axisTick: { show: false },
+      axisLabel: { color: css("--text-muted"), hideOverlap: true, formatter: { year: "{yyyy}", month: "{M}月", day: "" } },
+      splitLine: { show: false } },
+    yAxis: { type: "value", interval: 1, min: Math.floor(toY(lo)), max: Math.ceil(toY(hi)),
+      axisLabel: { color: css("--text-muted"), formatter: (n) => Math.round(100 * Math.pow(step, n)) },
+      splitLine: { lineStyle: { color: css("--grid"), width: 1 } } },
+    tooltip: { trigger: "axis", backgroundColor: css("--surface"), borderColor: css("--border"),
+      textStyle: { color: css("--text-primary"), fontSize: 13 },
+      axisPointer: { type: "line", lineStyle: { color: css("--text-secondary"), width: 1 } },
+      formatter: (ps) => {
+        const list = [...ps].sort((a, b) => b.value[1] - a.value[1]).map(p => {
+          const s = SERIES[p.seriesIndex];
+          return `<div style="display:flex;justify-content:space-between;gap:20px">` +
+            `<span>${p.marker}${s.name}</span><span><b>${s.fmt(p.value[2])}</b>（${pct(p.value[3])}）</span></div>`;
+        }).join("");
+        return `<div style="margin-bottom:4px">${fmtDay(new Date(ps[0].value[0]).toISOString().slice(0, 10))}（較起點）</div>${list}`;
+      } },
+    series: rows.map((r, i) => ({
+      name: r.name, type: "line", showSymbol: false, smooth: false,
+      lineStyle: { color: css(r.color), width: 2, type: r.dash ? "dashed" : "solid" },
+      itemStyle: { color: css(r.color) }, emphasis: { disabled: true },
+      data: r.pts.map(p => [p[0], toY(p[1] / r.base[1]), p[1], (p[1] / r.base[1] - 1) * 100]),
+      labelLayout: { moveOverlap: "shiftY" },
+      endLabel: { show: !narrow, color: css("--text-secondary"), fontSize: 11, distance: 8, padding: [2, 0],
+        formatter: () => `${r.name} ${r.fmt(r.last[1])}` },
+      ...(i === 0 ? { markLine: { silent: true, symbol: "none", label: { show: false },
+        lineStyle: { color: css("--text-muted"), type: "solid", width: 1 }, data: [{ yAxis: 0 }] } } : {}),
+    })),
+  }, true);
+
+  document.getElementById("ov-desc").textContent =
+    `日資料，基期 ${fmtDay(rows[0].base[0])}＝100；三大指數為價格，10 年期為殖利率，OAS 為信用利差。`;
+  document.getElementById("ov-table").innerHTML =
+    `<thead><tr><th>指標</th><th>區間起點</th><th>最新</th><th>區間變化</th><th>資料日期</th></tr></thead><tbody>` +
+    rows.map(r => {
+      const chg = (r.last[1] / r.base[1] - 1) * 100;
+      const bp = r.bp ? `，${Math.round((r.last[1] - r.base[1]) * r.bp) >= 0 ? "+" : ""}${Math.round((r.last[1] - r.base[1]) * r.bp)} bp` : "";
+      return `<tr><td><span class="sw" style="border-color:${css(r.color)};border-top-style:${r.dash ? "dashed" : "solid"}"></span>${r.name}</td>` +
+        `<td>${r.fmt(r.base[1])}</td><td><b>${r.fmt(r.last[1])}</b></td><td>${pct(chg)}${bp}</td><td>${fmtDay(r.last[0])}</td></tr>`;
+    }).join("") + "</tbody>";
+}
+
+fetch("data/overlay.json", { cache: "no-store" }).then(r => r.json()).then(json => {
+  DATA = json;
+  chart = echarts.init(document.getElementById("chart-overlay"));
+  render();
+  const t = new Date(DATA.updated.replace("Z", ":00Z"));
+  document.getElementById("updated").textContent =
+    "最後更新：" + t.toLocaleString("zh-TW", { timeZone: "Asia/Taipei", hour12: false }) + "（台灣時間）";
+});
+document.querySelectorAll(".toolbar button").forEach(btn => btn.addEventListener("click", () => {
+  months = Number(btn.dataset.m);
+  document.querySelectorAll(".toolbar button").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
+  render();
+}));
+window.addEventListener("resize", () => { if (chart) { chart.resize(); render(); } });
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (chart) render(); });
+</script>
+</body>
+</html>

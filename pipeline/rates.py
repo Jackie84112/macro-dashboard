@@ -47,6 +47,27 @@ def treasury_recent() -> pd.DataFrame:
     return pd.concat(frames).sort_index()
 
 
+def write_overlay(daily: dict) -> None:
+    """股債信用疊圖 overlay.html 的資料：三大指數（Yahoo）＋10Y＋投資級／垃圾級全體 OAS，自 OAS 最早日起。"""
+    out = ROOT / "data" / "overlay.json"
+    try:
+        idx = {k: yahoo(sym) for k, sym in (("spx", "^GSPC"), ("ndx", "^NDX"), ("sox", "^SOX"))}
+    except Exception as e:  # Yahoo 偶爾失敗：沿用上次檔案，不擋其他資料更新
+        print("overlay：Yahoo 抓取失敗，沿用上次資料：", e)
+        return
+    start = daily["oas_hy"].dropna().index.min()
+    cut = lambda s: s[s.index >= start].dropna()
+    data = {**{k: points(cut(v), 2) for k, v in idx.items()},
+            "dgs10": points(cut(daily["dgs10"]), 2),
+            "oas_ig": points(cut(daily["oas_ig"]), 0), "oas_hy": points(cut(daily["oas_hy"]), 0)}
+    prev = json.loads(out.read_text(encoding="utf-8")) if out.exists() else None
+    if prev and {k: v for k, v in prev.items() if k != "updated"} == data:
+        return
+    data = {"updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%MZ"), **data}
+    out.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    print("寫入 overlay.json：", {k: data[k][-1] for k in data if k != "updated"})
+
+
 def with_recent(hist: pd.Series, recent: pd.Series) -> pd.Series:
     """FRED 歷史接上較新的來源；重疊日期以較新來源為準。"""
     return pd.concat([hist[hist.index < recent.index.min()], recent.dropna()]).sort_index()
@@ -270,6 +291,8 @@ def main() -> None:
         **{k: points(v, 0) for k, v in daily.items() if k.startswith("oas_")},
         "nasdaq": points(nasdaq, 0),
     }
+    write_overlay(daily)
+
     # 數據沒變就保留原本的更新時間，避免排程每次都產生空的提交
     prev = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else None
     if prev and {k: v for k, v in prev.items() if k not in ("updated", "changes", "changedCells")} == data:
