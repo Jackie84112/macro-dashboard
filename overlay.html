@@ -45,6 +45,9 @@
   #tip .r{display:flex;justify-content:space-between;gap:14px;}
   #tip .r i{font-style:normal;display:flex;align-items:center;gap:6px;}
   #tip .r i::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--dc);}
+  #tip .evs{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.22);}
+  #tip .ev{display:flex;align-items:baseline;gap:6px;}
+  #tip .ev i{flex:none;width:8px;height:8px;border-radius:2px;background:#F9A8D4;}
   /* SOX 導火線時間軸 */
   .tl-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-bottom:10px;}
   .tl-head h2{font-size:17px;margin:0;letter-spacing:.3px;}
@@ -107,8 +110,8 @@
       <button class="tog" data-s="oas_ig" style="--dc:var(--ig)"><span class="dot"></span>投資級利差</button>
       <button class="tog" data-s="oas_hy" style="--dc:var(--hy)"><span class="dot"></span>垃圾級利差</button>
     </div>
-    <div class="grp"><span class="lbl">標記</span>
-      <button class="tog" data-s="events" style="--dc:#4B5158"><span class="dot"></span>事件虛線</button>
+    <div class="grp"><span class="lbl">底色區間</span>
+      <button class="tog" data-s="events" style="--dc:#F9A8D4"><span class="dot"></span>事件</button>
     </div>
   </section>
 
@@ -157,7 +160,7 @@ const LOW = [
   {k:"oas_ig", name:"投資級利差",    color:"#1D7A46", fmt:v=>v.toFixed(0)+" bp"},
   {k:"oas_hy", name:"垃圾級利差",    color:"#22262B", fmt:v=>v.toFixed(0)+" bp"},
 ];
-// 事件虛線（手動維護）：上欄＝指數、下欄＝信用利差
+// 事件（手動維護）：上欄＝指數、下欄＝信用利差；圖上只畫淺粉色底，文字只在浮標顯示
 const EVENTS_UP = [
   {d:"2026-07-29", t:"去槓桿"},
   {d:"2026-09-16", t:"Muse平台開放"},
@@ -168,7 +171,7 @@ const EVENTS_LOW = [
   {d:"2026-09-22", t:"Oracle 專案貸款受阻"},
   {d:"2026-10-15", t:"PPI CPI超預期，Coreweave CDS飆升"},
 ];
-const ROW_H = 15, TITLE_FONT = "11.5px 'Microsoft JhengHei',sans-serif";
+const EVENT_MIN_W = 8;   // 粉色帶最小寬度（px）：長區間一天不到 2px，太窄看不到也點不到
 const state = {range:"all", show:{spx:true,ndx:true,sox:true,dgs10:true,oas_ig:true,oas_hy:true,events:true}};
 const cv = document.getElementById("cv"), tip = document.getElementById("tip");
 const ctx = cv.getContext("2d");
@@ -201,32 +204,31 @@ function extent(arr, i0, i1){
   for(let i=i0;i<=i1;i++){ const v=arr[i]; if(v!=null){ lo=Math.min(lo,v); hi=Math.max(hi,v);} }
   return [lo,hi];
 }
-// 事件標籤排列：標籤橫放在欄上方，置中於虛線（貼邊時內縮）；與欄標題或其他標籤重疊才往上一列
-function layoutEvents(list, i0, i1, X, W, titleW, padL){
-  ctx.font=TITLE_FONT;
-  const placed=[[[padL-4, padL+titleW+8]]], items=[];
-  if(!state.show.events) return {items, rows:1};
-  for(const e of list){
-    const i=M.findIndex(d=>d>=e.d);
-    if(i<i0 || i>i1 || i<0) continue;
-    const w=ctx.measureText(e.t).width, x=X(i);
-    const cx=Math.min(Math.max(x, w/2+2), W-w/2-2);
-    let row=0;
-    while((placed[row]||[]).some(([l,r])=>cx-w/2-8<r && cx+w/2+8>l)) row++;
-    (placed[row]=placed[row]||[]).push([cx-w/2, cx+w/2]);
-    items.push({x, cx, row, t:e.t});
-  }
-  return {items, rows:Math.max(placed.length,1)};
+function eventBand(e, i0, i1, X, stepPx){
+  const i=M.findIndex(d=>d>=e.d);
+  if(i<0 || i<i0 || i>i1) return null;
+  const half=Math.max(EVENT_MIN_W, stepPx)/2;
+  return {x0:X(i)-half, x1:X(i)+half, x:X(i), half};
 }
-function drawEvents(ev, top, bottom){
-  ctx.save();
-  for(const e of ev.items){
-    ctx.strokeStyle="rgba(75,81,88,0.75)"; ctx.lineWidth=1; ctx.setLineDash([4,3]);
-    ctx.beginPath(); ctx.moveTo(e.x,top); ctx.lineTo(e.x,bottom); ctx.stroke();
+function drawEvents(list, top, bottom, i0, i1, X, stepPx, padL, right){
+  if(!state.show.events) return;
+  ctx.save(); ctx.fillStyle="rgba(244,114,182,0.20)";
+  for(const e of list){
+    const b=eventBand(e,i0,i1,X,stepPx); if(!b) continue;
+    const l=Math.max(b.x0,padL), r=Math.min(b.x1,right);
+    ctx.fillRect(l, top, r-l, bottom-top);
   }
-  ctx.setLineDash([]); ctx.font=TITLE_FONT; ctx.textAlign="center"; ctx.fillStyle="#3F454C";
-  for(const e of ev.items) ctx.fillText(e.t, e.cx, top-8-e.row*ROW_H);
   ctx.restore();
+}
+// 目前游標所在日期落在哪些粉色帶內（滑鼠在帶子範圍內就算命中）
+function eventsAt(i){
+  if(!state.show.events || !LAY) return [];
+  const {X,i0,i1,stepPx}=LAY, x=X(i), out=[];
+  for(const e of [...EVENTS_UP,...EVENTS_LOW]){
+    const b=eventBand(e,i0,i1,X,stepPx);
+    if(b && Math.abs(x-b.x)<=b.half+0.5 && !out.includes(e)) out.push(e);
+  }
+  return out.sort((a,b)=>a.d<b.d?-1:1);
 }
 function drawLine(arr, i0, i1, X, Y, color, width){
   ctx.strokeStyle=color; ctx.lineWidth=width; ctx.beginPath(); let st=false;
@@ -244,17 +246,12 @@ function draw(){
   const padL=62, padR=48;
   const [i0,i1] = visRange(); const nvis=i1-i0;
   const X = i => padL + (i-i0)/(nvis||1)*(W-padL-padR);
-  const anyOasShown = state.show.oas_ig||state.show.oas_hy, narrow=W<600;
+  const stepPx=(W-padL-padR)/(nvis||1), narrow=W<600;
+  const h1t=24, h1b=Math.round(H*0.56), h2t=h1b+30, h2b=H-30;
   const title1="指數（區間起點 = 100，對數座標）", t2=[];
   if(state.show.dgs10) t2.push(narrow?"10Y %（左）":"10 年期殖利率 %（左軸）");
-  if(anyOasShown) t2.push(narrow?"利差 bp（右）":"信用利差 bp（右軸，對數座標）");
+  if(state.show.oas_ig||state.show.oas_hy) t2.push(narrow?"利差 bp（右）":"信用利差 bp（右軸，對數座標）");
   const title2=t2.join("　×　");
-  ctx.font=TITLE_FONT;
-  const ev1=layoutEvents(EVENTS_UP,i0,i1,X,W,ctx.measureText(title1).width,padL);
-  ctx.font=TITLE_FONT;
-  const ev2=layoutEvents(EVENTS_LOW,i0,i1,X,W,ctx.measureText(title2).width,padL);
-  // 兩欄上緣依標籤列數下移
-  const h1t=9+ev1.rows*ROW_H, h1b=Math.round(H*0.56), h2t=h1b+15+ev2.rows*ROW_H, h2b=H-30;
 
   // 上欄：區間起點＝100、對數座標（同融資頁）
   const reb={};
@@ -317,8 +314,9 @@ function draw(){
     ctx.fillText(yy+"/"+mm, x, H-10); lastX=x;
   }
 
-  // 事件虛線在資料線下層
-  drawEvents(ev1,h1t,h1b); drawEvents(ev2,h2t,h2b);
+  // 事件底色在格線與資料線之間
+  drawEvents(EVENTS_UP,h1t,h1b,i0,i1,X,stepPx,padL,W-padR);
+  drawEvents(EVENTS_LOW,h2t,h2b,i0,i1,X,stepPx,padL,W-padR);
 
   // 線
   for(const s of LOW){ if(state.show[s.k]) drawLine(RAW[s.k],i0,i1,X,s.k==="dgs10"?Y2:Y3,s.color,1.6); }
@@ -339,7 +337,7 @@ function draw(){
     for(const s of LOW){ if(!state.show[s.k]) continue; const v=RAW[s.k][hoverI];
       if(v!=null){ ctx.fillStyle=s.color; ctx.beginPath(); ctx.arc(x,(s.k==="dgs10"?Y2:Y3)(v),3.2,0,7); ctx.fill(); } }
   }
-  LAY={padL,padR,W,i0,i1};
+  LAY={padL,padR,W,i0,i1,X,stepPx};
 }
 
 function idxFromEvent(ev){
@@ -356,6 +354,8 @@ function renderTip(ev){
     if(v!=null) html+=`<div class="r"><i style="--dc:${s.color}">${s.name}</i><b>${v.toLocaleString("en-US",{maximumFractionDigits:0})}</b></div>`; }
   for(const s of LOW){ if(!state.show[s.k]) continue; const v=RAW[s.k][hoverI];
     if(v!=null) html+=`<div class="r"><i style="--dc:${s.color}">${s.name}</i><b>${s.fmt(v)}</b></div>`; }
+  const evs=eventsAt(hoverI);
+  if(evs.length) html+=`<div class="evs">`+evs.map(e=>`<div class="ev"><i></i><span>${+e.d.slice(5,7)}/${+e.d.slice(8,10)} ${e.t}</span></div>`).join("")+`</div>`;
   tip.innerHTML=html; tip.style.display="block";
   const r=cv.getBoundingClientRect(), mx=ev.clientX-r.left, my=ev.clientY-r.top, bw=tip.offsetWidth;
   tip.style.left=Math.min(Math.max(mx-bw/2,8), cv.clientWidth-bw-8)+"px";
