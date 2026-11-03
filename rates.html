@@ -766,16 +766,52 @@ function fedMoves() {
   return out;
 }
 
-// 信用圖垂直線：Fed 動作＋手動事件（rates-manual.json 的 creditEvents）＋上週。
-// 標籤一律橫放在面板上方；row＝第幾層。每個標籤固定一層（Fed 最底、上週最高），
-// 3 年視圖事件擠在一起也不會互蓋；新增事件要同步調高 grid 的 top
-function oasMarks(showLabel, narrow) {
-  const ev = (MAN.creditEvents || []).map((e, i, a) => ({ xAxis: e.date, name: e.label, row: a.length - i,
+// 信用圖垂直線：Fed 動作＋手動事件（rates-manual.json 的 creditEvents，labels 多行疊在同一條線）＋上週。
+// 標籤橫放在面板上方、一律對齊同一組橫列：依目前時間範圍算像素位置，放得下就在最底列，互撞才往上一列
+let oasStart = null;
+const OAS_LINE_H = 15;
+function oasLayout() {
+  const w = charts.oas.getWidth(), narrow = w < 600;
+  const last = DATA.oas_hy[DATA.oas_hy.length - 1][0], first = oasStart || DATA.oas_hy[0][0];
+  const ms = (d) => new Date(d).getTime();
+  const pxPerMs = (w - (narrow ? 56 : 44) - 38) / (ms(last) - ms(first));
+  const textW = (s) => [...s].reduce((a, c) => a + (c.charCodeAt(0) < 128 ? 6.2 : 11), 0);
+  const ev = (MAN.creditEvents || []).map(e => ({ xAxis: e.date, labels: e.labels,
     color: css("--text-secondary"), type: "dashed", opacity: 0.85 }));
-  const all = [...fedMoves(), ...ev, { xAxis: WEEK_AGO, name: "上週", row: (MAN.creditEvents || []).length + 1, color: css("--text-muted"), type: [2, 3], opacity: 1 }];
-  return all.map(m => ({ xAxis: m.xAxis, name: m.name,
+  const items = [
+    ...fedMoves().map(m => ({ ...m, labels: [m.name] })), ...ev,
+    { xAxis: WEEK_AGO, labels: ["上週"], color: css("--text-muted"), type: [2, 3], opacity: 1 },
+  ];
+  const placed = [];   // 每列已佔的水平區段 [左, 右]
+  const free = (row, x, half) => !(placed[row] || []).some(([l, r]) => x - half - 8 < r && x + half + 8 > l);
+  let maxRow = 0;
+  for (const m of items) {
+    m.show = m.xAxis >= first && !(narrow && m.labels[0] === "降息");   // 手機 3 年視圖降息線太密，靠綠線＋[註2] 辨識
+    m.row = 0;
+    if (!m.show) continue;
+    const x = (ms(m.xAxis) - ms(first)) * pxPerMs, n = m.labels.length;
+    const half = m.labels.map(s => textW(s) / 2);
+    while (!half.every((h, i) => free(m.row + n - 1 - i, x, h))) m.row++;
+    half.forEach((h, i) => { const r = m.row + n - 1 - i; (placed[r] = placed[r] || []).push([x - h, x + h]); });
+    maxRow = Math.max(maxRow, m.row + n - 1);
+  }
+  const marks = (showLabel) => items.map(m => ({ xAxis: m.xAxis, name: m.labels.join("\n"),
     lineStyle: { color: m.color, type: m.type, width: 1, opacity: m.opacity },
-    label: { show: showLabel && !(narrow && m.name === "降息"), position: "end", rotate: 0, distance: 4 + m.row * 15, color: m.color, fontSize: 11, formatter: (p) => p.name } }));
+    label: { show: showLabel && m.show, position: "end", rotate: 0, distance: 4 + m.row * OAS_LINE_H, color: m.color,
+      fontSize: 11, lineHeight: OAS_LINE_H, formatter: (p) => p.name } }));
+  const top = (narrow ? 46 : 26) + (maxRow + 1) * OAS_LINE_H + 8;
+  // 上面板下緣固定在「高收益」標題上方；標籤層數變多時面板往內縮，不會壓到標題
+  return { marks, top, height: charts.oas.getHeight() * 0.53 - top - 22 };
+}
+
+// 時間範圍或視窗寬度改變時，只更新垂直線與面板上緣，不重畫整張圖
+function relayoutOas() {
+  const L = oasLayout();
+  charts.oas.setOption({
+    title: [{ top: L.top - 36 }, {}], grid: [{ top: L.top, height: L.height }, {}],
+    series: [...OAS_IG, ...OAS_HY].map((_, i) =>
+      i === 0 ? { markLine: { data: L.marks(true) } } : i === OAS_IG.length ? { markLine: { data: L.marks(false) } } : {}),
+  });
 }
 
 function renderOas() {
@@ -784,24 +820,24 @@ function renderOas() {
     `<div class="value">${t.v.toFixed(0)} bp</div>${deltaHtml(t.v, t.pv, true, " bp", 0)}` +
     `<div class="meta">高收益全體，${fmtDay(t.d)}（較一週前）</div>` +
     `<div class="meta">投資級全體 ${ig.v.toFixed(0)} bp（${sign(ig.v - ig.pv)}${(ig.v - ig.pv).toFixed(0)}）</div>`;
-  const b = base(), narrow = charts.oas.getWidth() < 600;
+  const b = base(), narrow = charts.oas.getWidth() < 600, L = oasLayout();
   const col = { oas_aaa: css("--text-muted"), oas_aa: css("--series-3"), oas_a: css("--series-1"), oas_bbb: css("--series-2"),
     oas_bb: css("--series-1"), oas_b: css("--series-2"), oas_hy: css("--text-secondary") };
   const mk = (list, gi) => list.map(([k, name], i) => line(name, DATA[k], col[k], {
     xAxisIndex: gi, yAxisIndex: gi, endLabel: { show: false },
     ...(k === "oas_hy" ? { lineStyle: { width: 2.5, color: col[k] } } : {}),
-    ...(i === 0 ? { markLine: { silent: true, symbol: "none", data: oasMarks(gi === 0, narrow) } } : {}),
+    ...(i === 0 ? { markLine: { silent: true, symbol: "none", data: L.marks(gi === 0) } } : {}),
   }));
   charts.oas.setOption({
     ...b,
     legend: { ...legend(), data: [...OAS_IG, ...OAS_HY].map(x => x[1]) },
     title: [
-      { text: "投資級", left: 8, top: 64, textStyle: { color: css("--text-muted"), fontSize: 12, fontWeight: 600 } },
+      { text: "投資級", left: 8, top: L.top - 36, textStyle: { color: css("--text-muted"), fontSize: 12, fontWeight: 600 } },
       { text: "高收益", left: 8, top: "53%", textStyle: { color: css("--text-muted"), fontSize: 12, fontWeight: 600 } },
     ],
     grid: [
       // 右邊留白：事件標籤置中於線上，最新事件靠近右緣時才不會被切掉
-      { left: 8, right: narrow ? 56 : 44, top: 100, height: narrow ? "33%" : "36%", containLabel: true },
+      { left: 8, right: narrow ? 56 : 44, top: L.top, height: L.height, containLabel: true },
       { left: 8, right: narrow ? 56 : 44, top: "58%", bottom: 28, containLabel: true },
     ],
     xAxis: [{ ...b.xAxis, gridIndex: 0, axisLabel: { show: false } }, { ...b.xAxis, gridIndex: 1 }],
@@ -888,6 +924,7 @@ function applyRange() {
     charts[k].dispatchAction(start
       ? { type: "dataZoom", startValue: start, end: 100 }
       : { type: "dataZoom", start: 0, end: 100 });
+    if (k === "oas") { oasStart = start; relayoutOas(); }
   }
 }
 
@@ -1093,7 +1130,7 @@ function startFomcCountdown() {
   setInterval(tick, 1000);
 }
 
-window.addEventListener("resize", () => Object.values(charts).forEach(c => c.resize()));
+window.addEventListener("resize", () => { Object.values(charts).forEach(c => c.resize()); if (DATA) relayoutOas(); });
 window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => DATA && renderAll());
 </script>
 </body>
