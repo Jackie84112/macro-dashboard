@@ -73,6 +73,9 @@
       <button class="tog" data-s="oas_ig" style="--dc:var(--ig)"><span class="dot"></span>投資級利差</button>
       <button class="tog" data-s="oas_hy" style="--dc:var(--hy)"><span class="dot"></span>垃圾級利差</button>
     </div>
+    <div class="grp"><span class="lbl">標記</span>
+      <button class="tog" data-s="events" style="--dc:#4B5158"><span class="dot"></span>事件虛線</button>
+    </div>
   </section>
 
   <section class="card chartbox">
@@ -92,7 +95,19 @@ const LOW = [
   {k:"oas_ig", name:"投資級利差",    color:"#1D7A46", fmt:v=>v.toFixed(0)+" bp"},
   {k:"oas_hy", name:"垃圾級利差",    color:"#22262B", fmt:v=>v.toFixed(0)+" bp"},
 ];
-const state = {range:"all", show:{spx:true,ndx:true,sox:true,dgs10:true,oas_ig:true,oas_hy:true}};
+// 事件虛線（手動維護）：上欄＝指數、下欄＝信用利差
+const EVENTS_UP = [
+  {d:"2026-07-29", t:"去槓桿"},
+  {d:"2026-09-16", t:"Muse平台開放"},
+  {d:"2026-10-06", t:"OpenAI營收下調"},
+];
+const EVENTS_LOW = [
+  {d:"2026-09-16", t:"加息1碼"},
+  {d:"2026-09-22", t:"Oracle 專案貸款受阻"},
+  {d:"2026-10-15", t:"PPI CPI超預期，Coreweave CDS飆升"},
+];
+const ROW_H = 15, TITLE_FONT = "11.5px 'Microsoft JhengHei',sans-serif";
+const state = {range:"all", show:{spx:true,ndx:true,sox:true,dgs10:true,oas_ig:true,oas_hy:true,events:true}};
 const cv = document.getElementById("cv"), tip = document.getElementById("tip");
 const ctx = cv.getContext("2d");
 let RAW = {}, M = [], N = 0, LAY = null, hoverI = -1, tipOn = false;
@@ -124,6 +139,33 @@ function extent(arr, i0, i1){
   for(let i=i0;i<=i1;i++){ const v=arr[i]; if(v!=null){ lo=Math.min(lo,v); hi=Math.max(hi,v);} }
   return [lo,hi];
 }
+// 事件標籤排列：標籤橫放在欄上方，置中於虛線（貼邊時內縮）；與欄標題或其他標籤重疊才往上一列
+function layoutEvents(list, i0, i1, X, W, titleW, padL){
+  ctx.font=TITLE_FONT;
+  const placed=[[[padL-4, padL+titleW+8]]], items=[];
+  if(!state.show.events) return {items, rows:1};
+  for(const e of list){
+    const i=M.findIndex(d=>d>=e.d);
+    if(i<i0 || i>i1 || i<0) continue;
+    const w=ctx.measureText(e.t).width, x=X(i);
+    const cx=Math.min(Math.max(x, w/2+2), W-w/2-2);
+    let row=0;
+    while((placed[row]||[]).some(([l,r])=>cx-w/2-8<r && cx+w/2+8>l)) row++;
+    (placed[row]=placed[row]||[]).push([cx-w/2, cx+w/2]);
+    items.push({x, cx, row, t:e.t});
+  }
+  return {items, rows:Math.max(placed.length,1)};
+}
+function drawEvents(ev, top, bottom){
+  ctx.save();
+  for(const e of ev.items){
+    ctx.strokeStyle="rgba(75,81,88,0.75)"; ctx.lineWidth=1; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(e.x,top); ctx.lineTo(e.x,bottom); ctx.stroke();
+  }
+  ctx.setLineDash([]); ctx.font=TITLE_FONT; ctx.textAlign="center"; ctx.fillStyle="#3F454C";
+  for(const e of ev.items) ctx.fillText(e.t, e.cx, top-8-e.row*ROW_H);
+  ctx.restore();
+}
 function drawLine(arr, i0, i1, X, Y, color, width){
   ctx.strokeStyle=color; ctx.lineWidth=width; ctx.beginPath(); let st=false;
   for(let i=i0;i<=i1;i++){ const v=arr[i]; if(v==null) continue;
@@ -137,10 +179,20 @@ function draw(){
   const W = cv.clientWidth, H = cv.clientHeight;
   cv.width = W*dpr; cv.height = H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
   ctx.clearRect(0,0,W,H);
-  const padL=62, padR=48, gap=30;
-  const h1t=24, h1b=Math.round(H*0.56), h2t=h1b+gap, h2b=H-30;
+  const padL=62, padR=48;
   const [i0,i1] = visRange(); const nvis=i1-i0;
   const X = i => padL + (i-i0)/(nvis||1)*(W-padL-padR);
+  const anyOasShown = state.show.oas_ig||state.show.oas_hy, narrow=W<600;
+  const title1="指數（區間起點 = 100，對數座標）", t2=[];
+  if(state.show.dgs10) t2.push(narrow?"10Y %（左）":"10 年期殖利率 %（左軸）");
+  if(anyOasShown) t2.push(narrow?"利差 bp（右）":"信用利差 bp（右軸，對數座標）");
+  const title2=t2.join("　×　");
+  ctx.font=TITLE_FONT;
+  const ev1=layoutEvents(EVENTS_UP,i0,i1,X,W,ctx.measureText(title1).width,padL);
+  ctx.font=TITLE_FONT;
+  const ev2=layoutEvents(EVENTS_LOW,i0,i1,X,W,ctx.measureText(title2).width,padL);
+  // 兩欄上緣依標籤列數下移
+  const h1t=9+ev1.rows*ROW_H, h1b=Math.round(H*0.56), h2t=h1b+15+ev2.rows*ROW_H, h2b=H-30;
 
   // 上欄：區間起點＝100、對數座標（同融資頁）
   const reb={};
@@ -203,17 +255,17 @@ function draw(){
     ctx.fillText(yy+"/"+mm, x, H-10); lastX=x;
   }
 
+  // 事件虛線在資料線下層
+  drawEvents(ev1,h1t,h1b); drawEvents(ev2,h2t,h2b);
+
   // 線
   for(const s of LOW){ if(state.show[s.k]) drawLine(RAW[s.k],i0,i1,X,s.k==="dgs10"?Y2:Y3,s.color,1.6); }
   for(const s of UP){ if(state.show[s.k]) drawLine(reb[s.k],i0,i1,X,Y1,s.color,1.5); }
 
   // 欄標題
   ctx.textAlign="left"; ctx.fillStyle="#6B7178"; ctx.font="11.5px 'Microsoft JhengHei',sans-serif";
-  ctx.fillText("指數（區間起點 = 100，對數座標）", padL, h1t-8);
-  const t2=[], narrow=W<600;
-  if(state.show.dgs10) t2.push(narrow?"10Y %（左）":"10 年期殖利率 %（左軸）");
-  if(anyOas) t2.push(narrow?"利差 bp（右）":"信用利差 bp（右軸，對數座標）");
-  ctx.fillText(t2.join("　×　"), padL, h2t-8);
+  ctx.fillText(title1, padL, h1t-8);
+  ctx.fillText(title2, padL, h2t-8);
 
   // 十字線
   if(hoverI>=i0 && hoverI<=i1){
