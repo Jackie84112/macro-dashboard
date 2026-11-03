@@ -10,7 +10,7 @@
       { href: "rates.html", label: "貨幣成本", desc: "通膨、Fed 利率路徑、公債與信用利率" },
       { href: "index.html", label: "就業狀況", desc: "初領失業金、非農、失業率 vs u*" },
       { href: "margin.html", label: "融資槓桿", desc: "FINRA 融資年增、槓桿熱度、Fed 救援空間" },
-      { href: "overlay.html", label: "股債信用疊圖", desc: "三大指數、10 年期殖利率與投資級／垃圾級利差同基期疊圖" },
+      { href: "overlay.html", label: "股債信用疊圖", desc: "三大指數 × 10 年期殖利率與投資級／垃圾級利差" },
       { href: "l2.html", label: "流動性潮水", desc: "L2 準備金、RRP、TGA 與 Fed 資產負債表" },
       { href: "l3.html", label: "持倉分布", desc: "L3 持倉擁擠度與分布" },
     ] },

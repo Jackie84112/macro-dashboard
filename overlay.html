@@ -4,347 +4,278 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>股債信用疊圖｜宏觀監控儀表板</title>
-<meta name="description" content="S&P 500、Nasdaq-100、SOX 與 10 年期公債殖利率、投資級與垃圾級信用利差，以同一基期疊在一張圖。">
-<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
 <style>
-:root {
-  color-scheme: light;
-  --bg: #f5f5f3;
-  --surface: #fcfcfb;
-  --border: #e4e3de;
-  --grid: #ecebe7;
-  --text-primary: #0b0b0b;
-  --text-secondary: #52514e;
-  --text-muted: #7a7973;
-  --series-1: #2a78d6;
-  --series-2: #eb6834;
-  --series-3: #1baf7a;
-  --bar-neutral: #c9c8c2;
-  --band-critical: rgba(208, 59, 59, 0.17);
-  --warn-line: #d03b3b;
-  --band-neutral: rgba(82, 81, 78, 0.10);
-  --good: #0a7d0a;
-  --bad: #c43131;
-  --group-bg: #f3f2ee;
-  --group-rule: #b9b8b1;
-  --tint-1: rgba(42, 120, 214, 0.16);
-  --tint-2: rgba(237, 161, 0, 0.20);
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-    --bg: #121211;
-    --surface: #1a1a19;
-    --border: #2e2e2b;
-    --grid: #2a2a28;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --text-muted: #8f8e86;
-    --series-1: #3987e5;
-    --series-2: #d95926;
-    --series-3: #199e70;
-    --bar-neutral: #55544f;
-    --band-critical: rgba(230, 103, 103, 0.22);
-    --warn-line: #e66767;
-    --band-neutral: rgba(195, 194, 183, 0.12);
-    --good: #4cc24c;
-    --bad: #e66767;
-    --group-bg: rgba(255, 255, 255, 0.05);
-    --group-rule: #5c5b56;
-    --tint-1: rgba(57, 135, 229, 0.26);
-    --tint-2: rgba(201, 133, 0, 0.28);
+  /* 版面與互動沿用融資槓桿頁第一張圖（pipeline/margin/template.html） */
+  :root{
+    --bg:#F6F5F2; --card:#FFFFFF; --ink:#22262B; --muted:#6B7178;
+    --line:#E4E2DC; --accent:#B04A2F;
+    --spx:#2563EB; --ndx:#7C3AED; --sox:#DC2626;
+    --dgs10:#D97706; --ig:#1D7A46; --hy:#22262B;
   }
-}
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --bg: #121211;
-  --surface: #1a1a19;
-  --border: #2e2e2b;
-  --grid: #2a2a28;
-  --text-primary: #ffffff;
-  --text-secondary: #c3c2b7;
-  --text-muted: #8f8e86;
-  --series-1: #3987e5;
-  --series-2: #d95926;
-  --series-3: #199e70;
-  --bar-neutral: #55544f;
-  --band-critical: rgba(230, 103, 103, 0.22);
-  --warn-line: #e66767;
-  --band-neutral: rgba(195, 194, 183, 0.12);
-  --good: #4cc24c;
-  --bad: #e66767;
-  --group-bg: rgba(255, 255, 255, 0.05);
-  --group-rule: #5c5b56;
-  --tint-1: rgba(57, 135, 229, 0.26);
-  --tint-2: rgba(201, 133, 0, 0.28);
-}
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text-primary);
-  font-family: "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", system-ui, sans-serif;
-  line-height: 1.5;
-}
-main { max-width: 1080px; margin: 0 auto; padding: 32px 16px 48px; }
-header h1 { font-size: 28px; margin: 0 0 4px; font-weight: 700; }
-header p { margin: 0; color: var(--text-secondary); font-size: 14px; }
-.toolbar { display: flex; gap: 8px; align-items: center; margin: 24px 0 8px; flex-wrap: wrap; }
-.toolbar span { color: var(--text-muted); font-size: 13px; margin-right: 4px; }
-.toolbar button, .tabs button {
-  font: inherit; font-size: 13px; padding: 4px 12px; border-radius: 6px;
-  border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); cursor: pointer;
-}
-.toolbar button[aria-pressed="true"], .tabs button[aria-pressed="true"] { background: var(--text-primary); color: var(--surface); border-color: var(--text-primary); }
-h2.sec { font-size: 22px; font-weight: 700; color: var(--text-primary); margin: 36px 0 12px; letter-spacing: 1px; }
-h2.sec small { font-weight: 400; color: var(--text-muted); letter-spacing: 0; margin-left: 10px; font-size: 13px; }
-.card {
-  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-  padding: 20px 20px 8px; margin-bottom: 16px;
-}
-.card-head { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
-.card h3 { font-size: 18px; margin: 0; font-weight: 700; }
-.card .desc { margin: 2px 0 0; color: var(--text-secondary); font-size: 13px; }
-.stat { text-align: right; }
-.stat .value { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.stat .meta { font-size: 12px; color: var(--text-muted); }
-.stat .delta { font-size: 13px; font-weight: 600; }
-.delta.good { color: var(--good); }
-.delta.bad { color: var(--bad); }
-.delta.flat { color: var(--series-1); }
-.tabs { display: flex; gap: 6px; margin: 12px 0 0; flex-wrap: wrap; }
-.tabs button { font-size: 12px; padding: 2px 10px; }
-.chart { width: 100%; height: 340px; }
-.chart.tall { height: 420px; }
-#chart-oas { height: 720px; }
-.legend-chips { display: flex; gap: 12px; font-size: 12px; color: var(--text-secondary); align-items: center; }
-.legend-chips i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
-.table-wrap { overflow-x: auto; margin: 0 -20px; padding: 0 20px 12px; }
-table.data { border-collapse: collapse; width: 100%; min-width: 860px; font-size: 13px; font-variant-numeric: tabular-nums; }
-table.data th, table.data td { padding: 6px 5px; border-bottom: 1px solid var(--grid); white-space: nowrap; }
-table.data thead th { font-weight: 600; color: var(--text-secondary); text-align: right; border-bottom: 1px solid var(--border); }
-table.data thead th.left { text-align: left; }
-table.data thead th.fomc { background: var(--tint-2); border-radius: 4px; }
-table.data thead th.now { color: var(--text-primary); box-shadow: inset 0 0 0 2px var(--series-1); border-radius: 4px; }
-table.data td { text-align: right; color: var(--text-primary); }
-table.data td.group { white-space: normal; width: 96px; min-width: 96px; text-align: left; color: var(--text-primary); font-size: 14px; font-weight: 700; vertical-align: middle; background: var(--group-bg); border-left: 4px solid var(--group-rule); border-right: 1px solid var(--grid); padding-left: 10px; }
-table.data td.label { text-align: left; }
-table.data td.next { text-align: center; color: var(--text-secondary); border-left: 1px solid var(--grid); vertical-align: middle; }
-table.data td.next.weekly { color: var(--bad); font-weight: 600; }
-table.data tr.key td.label { font-weight: 600; }
-table.data td.good { color: var(--good); font-weight: 700; }
-table.data td.bad { color: var(--bad); font-weight: 700; }
-table.data td.flat { color: var(--series-1); font-weight: 700; }
-table.data td.muted { color: var(--text-muted); }
-table.data tbody.gap + tbody tr:first-child td { border-top: 2px solid var(--group-rule); }
-table.data tbody tr:last-child td { border-bottom: none; }
-table.data td.updated { background: var(--group-bg); }
-table.data tbody.gap td { height: 14px; padding: 0; border: none; background: transparent; }
-table.data.snap { min-width: 640px; }
-/* FedWatch：照 PPT 版面，每週一列＝週別｜下次會議長條圖｜各次會議機率表 */
-.fw-week { display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 2fr); gap: 12px; align-items: center; padding: 14px 0; }
-.fw-week + .fw-week { border-top: 1px solid var(--grid); }
-.fw-week .wk { font-size: 20px; font-weight: 700; }
-.fw-bar { height: 280px; min-width: 0; }
-.fw-tbl { overflow-x: auto; padding: 2px; } /* 留邊讓 border-collapse 的 2px 外框不被捲動容器裁掉一半 */
-table.fwt { border-collapse: collapse; width: 100%; min-width: 440px; font-size: 12px; font-variant-numeric: tabular-nums; }
-table.fwt th, table.fwt td { border: 1px solid var(--border); padding: 4px 5px; text-align: right; white-space: nowrap; }
-table.fwt th { font-weight: 700; color: var(--text-primary); text-align: center; font-size: 12px; }
-table.fwt td:first-child { text-align: right; }
-table.fwt th.blank { border: none; }
-table.fwt td.hi { background: var(--tint-1); }
-table.fwt td.mid { background: var(--tint-2); }
-/* 今年剩餘會議加框（同 PPT） */
-/* 用 inset 陰影畫框：border-collapse 的邊框衝突會在縮放 <100% 時讓 2px 藍線輸給 1px 灰線，陰影不受影響 */
-table.fwt tr.bx td { box-shadow: inset 2px 0 0 var(--bl, transparent), inset -2px 0 0 var(--br, transparent), inset 0 2px 0 var(--bt, transparent), inset 0 -2px 0 var(--bb, transparent); }
-table.fwt tr.bx td:first-child { --bl: var(--series-1); }
-table.fwt tr.bx td:last-child { --br: var(--series-1); }
-table.fwt tr.bx-top td { --bt: var(--series-1); }
-table.fwt tr.bx-bot td { --bb: var(--series-1); }
-/* FOMC 倒數橫幅：深藍底，兩種主題都用同一組色 */
-.cd-banner { display: none; margin: 16px 0 18px; padding: 22px 28px; border-radius: 16px; color: #fff;
-  background: radial-gradient(120% 160% at 0% 0%, #2a527f 0%, #16335a 45%, #0d2140 100%);
-  box-shadow: 0 6px 20px rgba(13, 33, 64, .25); align-items: center; justify-content: space-between; gap: 20px 32px; flex-wrap: wrap; }
-.cd-banner.on { display: flex; }
-.cd-banner .cd-kick { font-size: 12px; font-weight: 700; letter-spacing: .14em; color: #8fb4e3; }
-.cd-banner .cd-title { font-size: 26px; font-weight: 700; line-height: 1.25; margin-top: 4px; }
-.cd-banner .cd-sub { font-size: 13px; color: #b9cde6; margin-top: 8px; }
-.cd-banner .cd-boxes { display: flex; gap: 12px; }
-.cd-banner .cd-box { width: 86px; padding: 12px 10px 9px; border-radius: 14px; background: #fff; color: #14243b; box-shadow: 0 2px 8px rgba(0, 0, 0, .25); }
-.cd-banner .cd-num { font-size: 40px; font-weight: 500; line-height: 1.1; font-variant-numeric: tabular-nums; border-bottom: 1.5px solid #14243b; padding-bottom: 4px; }
-.cd-banner .cd-lab { font-size: 11px; font-weight: 600; letter-spacing: .08em; margin-top: 5px; color: #3b4d66; }
-.cd-banner.soon .cd-num { color: #c2410c; }
-@media (max-width: 640px) {
-  .cd-banner { padding: 18px 16px; }
-  .cd-banner .cd-title { font-size: 20px; }
-  .cd-banner .cd-boxes { width: 100%; gap: 8px; }
-  .cd-banner .cd-box { flex: 1; width: auto; padding: 10px 6px 8px; }
-  .cd-banner .cd-num { font-size: 30px; }
-}
-@media (max-width: 860px) { .fw-week { grid-template-columns: 1fr; } }
-@media (max-width: 1100px) { table.fwt { min-width: 0; font-size: 11px; } table.fwt th, table.fwt td { padding: 4px 3px; } table.fwt th { font-size: 11px; } }
-.notes { margin: 8px 0 12px; font-size: 12px; color: var(--text-secondary); }
-.notes p { margin: 2px 0; }
-footer { color: var(--text-muted); font-size: 12px; margin-top: 24px; }
-footer a { color: inherit; }
-.changes { margin: 6px 0 10px; padding-left: 18px; }
-.changes li { margin: 2px 0; }
-.changes b { font-weight: 600; color: var(--text-secondary); }
-@media (max-width: 600px) {
-  .stat { text-align: left; }
-  .chart { height: 280px; }
-  .chart.tall { height: 360px; }
-  #chart-oas { height: 580px; }
-}
-/* 本頁：六條線依固定順序配色（dataviz 參考色盤，已驗證） */
-:root { --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) { --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; }
-}
-:root[data-theme="dark"] { --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500; --s5:#d55181; --s6:#008300; }
-#chart-overlay { width: 100%; height: 600px; }
-@media (max-width: 600px) { #chart-overlay { height: 440px; } }
-.ov-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 16px; font-variant-numeric: tabular-nums; }
-.ov-table th, .ov-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); text-align: right; white-space: nowrap; }
-.ov-table th { color: var(--text-muted); font-weight: 500; font-size: 13px; }
-.ov-table th:first-child, .ov-table td:first-child { text-align: left; }
-.ov-table .sw { display: inline-block; width: 14px; height: 0; border-top: 2px solid; margin-right: 8px; vertical-align: 3px; }
-.ov-wrap { overflow-x: auto; }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);
+    font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,sans-serif;
+    margin:0;padding:0 16px 40px;}
+  .wrap{max-width:1180px;margin:20px auto 0;display:flex;flex-direction:column;gap:14px;}
+  header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;padding:4px 4px 0;}
+  h1{font-size:28px;margin:0;letter-spacing:.5px;}
+  .sub{color:var(--muted);font-size:13px;margin:0;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
+  .controls{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;}
+  .grp{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .grp .lbl{font-size:12px;color:var(--muted);letter-spacing:1px;margin-right:2px;}
+  button.rng{border:1px solid var(--line);background:transparent;color:var(--muted);
+    border-radius:7px;padding:5px 11px;font-size:13px;cursor:pointer;font-family:inherit;}
+  button.rng:hover{border-color:#C9C6BF;}
+  button.rng.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+  button.tog{display:flex;align-items:center;gap:7px;border:1px solid var(--line);
+    background:transparent;border-radius:7px;padding:5px 11px;font-size:13px;cursor:pointer;
+    color:var(--ink);font-family:inherit;}
+  button.tog .dot{width:14px;height:4px;border-radius:2px;background:var(--dc);}
+  button.tog.off{color:#B8BCC1;}
+  button.tog.off .dot{background:#D8DADD;}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .chartbox{position:relative;}
+  canvas{display:block;width:100%;height:600px;}
+  @media (max-width:600px){ canvas{height:480px;} }
+  #tip{position:absolute;pointer-events:none;background:rgba(34,38,43,.94);color:#F2F1EE;
+    border-radius:8px;padding:9px 12px;font-size:12.5px;line-height:1.55;display:none;
+    min-width:190px;z-index:5;font-variant-numeric:tabular-nums;}
+  #tip .t{color:#B9BEC4;margin-bottom:3px;}
+  #tip .r{display:flex;justify-content:space-between;gap:14px;}
+  #tip .r i{font-style:normal;display:flex;align-items:center;gap:6px;}
+  #tip .r i::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--dc);}
 </style>
 </head>
 <body>
-<script src="nav.js?v=20261103a"></script>
-<main>
+<script src="nav.js?v=20261103b"></script>
+<div class="wrap">
   <header>
-    <h1>股債信用疊圖</h1>
-    <p>三大指數、10 年期公債殖利率與投資級、垃圾級信用利差放在同一基期，比較同一段時間誰動得多、方向是否一致。</p>
+    <div>
+      <h1>股債信用疊圖</h1>
+      <p class="sub" id="sub">S&amp;P 500 / Nasdaq-100 / 費城半導體 × 10 年期公債殖利率 × 投資級、垃圾級信用利差</p>
+    </div>
   </header>
 
-  <div class="toolbar" role="group" aria-label="時間範圍">
-    <span>時間範圍</span>
-    <button data-m="3">3 個月</button>
-    <button data-m="6">6 個月</button>
-    <button data-m="12" aria-pressed="true">1 年</button>
-    <button data-m="0">全部</button>
-  </div>
-
-  <section class="card">
-    <div class="card-head">
-      <div>
-        <h3>指數、殖利率與信用利差（區間起點＝100）</h3>
-        <p class="desc" id="ov-desc"></p>
-      </div>
+  <section class="card controls">
+    <div class="grp"><span class="lbl">區間</span>
+      <button class="rng" data-r="63">3M</button><button class="rng" data-r="126">6M</button>
+      <button class="rng" data-r="252">1Y</button><button class="rng" data-r="504">2Y</button>
+      <button class="rng on" data-r="all">ALL</button>
     </div>
-    <div id="chart-overlay" role="img" aria-label="S&P 500、Nasdaq-100、SOX、10 年期公債殖利率、投資級與垃圾級信用利差同基期折線圖"></div>
-    <div class="ov-wrap"><table class="ov-table" id="ov-table"></table></div>
-    <div class="notes">
-      <p>[註1]：各線以區間起點＝100 換算後疊圖，採對數座標，實際數值見滑鼠提示與上表；切換時間範圍時基期跟著改變。</p>
-      <p>[註2]：投資級、垃圾級各一條，為 ICE 美銀全體指數 OAS（已按市值加權整合各評級），FRED 僅提供近 3 年。</p>
+    <div class="grp"><span class="lbl">疊圖線</span>
+      <button class="tog" data-s="spx" style="--dc:var(--spx)"><span class="dot"></span>S&amp;P 500</button>
+      <button class="tog" data-s="ndx" style="--dc:var(--ndx)"><span class="dot"></span>Nasdaq-100</button>
+      <button class="tog" data-s="sox" style="--dc:var(--sox)"><span class="dot"></span>SOX 半導體</button>
+    </div>
+    <div class="grp"><span class="lbl">下欄指標</span>
+      <button class="tog" data-s="dgs10" style="--dc:var(--dgs10)"><span class="dot"></span>10 年期殖利率</button>
+      <button class="tog" data-s="oas_ig" style="--dc:var(--ig)"><span class="dot"></span>投資級利差</button>
+      <button class="tog" data-s="oas_hy" style="--dc:var(--hy)"><span class="dot"></span>垃圾級利差</button>
     </div>
   </section>
 
-  <footer>
-    <div>資料來源：Yahoo Finance（^GSPC、^NDX、^SOX）、FRED／美國財政部（DGS10）、FRED（BAMLC0A0CM、BAMLH0A0HYM2）。</div>
-    <div id="updated"></div>
-  </footer>
-</main>
+  <section class="card chartbox">
+    <canvas id="cv"></canvas>
+    <div id="tip"></div>
+  </section>
+</div>
 
 <script>
-const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
-const SERIES = [
-  { k: "spx", name: "S&P 500", color: "--s1", fmt: (v) => v.toLocaleString("en-US", { maximumFractionDigits: 0 }) },
-  { k: "ndx", name: "Nasdaq-100", color: "--s2", fmt: (v) => v.toLocaleString("en-US", { maximumFractionDigits: 0 }) },
-  { k: "sox", name: "SOX", color: "--s3", fmt: (v) => v.toLocaleString("en-US", { maximumFractionDigits: 0 }) },
-  { k: "dgs10", name: "10 年期殖利率", color: "--s4", dash: true, fmt: (v) => v.toFixed(2) + "%", bp: 100 },
-  { k: "oas_ig", name: "投資級 OAS", color: "--s5", fmt: (v) => v.toFixed(0) + " bp", bp: 1 },
-  { k: "oas_hy", name: "垃圾級 OAS", color: "--s6", fmt: (v) => v.toFixed(0) + " bp", bp: 1 },
+const UP = [
+  {k:"spx", name:"S&P 500",    color:"#2563EB"},
+  {k:"ndx", name:"Nasdaq-100", color:"#7C3AED"},
+  {k:"sox", name:"SOX",        color:"#DC2626"},
 ];
-const STEPS = [1.02, 1.05, 1.1, 1.25, 1.5, 2];   // 對數座標每格倍數，依區間漲跌幅挑選
-let DATA = null, months = 12, chart = null;
+const LOW = [
+  {k:"dgs10",  name:"10 年期殖利率", color:"#D97706", fmt:v=>v.toFixed(2)+"%"},
+  {k:"oas_ig", name:"投資級利差",    color:"#1D7A46", fmt:v=>v.toFixed(0)+" bp"},
+  {k:"oas_hy", name:"垃圾級利差",    color:"#22262B", fmt:v=>v.toFixed(0)+" bp"},
+];
+const state = {range:"all", show:{spx:true,ndx:true,sox:true,dgs10:true,oas_ig:true,oas_hy:true}};
+const cv = document.getElementById("cv"), tip = document.getElementById("tip");
+const ctx = cv.getContext("2d");
+let RAW = {}, M = [], N = 0, LAY = null, hoverI = -1, tipOn = false;
 
-function startOf(m) {
-  const last = SERIES.map(s => DATA[s.k][DATA[s.k].length - 1][0]).sort().pop();
-  if (!m) return SERIES.map(s => DATA[s.k][0][0]).sort().pop();   // 全部＝六條線都有資料的第一天
-  const d = new Date(last); d.setMonth(d.getMonth() - m);
-  return d.toISOString().slice(0, 10);
+function visRange(){
+  if(state.range==="all") return [0, N-1];
+  return [Math.max(0, N-1-(+state.range)), N-1];
 }
-const fmtDay = (d) => d.replaceAll("-", "/");
-const pct = (x) => (x >= 0 ? "+" : "") + x.toFixed(1) + "%";
-
-function render() {
-  const start = startOf(months), narrow = chart.getWidth() < 600;
-  const rows = SERIES.map(s => {
-    const pts = DATA[s.k].filter(p => p[0] >= start);
-    return { ...s, pts, base: pts[0], last: pts[pts.length - 1] };
-  });
-  const all = rows.flatMap(r => r.pts.map(p => p[1] / r.base[1]));
-  const lo = Math.min(...all), hi = Math.max(...all);
-  const step = STEPS.find(x => Math.log(hi / lo) / Math.log(x) <= 8) || 2;
-  const toY = (ratio) => Math.log(ratio) / Math.log(step);
-
-  chart.setOption({
-    animation: false,
-    textStyle: { fontFamily: getComputedStyle(document.body).fontFamily },
-    legend: { top: 0, left: 0, itemWidth: 16, itemHeight: 2, icon: "rect",
-      textStyle: { color: css("--text-secondary"), fontSize: 12 } },
-    grid: { left: 8, right: narrow ? 16 : 150, top: narrow ? 60 : 36, bottom: 28, containLabel: true },
-    xAxis: { type: "time", min: start, axisLine: { lineStyle: { color: css("--grid") } }, axisTick: { show: false },
-      axisLabel: { color: css("--text-muted"), hideOverlap: true, formatter: { year: "{yyyy}", month: "{M}月", day: "" } },
-      splitLine: { show: false } },
-    yAxis: { type: "value", interval: 1, min: Math.floor(toY(lo)), max: Math.ceil(toY(hi)),
-      axisLabel: { color: css("--text-muted"), formatter: (n) => Math.round(100 * Math.pow(step, n)) },
-      splitLine: { lineStyle: { color: css("--grid"), width: 1 } } },
-    tooltip: { trigger: "axis", backgroundColor: css("--surface"), borderColor: css("--border"),
-      textStyle: { color: css("--text-primary"), fontSize: 13 },
-      axisPointer: { type: "line", lineStyle: { color: css("--text-secondary"), width: 1 } },
-      formatter: (ps) => {
-        const list = [...ps].sort((a, b) => b.value[1] - a.value[1]).map(p => {
-          const s = SERIES[p.seriesIndex];
-          return `<div style="display:flex;justify-content:space-between;gap:20px">` +
-            `<span>${p.marker}${s.name}</span><span><b>${s.fmt(p.value[2])}</b>（${pct(p.value[3])}）</span></div>`;
-        }).join("");
-        return `<div style="margin-bottom:4px">${fmtDay(new Date(ps[0].value[0]).toISOString().slice(0, 10))}（較起點）</div>${list}`;
-      } },
-    series: rows.map((r, i) => ({
-      name: r.name, type: "line", showSymbol: false, smooth: false,
-      lineStyle: { color: css(r.color), width: 2, type: r.dash ? "dashed" : "solid" },
-      itemStyle: { color: css(r.color) }, emphasis: { disabled: true },
-      data: r.pts.map(p => [p[0], toY(p[1] / r.base[1]), p[1], (p[1] / r.base[1] - 1) * 100]),
-      labelLayout: { moveOverlap: "shiftY" },
-      endLabel: { show: !narrow, color: css("--text-secondary"), fontSize: 11, distance: 8, padding: [2, 0],
-        formatter: () => `${r.name} ${r.fmt(r.last[1])}` },
-      ...(i === 0 ? { markLine: { silent: true, symbol: "none", label: { show: false },
-        lineStyle: { color: css("--text-muted"), type: "solid", width: 1 }, data: [{ yAxis: 0 }] } } : {}),
-    })),
-  }, true);
-
-  document.getElementById("ov-desc").textContent =
-    `日資料，基期 ${fmtDay(rows[0].base[0])}＝100；三大指數為價格，10 年期為殖利率，OAS 為信用利差。`;
-  document.getElementById("ov-table").innerHTML =
-    `<thead><tr><th>指標</th><th>區間起點</th><th>最新</th><th>區間變化</th><th>資料日期</th></tr></thead><tbody>` +
-    rows.map(r => {
-      const chg = (r.last[1] / r.base[1] - 1) * 100;
-      const bp = r.bp ? `，${Math.round((r.last[1] - r.base[1]) * r.bp) >= 0 ? "+" : ""}${Math.round((r.last[1] - r.base[1]) * r.bp)} bp` : "";
-      return `<tr><td><span class="sw" style="border-color:${css(r.color)};border-top-style:${r.dash ? "dashed" : "solid"}"></span>${r.name}</td>` +
-        `<td>${r.fmt(r.base[1])}</td><td><b>${r.fmt(r.last[1])}</b></td><td>${pct(chg)}${bp}</td><td>${fmtDay(r.last[0])}</td></tr>`;
-    }).join("") + "</tbody>";
+function niceLogTicks(lo, hi){
+  // 依範圍挑整數刻度：由疏到密，取第一組有 4 格以上的
+  const SETS=[[1,2,5],[1,1.5,2,3,5,7],[1,1.2,1.5,2,2.5,3,4,5,6,8],[1,1.1,1.2,1.3,1.4,1.5,1.6,1.8,2,2.2,2.5,3,3.5,4,4.5,5,6,7,8,9]];
+  const e0=Math.floor(Math.log10(lo)), e1=Math.ceil(Math.log10(hi));
+  let out=[];
+  for(const set of SETS){
+    out=[];
+    for(let e=e0;e<=e1;e++) for(const m of set){ const v=m*Math.pow(10,e); if(v>=lo&&v<=hi) out.push(Math.round(v*100)/100); }
+    if(out.length>=4) break;
+  }
+  return out;
+}
+function niceLinTicks(lo, hi){
+  const span=hi-lo, raw=span/5, mag=Math.pow(10,Math.floor(Math.log10(raw)));
+  const step=[1,2,2.5,5,10].map(x=>x*mag).find(s=>span/s<=6)||mag*10;
+  const out=[]; for(let v=Math.ceil(lo/step)*step; v<=hi+1e-9; v+=step) out.push(v);
+  return out;
+}
+function extent(arr, i0, i1){
+  let lo=Infinity, hi=-Infinity;
+  for(let i=i0;i<=i1;i++){ const v=arr[i]; if(v!=null){ lo=Math.min(lo,v); hi=Math.max(hi,v);} }
+  return [lo,hi];
+}
+function drawLine(arr, i0, i1, X, Y, color, width){
+  ctx.strokeStyle=color; ctx.lineWidth=width; ctx.beginPath(); let st=false;
+  for(let i=i0;i<=i1;i++){ const v=arr[i]; if(v==null) continue;
+    const x=X(i), y=Y(v); st?ctx.lineTo(x,y):(ctx.moveTo(x,y),st=true); }
+  ctx.stroke();
 }
 
-fetch("data/overlay.json", { cache: "no-store" }).then(r => r.json()).then(json => {
-  DATA = json;
-  chart = echarts.init(document.getElementById("chart-overlay"));
-  render();
-  const t = new Date(DATA.updated.replace("Z", ":00Z"));
-  document.getElementById("updated").textContent =
-    "最後更新：" + t.toLocaleString("zh-TW", { timeZone: "Asia/Taipei", hour12: false }) + "（台灣時間）";
+function draw(){
+  if(!N) return;
+  const dpr = window.devicePixelRatio||1;
+  const W = cv.clientWidth, H = cv.clientHeight;
+  cv.width = W*dpr; cv.height = H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+  const padL=62, padR=48, gap=30;
+  const h1t=24, h1b=Math.round(H*0.56), h2t=h1b+gap, h2b=H-30;
+  const [i0,i1] = visRange(); const nvis=i1-i0;
+  const X = i => padL + (i-i0)/(nvis||1)*(W-padL-padR);
+
+  // 上欄：區間起點＝100、對數座標（同融資頁）
+  const reb={};
+  for(const s of UP){
+    const arr=RAW[s.k]; let bi=i0; while(bi<=i1 && arr[bi]==null) bi++;
+    const base=arr[bi]; reb[s.k]=arr.map(v=> v==null||!base?null:v/base*100);
+  }
+  let lo=Infinity, hi=-Infinity;
+  for(const s of UP){ if(!state.show[s.k]) continue;
+    const [a,b]=extent(reb[s.k],i0,i1); lo=Math.min(lo,a); hi=Math.max(hi,b); }
+  if(!isFinite(lo)){ lo=90; hi=110; }
+  lo*=0.97; hi*=1.03;
+  const Y1 = v => h1b - (Math.log10(v)-Math.log10(lo))/(Math.log10(hi)-Math.log10(lo))*(h1b-h1t);
+
+  // 下欄：殖利率左軸（%）、信用利差右軸（bp，對數，投資級與垃圾級才看得出幅度）
+  let [ylo,yhi]=state.show.dgs10?extent(RAW.dgs10,i0,i1):[Infinity,-Infinity];
+  if(!isFinite(ylo)){ ylo=3; yhi=5; }
+  const ypad=Math.max((yhi-ylo)*0.1,0.05); ylo-=ypad; yhi+=ypad;
+  const Y2 = v => h2b - (v-ylo)/(yhi-ylo)*(h2b-h2t);
+  let rlo=Infinity, rhi=-Infinity;
+  for(const k of ["oas_ig","oas_hy"]){ if(!state.show[k]) continue;
+    const [a,b]=extent(RAW[k],i0,i1); rlo=Math.min(rlo,a); rhi=Math.max(rhi,b); }
+  if(!isFinite(rlo)){ rlo=50; rhi=500; }
+  rlo*=0.92; rhi*=1.08;
+  const Y3 = v => h2b - (Math.log10(v)-Math.log10(rlo))/(Math.log10(rhi)-Math.log10(rlo))*(h2b-h2t);
+  const anyOas = state.show.oas_ig||state.show.oas_hy;
+
+  // 格線與刻度
+  ctx.font="11px 'Microsoft JhengHei',sans-serif"; ctx.lineWidth=1;
+  for(const t of niceLogTicks(lo,hi)){
+    const y=Y1(t); if(y<h1t||y>h1b) continue;
+    ctx.strokeStyle="rgba(0,0,0,0.06)"; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+    ctx.textAlign="right"; ctx.fillStyle="#8A9097"; ctx.fillText(t>=1000?(t/1000)+"k":Math.round(t), padL-8, y+3.5);
+  }
+  if(state.show.dgs10){
+    for(const t of niceLinTicks(ylo,yhi)){
+      const y=Y2(t);
+      ctx.strokeStyle="rgba(0,0,0,0.06)"; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+      ctx.textAlign="right"; ctx.fillStyle="#B7791F"; ctx.fillText(parseFloat(t.toFixed(2))+"%", padL-8, y+3.5);
+    }
+  }
+  if(anyOas){
+    for(const t of niceLogTicks(rlo,rhi)){
+      const y=Y3(t); if(y<h2t-1||y>h2b+1) continue;
+      if(!state.show.dgs10){ ctx.strokeStyle="rgba(0,0,0,0.06)";
+        ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); }
+      ctx.textAlign="left"; ctx.fillStyle="#8A9097"; ctx.fillText(Math.round(t), W-padR+6, y+3.5);
+    }
+  }
+
+  // X 軸：短區間逐月，長區間 1 月與 7 月
+  ctx.textAlign="center"; ctx.fillStyle="#8A9097";
+  const shortRange = nvis<=140;
+  let lastX=-999;
+  for(let i=Math.max(i0,1);i<=i1;i++){
+    if(M[i].slice(0,7)===M[i-1].slice(0,7)) continue;
+    const yy=M[i].slice(0,4), mm=+M[i].slice(5,7);
+    if(!shortRange && mm!==1 && mm!==7) continue;
+    const x=X(i); if(x-lastX<44) continue;
+    ctx.fillText(yy+"/"+mm, x, H-10); lastX=x;
+  }
+
+  // 線
+  for(const s of LOW){ if(state.show[s.k]) drawLine(RAW[s.k],i0,i1,X,s.k==="dgs10"?Y2:Y3,s.color,1.6); }
+  for(const s of UP){ if(state.show[s.k]) drawLine(reb[s.k],i0,i1,X,Y1,s.color,1.5); }
+
+  // 欄標題
+  ctx.textAlign="left"; ctx.fillStyle="#6B7178"; ctx.font="11.5px 'Microsoft JhengHei',sans-serif";
+  ctx.fillText("指數（區間起點 = 100，對數座標）", padL, h1t-8);
+  const t2=[], narrow=W<600;
+  if(state.show.dgs10) t2.push(narrow?"10Y %（左）":"10 年期殖利率 %（左軸）");
+  if(anyOas) t2.push(narrow?"利差 bp（右）":"信用利差 bp（右軸，對數座標）");
+  ctx.fillText(t2.join("　×　"), padL, h2t-8);
+
+  // 十字線
+  if(hoverI>=i0 && hoverI<=i1){
+    const x=X(hoverI);
+    ctx.strokeStyle="rgba(34,38,43,0.35)"; ctx.lineWidth=1; ctx.setLineDash([2,3]);
+    ctx.beginPath(); ctx.moveTo(x,h1t); ctx.lineTo(x,h2b); ctx.stroke(); ctx.setLineDash([]);
+    for(const s of UP){ if(!state.show[s.k]) continue; const v=reb[s.k][hoverI];
+      if(v!=null){ ctx.fillStyle=s.color; ctx.beginPath(); ctx.arc(x,Y1(v),3.2,0,7); ctx.fill(); } }
+    for(const s of LOW){ if(!state.show[s.k]) continue; const v=RAW[s.k][hoverI];
+      if(v!=null){ ctx.fillStyle=s.color; ctx.beginPath(); ctx.arc(x,(s.k==="dgs10"?Y2:Y3)(v),3.2,0,7); ctx.fill(); } }
+  }
+  LAY={padL,padR,W,i0,i1};
+}
+
+function idxFromEvent(ev){
+  if(!LAY) return -1;
+  const r=cv.getBoundingClientRect(), mx=ev.clientX-r.left;
+  const {padL,W,padR,i0,i1}=LAY;
+  if(mx<padL||mx>W-padR) return -1;
+  return Math.round(i0+(mx-padL)/(W-padL-padR)*(i1-i0));
+}
+function renderTip(ev){
+  const m=M[hoverI]; if(!m){ tip.style.display="none"; return; }
+  let html=`<div class="t">${m.replaceAll("-","/")}</div>`;
+  for(const s of UP){ if(!state.show[s.k]) continue; const v=RAW[s.k][hoverI];
+    if(v!=null) html+=`<div class="r"><i style="--dc:${s.color}">${s.name}</i><b>${v.toLocaleString("en-US",{maximumFractionDigits:0})}</b></div>`; }
+  for(const s of LOW){ if(!state.show[s.k]) continue; const v=RAW[s.k][hoverI];
+    if(v!=null) html+=`<div class="r"><i style="--dc:${s.color}">${s.name}</i><b>${s.fmt(v)}</b></div>`; }
+  tip.innerHTML=html; tip.style.display="block";
+  const r=cv.getBoundingClientRect(), mx=ev.clientX-r.left, my=ev.clientY-r.top, bw=tip.offsetWidth;
+  tip.style.left=Math.min(Math.max(mx-bw/2,8), cv.clientWidth-bw-8)+"px";
+  tip.style.top=(my<200? my+26 : my-tip.offsetHeight-18)+"px";
+}
+// 游標移動只有十字線；點一下才開浮標，再點一下關閉（同融資頁）
+cv.addEventListener("pointermove", ev=>{
+  hoverI=idxFromEvent(ev); draw();
+  if(tipOn && hoverI>=0) renderTip(ev); else tip.style.display="none";
 });
-document.querySelectorAll(".toolbar button").forEach(btn => btn.addEventListener("click", () => {
-  months = Number(btn.dataset.m);
-  document.querySelectorAll(".toolbar button").forEach(b => b.setAttribute("aria-pressed", String(b === btn)));
-  render();
+cv.addEventListener("pointerleave", ()=>{ hoverI=-1; tip.style.display="none"; draw(); });
+cv.addEventListener("click", ev=>{
+  tipOn=!tipOn;
+  hoverI=idxFromEvent(ev); draw();
+  if(tipOn && hoverI>=0) renderTip(ev); else tip.style.display="none";
+});
+document.querySelectorAll("button.rng").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("button.rng").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on"); state.range=b.dataset.r; draw();
 }));
-window.addEventListener("resize", () => { if (chart) { chart.resize(); render(); } });
-matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (chart) render(); });
+document.querySelectorAll("button.tog").forEach(b=>b.addEventListener("click",()=>{
+  const k=b.dataset.s; state.show[k]=!state.show[k]; b.classList.toggle("off",!state.show[k]); draw();
+}));
+window.addEventListener("resize", draw);
+
+fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
+  const keys=[...UP,...LOW].map(s=>s.k);
+  const dates=new Set(); keys.forEach(k=>j[k].forEach(p=>dates.add(p[0])));
+  M=[...dates].sort(); N=M.length;
+  const pos=new Map(M.map((d,i)=>[d,i]));
+  keys.forEach(k=>{ const a=new Array(N).fill(null); j[k].forEach(p=>{a[pos.get(p[0])]=p[1];}); RAW[k]=a; });
+  document.getElementById("sub").textContent+=` ｜ ${M[0].slice(0,7).replace("-","/")} – ${M[N-1].slice(0,7).replace("-","/")}`;
+  draw();
+});
 </script>
 </body>
 </html>
