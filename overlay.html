@@ -173,7 +173,7 @@ const EVENTS_LOW = [
   {d:"2026-09-22", t:"Oracle 專案貸款受阻"},
   {d:"2026-10-15", t:"PPI CPI超預期，Coreweave CDS飆升"},
 ];
-const EVENT_DAYS = 5, EVENT_MIN_W = 8;   // 底色帶寬＝前後共 5 個交易日；長區間至少 8px，太窄看不到也點不到
+const EVENT_DAYS = 1, EVENT_MIN_W = 4, EVENT_HIT = 4;   // 底色帶寬＝事件當天；長區間至少 4px；滑鼠容許 ±4px 才點得到
 const state = {range:"all", show:{spx:true,ndx:true,sox:true,dgs10:true,oas_ig:true,oas_hy:true,events:true}};
 const cv = document.getElementById("cv"), tip = document.getElementById("tip");
 const ctx = cv.getContext("2d");
@@ -230,7 +230,7 @@ function eventsAt(i){
   const {X,i0,i1,stepPx}=LAY, x=X(i), out=[];
   for(const e of [...EVENTS_UP,...EVENTS_LOW]){
     const b=eventBand(e,i0,i1,X,stepPx);
-    if(b && Math.abs(x-b.x)<=b.half+0.5 && !out.includes(e)) out.push(e);
+    if(b && Math.abs(x-b.x)<=Math.max(b.half,EVENT_HIT)+0.5 && !out.includes(e)) out.push(e);
   }
   return out.sort((a,b)=>a.d<b.d?-1:1);
 }
