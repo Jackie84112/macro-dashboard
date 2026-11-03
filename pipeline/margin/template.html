@@ -8,7 +8,7 @@
   }
   *{box-sizing:border-box}
   body{background:var(--bg);color:var(--ink);
-    font-family:"Microsoft JhengHei","PingFang TC","Noto Sans TC",system-ui,sans-serif;
+    font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;
     margin:0;padding:20px 16px 40px;}
   .wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:14px;}
   header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;padding:4px 4px 0;}
@@ -355,7 +355,7 @@ function draw(){
   }
 
   // grid + ticks panel1
-  ctx.font="11px 'Microsoft JhengHei',sans-serif"; ctx.fillStyle="#8A9097";
+  ctx.font="11px 'Noto Sans TC','Microsoft JhengHei',sans-serif"; ctx.fillStyle="#8A9097";
   for(const t of niceLogTicks(lo,hi)){
     const y=Y1(t); if(y<h1t||y>h1b) continue;
     ctx.strokeStyle="rgba(0,0,0,0.06)"; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
@@ -444,7 +444,7 @@ function draw(){
     ctx.stroke(); ctx.setLineDash([]);
   }
   // panel titles
-  ctx.textAlign="left"; ctx.fillStyle="#6B7178"; ctx.font="11.5px 'Microsoft JhengHei',sans-serif";
+  ctx.textAlign="left"; ctx.fillStyle="#6B7178"; ctx.font="11.5px 'Noto Sans TC','Microsoft JhengHei',sans-serif";
   const t2=[];
   if(state.show.yoy) t2.push("融資餘額年增率 %（左軸，紅點線 = 40% 警戒，紅虛線段 = IBKR 暫估）");
   if(state.show.ratio) t2.push("融資／市值比 %（右軸，琥珀帶 = 1.5–2.2% 常態，虛線 = 2.5%）");

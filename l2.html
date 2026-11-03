@@ -7,13 +7,13 @@
 <style>:root{color-scheme:light}body{margin:0;padding:0;background:#f5f7f9}img{max-width:100%}</style>
 </head>
 <body>
-<script src="nav.js?v=20261103b"></script>
+<script src="nav.js?v=20261103c"></script>
 
 <title>L2 流動性潮水儀表板</title>
 <style>
   #l2 { --ink:#14202b; --muted:#5a6b7a; --paper:#f5f7f9; --panel:#ffffff;
         --line:#e2e8ee; --accent:#0b6e7d; --good:#1f8a54; --warn:#c08117; --crit:#c23b33;
-        color:var(--ink); background:var(--paper); font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+        color:var(--ink); background:var(--paper); font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;
         line-height:1.5; padding:32px 20px 56px; }
   #l2 .wrap { max-width:980px; margin:0 auto; }
   #l2 .num { font-variant-numeric:tabular-nums; font-feature-settings:"tnum"; }
@@ -272,7 +272,7 @@
     var cw=(W-LAB)/N;
     rows.forEach(function(r,ri){
       var y=ri*(BH+GAP);
-      x.fillStyle=C.mut; x.font='700 11px "Segoe UI",sans-serif'; x.textBaseline='middle'; x.textAlign='left';
+      x.fillStyle=C.mut; x.font='700 11px "Noto Sans TC","Microsoft JhengHei",sans-serif'; x.textBaseline='middle'; x.textAlign='left';
       x.fillText(r[0], 0, y+BH/2);
       for(var i=0;i<N;i++){
         var v=r[1][i];
@@ -281,7 +281,7 @@
       }
     });
     var ay=rows.length*(BH+GAP)+2, last=-1;
-    x.fillStyle=C.mut; x.font='10px "Segoe UI",sans-serif'; x.textBaseline='top';
+    x.fillStyle=C.mut; x.font='10px "Noto Sans TC","Microsoft JhengHei",sans-serif'; x.textBaseline='top';
     for(var i=0;i<N;i++){ var y2=yr(i); if(y2!==last){ x.fillText(String(y2), LAB+i*cw, ay); last=y2; } }
     if(hi!=null){
       x.strokeStyle=C.ink; x.lineWidth=1; x.beginPath();
@@ -316,7 +316,7 @@
     var rng=(mx-mn)||1; mn-=rng*0.05; mx+=rng*0.05; rng=mx-mn;
     var X=function(i){return PL+i*(W-PL-PR)/(n-1);};
     var Y=function(v){return PT+(1-(v-mn)/rng)*(Ht-PT-PB);};
-    x.font='10px "Segoe UI",sans-serif';
+    x.font='10px "Noto Sans TC","Microsoft JhengHei",sans-serif';
     for(var g2=0;g2<=3;g2++){
       var vv=mn+rng*g2/3, yy=Y(vv);
       x.strokeStyle=C.line; x.lineWidth=1; x.beginPath(); x.moveTo(PL,yy); x.lineTo(W-PR,yy); x.stroke();

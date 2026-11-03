@@ -56,8 +56,19 @@
 .jump { scroll-margin-top: 68px; }
 .jump.flash { animation: jump-flash 1.6s ease-out; }
 @keyframes jump-flash { 0%, 30% { box-shadow: 0 0 0 3px rgba(208,59,59,.35); } 100% { box-shadow: 0 0 0 3px transparent; } }`;
+  // 全站字體：Noto Sans TC（思源黑體）網頁字型；載入後發 resize 讓 canvas／ECharts 重畫文字
+  const FONT = '"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif';
+  [["preconnect", "https://fonts.googleapis.com"], ["preconnect", "https://fonts.gstatic.com", true]].forEach(([rel, href, co]) => {
+    const l = document.createElement("link"); l.rel = rel; l.href = href; if (co) l.crossOrigin = ""; document.head.appendChild(l); });
+  const fontLink = document.createElement("link");
+  fontLink.rel = "stylesheet";
+  fontLink.href = "https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700&display=swap";
+  fontLink.onload = () => Promise.all(["400", "700"].map(w => document.fonts.load(w + ' 12px "Noto Sans TC"', "股債信用")))
+    .then(() => dispatchEvent(new Event("resize"))).catch(() => {});
+  document.head.appendChild(fontLink);
   const style = document.createElement("style");
-  style.textContent = css;
+  style.textContent = `html body { font-family: ${FONT}; } button, input, select, textarea { font-family: inherit; } .site-nav { line-height: 1.5; }` + css + `
+.site-nav .tabs { margin: 0; }`;
   document.head.appendChild(style);
   const nav = document.createElement("nav");
   nav.className = "site-nav";
