@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>股債信用疊圖｜宏觀監控儀表板</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   /* 版面與互動沿用融資槓桿頁第一張圖（pipeline/margin/template.html） */
   :root{
@@ -50,10 +53,10 @@
   #tip .ev i{flex:none;width:8px;height:8px;border-radius:2px;background:#E8806F;}
   /* SOX 導火線時間軸 */
   .tl-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-bottom:10px;}
-  .tl-head h2{font-size:19px;margin:0;letter-spacing:.3px;}
-  .tl-head span{color:var(--muted);font-size:14px;}
-  table.tl{width:100%;border-collapse:collapse;font-size:15px;line-height:1.6;}
-  table.tl th{font-size:13px;font-weight:400;color:var(--muted);letter-spacing:1px;text-align:left;
+  .tl-head h2{font-size:17px;font-weight:500;margin:0;letter-spacing:.3px;}
+  .tl-head span{color:var(--muted);font-size:12.5px;}
+  table.tl{width:100%;border-collapse:collapse;font-size:13.5px;line-height:1.65;}
+  table.tl th{font-size:12px;font-weight:400;color:var(--muted);letter-spacing:1px;text-align:left;
     padding:6px 10px;border-bottom:1px solid var(--ink);white-space:nowrap;}
   table.tl td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
   table.tl tr:last-child td{border-bottom:0;}
@@ -61,19 +64,19 @@
   .tl .d{white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums;}
   .tl .x{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums;}
   table.tl th.x{text-align:right;}
-  section.tl-card, section.tl-card *{font-family:"Microsoft JhengHei","微軟正黑體",sans-serif;}
-  table.tl tr.big{background:#E6F4EA;}
-  table.tl tbody tr.big:hover{background:#DCEFE2;}
+  section.tl-card, section.tl-card *{font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;}
+  table.tl tr.big{background:#F3F8F4;}
+  table.tl tbody tr.big:hover{background:#ECF4EE;}
   .tl .dn{color:#15803D;} .tl .up{color:#DC2626;}
   .tl .x b{font-weight:700;}
   .tl .k{white-space:nowrap;}
-  .chip{display:inline-block;font-size:13px;line-height:1.5;padding:0 7px;border-radius:5px;margin:1px 4px 1px 0;
+  .chip{display:inline-block;font-size:12px;line-height:1.5;padding:0 7px;border-radius:5px;margin:1px 4px 1px 0;
     background:#EFEEEA;color:#4B5158;}
   .chip.c-cr{background:#F9ECE7;color:#B04A2F;}
   .chip.c-er{background:#E8EEFC;color:#1D4ED8;}
   .chip.c-mp{background:#FBF1DD;color:#92600F;}
   .chip.c-cp{background:#F0EBFB;color:#6D28D9;}
-  .notes{margin:12px 0 0;font-size:13px;color:var(--muted);line-height:1.6;}
+  .notes{margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.6;}
   .notes p{margin:2px 0;}
   @media (max-width:600px){
     table.tl thead{display:none;}
@@ -131,7 +134,7 @@
       <thead><tr><th>日期</th><th class="x">SOX</th><th>事件性質</th><th>導火線</th></tr></thead>
       <tbody>
         <tr><td class="d">10/7</td><td class="x"><span class="dn">-1.15%</span></td><td class="k"><span class="chip c-mp">貨幣政策</span></td><td class="t">10 年債盤中約 5.35%、30 年債 5.73%；FOMC 紀要：多數官員預期年底前再升息；市場憂借貸成本壓抑 AI 投資</td></tr>
-        <tr class="big"><td class="d">10/8</td><td class="x"><span class="dn"><b>-3.39%</b></span></td><td class="k"><span class="chip c-cr">信用</span></td><td class="t">FT：OpenAI 年化營收約 500 億美元，比傳聞的 700 億少 200 億；WSJ：博通為 OpenAI 客製晶片尋求逾 500 億融資；石油破 104 美元</td></tr>
+        <tr><td class="d">10/8</td><td class="x"><span class="dn">-3.39%</span></td><td class="k"><span class="chip c-cr">信用</span></td><td class="t">FT：OpenAI 年化營收約 500 億美元，比傳聞的 700 億少 200 億；WSJ：博通為 OpenAI 客製晶片尋求逾 500 億融資；石油破 104 美元</td></tr>
         <tr><td class="d">10/12</td><td class="x"><span class="dn">-2.67%</span></td><td class="k"><span class="chip c-cr">信用</span></td><td class="t">博通執行長：資金恐比晶片、電力更限制 AI 擴張，部分投資人如賭徒；英特爾執行長：憂資金成本與投資報酬</td></tr>
         <tr><td class="d">10/13</td><td class="x"><span class="dn">-0.23%</span></td><td class="k"><span class="chip c-cp">產業競爭</span></td><td class="t">長鑫宣稱 4F² DRAM 突破，年底推伺服器 DDR5；海力士 -10%、三星 -7.4%、美光 -3.6%；彭博稱未經證實</td></tr>
         <tr class="big"><td class="d">10/14</td><td class="x"><span class="dn"><b>-4.30%</b></span></td><td class="k"><span class="chip c-cr">信用</span><span class="chip c-mp">貨幣政策</span></td><td class="t">9 月 CPI 年增 3.7%，核心月增 0.3%；CoreWeave 債券殖利率近 15%，股價 -15.5%</td></tr>
