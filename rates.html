@@ -116,6 +116,7 @@ h2.sec small { font-weight: 400; color: var(--text-muted); letter-spacing: 0; ma
 .tabs button { font-size: 12px; padding: 2px 10px; }
 .chart { width: 100%; height: 340px; }
 .chart.tall { height: 420px; }
+#chart-oas { height: 720px; }
 .legend-chips { display: flex; gap: 12px; font-size: 12px; color: var(--text-secondary); align-items: center; }
 .legend-chips i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 4px; vertical-align: -1px; }
 .table-wrap { overflow-x: auto; margin: 0 -20px; padding: 0 20px 12px; }
@@ -193,6 +194,7 @@ footer a { color: inherit; }
   .stat { text-align: left; }
   .chart { height: 280px; }
   .chart.tall { height: 360px; }
+  #chart-oas { height: 580px; }
 }
 </style>
 </head>
@@ -758,10 +760,22 @@ function fedMoves() {
   const U = DATA.ffr_upper, out = [];
   for (let i = 1; i < U.length; i++) {
     const d = U[i][1] - U[i - 1][1];
-    if (Math.abs(d) > 1e-9) out.push({ xAxis: U[i][0], name: d > 0 ? "升息" : "降息",
-      lineStyle: { color: d > 0 ? css("--bad") : css("--good"), type: "dashed", width: 1, opacity: 0.7 } });
+    if (Math.abs(d) > 1e-9) out.push({ xAxis: U[i][0], name: d > 0 ? "升息" : "降息", row: 0,
+      color: d > 0 ? css("--bad") : css("--good"), type: "dashed", opacity: 0.7 });
   }
   return out;
+}
+
+// 信用圖垂直線：Fed 動作＋手動事件（rates-manual.json 的 creditEvents）＋上週。
+// 標籤一律橫放在面板上方；row＝第幾層。每個標籤固定一層（Fed 最底、上週最高），
+// 3 年視圖事件擠在一起也不會互蓋；新增事件要同步調高 grid 的 top
+function oasMarks(showLabel, narrow) {
+  const ev = (MAN.creditEvents || []).map((e, i, a) => ({ xAxis: e.date, name: e.label, row: a.length - i,
+    color: css("--text-secondary"), type: "dashed", opacity: 0.85 }));
+  const all = [...fedMoves(), ...ev, { xAxis: WEEK_AGO, name: "上週", row: (MAN.creditEvents || []).length + 1, color: css("--text-muted"), type: [2, 3], opacity: 1 }];
+  return all.map(m => ({ xAxis: m.xAxis, name: m.name,
+    lineStyle: { color: m.color, type: m.type, width: 1, opacity: m.opacity },
+    label: { show: showLabel && !(narrow && m.name === "降息"), position: "end", rotate: 0, distance: 4 + m.row * 15, color: m.color, fontSize: 11, formatter: (p) => p.name } }));
 }
 
 function renderOas() {
@@ -770,25 +784,25 @@ function renderOas() {
     `<div class="value">${t.v.toFixed(0)} bp</div>${deltaHtml(t.v, t.pv, true, " bp", 0)}` +
     `<div class="meta">高收益全體，${fmtDay(t.d)}（較一週前）</div>` +
     `<div class="meta">投資級全體 ${ig.v.toFixed(0)} bp（${sign(ig.v - ig.pv)}${(ig.v - ig.pv).toFixed(0)}）</div>`;
-  const b = base(), moves = fedMoves();
+  const b = base(), narrow = charts.oas.getWidth() < 600;
   const col = { oas_aaa: css("--text-muted"), oas_aa: css("--series-3"), oas_a: css("--series-1"), oas_bbb: css("--series-2"),
     oas_bb: css("--series-1"), oas_b: css("--series-2"), oas_hy: css("--text-secondary") };
   const mk = (list, gi) => list.map(([k, name], i) => line(name, DATA[k], col[k], {
     xAxisIndex: gi, yAxisIndex: gi, endLabel: { show: false },
     ...(k === "oas_hy" ? { lineStyle: { width: 2.5, color: col[k] } } : {}),
-    ...(i === 0 ? { markLine: { silent: true, symbol: "none", data: [...moves, { xAxis: WEEK_AGO, lineStyle: { color: css("--text-muted"), type: "dotted", width: 1 } }],
-      label: { show: gi === 0, color: css("--text-secondary"), fontSize: 10, position: "insideEndTop", formatter: (p) => p.name } } } : {}),
+    ...(i === 0 ? { markLine: { silent: true, symbol: "none", data: oasMarks(gi === 0, narrow) } } : {}),
   }));
   charts.oas.setOption({
     ...b,
     legend: { ...legend(), data: [...OAS_IG, ...OAS_HY].map(x => x[1]) },
     title: [
-      { text: "投資級", left: 8, top: 24, textStyle: { color: css("--text-muted"), fontSize: 12, fontWeight: 600 } },
+      { text: "投資級", left: 8, top: 64, textStyle: { color: css("--text-muted"), fontSize: 12, fontWeight: 600 } },
       { text: "高收益", left: 8, top: "53%", textStyle: { color: css("--text-muted"), fontSize: 12, fontWeight: 600 } },
     ],
     grid: [
-      { left: 8, right: 24, top: 52, height: "34%", containLabel: true },
-      { left: 8, right: 24, top: "62%", bottom: 28, containLabel: true },
+      // 右邊留白：事件標籤置中於線上，最新事件靠近右緣時才不會被切掉
+      { left: 8, right: narrow ? 56 : 44, top: 100, height: narrow ? "33%" : "36%", containLabel: true },
+      { left: 8, right: narrow ? 56 : 44, top: "58%", bottom: 28, containLabel: true },
     ],
     xAxis: [{ ...b.xAxis, gridIndex: 0, axisLabel: { show: false } }, { ...b.xAxis, gridIndex: 1 }],
     yAxis: [
