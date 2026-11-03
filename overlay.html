@@ -50,10 +50,10 @@
   #tip .ev i{flex:none;width:8px;height:8px;border-radius:2px;background:#E8806F;}
   /* SOX 導火線時間軸 */
   .tl-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-bottom:10px;}
-  .tl-head h2{font-size:17px;margin:0;letter-spacing:.3px;}
-  .tl-head span{color:var(--muted);font-size:12.5px;}
-  table.tl{width:100%;border-collapse:collapse;font-size:13.5px;line-height:1.6;}
-  table.tl th{font-size:12px;font-weight:400;color:var(--muted);letter-spacing:1px;text-align:left;
+  .tl-head h2{font-size:19px;margin:0;letter-spacing:.3px;}
+  .tl-head span{color:var(--muted);font-size:14px;}
+  table.tl{width:100%;border-collapse:collapse;font-size:15px;line-height:1.6;}
+  table.tl th{font-size:13px;font-weight:400;color:var(--muted);letter-spacing:1px;text-align:left;
     padding:6px 10px;border-bottom:1px solid var(--ink);white-space:nowrap;}
   table.tl td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
   table.tl tr:last-child td{border-bottom:0;}
@@ -61,17 +61,19 @@
   .tl .d{white-space:nowrap;color:var(--muted);font-variant-numeric:tabular-nums;}
   .tl .x{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums;}
   table.tl th.x{text-align:right;}
-  .tl .x small{font-size:11px;color:var(--muted);margin-left:3px;}
+  section.tl-card, section.tl-card *{font-family:"Microsoft JhengHei","微軟正黑體",sans-serif;}
+  table.tl tr.big{background:#E6F4EA;}
+  table.tl tbody tr.big:hover{background:#DCEFE2;}
   .tl .dn{color:#15803D;} .tl .up{color:#DC2626;}
   .tl .x b{font-weight:700;}
   .tl .k{white-space:nowrap;}
-  .chip{display:inline-block;font-size:12px;line-height:1.5;padding:0 7px;border-radius:5px;margin:1px 4px 1px 0;
+  .chip{display:inline-block;font-size:13px;line-height:1.5;padding:0 7px;border-radius:5px;margin:1px 4px 1px 0;
     background:#EFEEEA;color:#4B5158;}
   .chip.c-cr{background:#F9ECE7;color:#B04A2F;}
   .chip.c-er{background:#E8EEFC;color:#1D4ED8;}
   .chip.c-mp{background:#FBF1DD;color:#92600F;}
   .chip.c-cp{background:#F0EBFB;color:#6D28D9;}
-  .notes{margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.6;}
+  .notes{margin:12px 0 0;font-size:13px;color:var(--muted);line-height:1.6;}
   .notes p{margin:2px 0;}
   @media (max-width:600px){
     table.tl thead{display:none;}
@@ -120,30 +122,30 @@
     <div id="tip"></div>
   </section>
 
-  <section class="card">
+  <section class="card tl-card">
     <div class="tl-head">
       <h2>SOX 導火線時間軸</h2>
-      <span>2026/10/6 收盤 13,218 → 11/2 收盤 10,328，累計 -21.9%</span>
+      <span>2026/10/6 收盤 13,218 → 11/2 收盤 10,328，-21.9%</span>
     </div>
     <table class="tl">
       <thead><tr><th>日期</th><th class="x">SOX</th><th>事件性質</th><th>導火線</th></tr></thead>
       <tbody>
         <tr><td class="d">10/7</td><td class="x"><span class="dn">-1.15%</span></td><td class="k"><span class="chip c-mp">貨幣政策</span></td><td class="t">10 年債盤中約 5.35%、30 年債 5.73%；FOMC 紀要：多數官員預期年底前再升息；市場憂借貸成本壓抑 AI 投資</td></tr>
-        <tr><td class="d">10/8</td><td class="x"><span class="dn"><b>-3.39%</b></span></td><td class="k"><span class="chip c-cr">信用</span></td><td class="t">FT：OpenAI 年化營收約 500 億美元，比傳聞的 700 億少 200 億；WSJ：博通為 OpenAI 客製晶片尋求逾 500 億融資；石油破 104 美元</td></tr>
+        <tr class="big"><td class="d">10/8</td><td class="x"><span class="dn"><b>-3.39%</b></span></td><td class="k"><span class="chip c-cr">信用</span></td><td class="t">FT：OpenAI 年化營收約 500 億美元，比傳聞的 700 億少 200 億；WSJ：博通為 OpenAI 客製晶片尋求逾 500 億融資；石油破 104 美元</td></tr>
         <tr><td class="d">10/12</td><td class="x"><span class="dn">-2.67%</span></td><td class="k"><span class="chip c-cr">信用</span></td><td class="t">博通執行長：資金恐比晶片、電力更限制 AI 擴張，部分投資人如賭徒；英特爾執行長：憂資金成本與投資報酬</td></tr>
         <tr><td class="d">10/13</td><td class="x"><span class="dn">-0.23%</span></td><td class="k"><span class="chip c-cp">產業競爭</span></td><td class="t">長鑫宣稱 4F² DRAM 突破，年底推伺服器 DDR5；海力士 -10%、三星 -7.4%、美光 -3.6%；彭博稱未經證實</td></tr>
-        <tr><td class="d">10/14</td><td class="x"><span class="dn"><b>-4.30%</b></span></td><td class="k"><span class="chip c-cr">信用</span><span class="chip c-mp">貨幣政策</span></td><td class="t">9 月 CPI 年增 3.7%，核心月增 0.3%；CoreWeave 債券殖利率近 15%，股價 -15.5%</td></tr>
+        <tr class="big"><td class="d">10/14</td><td class="x"><span class="dn"><b>-4.30%</b></span></td><td class="k"><span class="chip c-cr">信用</span><span class="chip c-mp">貨幣政策</span></td><td class="t">9 月 CPI 年增 3.7%，核心月增 0.3%；CoreWeave 債券殖利率近 15%，股價 -15.5%</td></tr>
         <tr><td class="d">10/16</td><td class="x"><span class="dn">-3.83%</span></td><td class="k"><span class="chip">延續賣壓</span></td><td class="t">賣壓擴散至亞洲、歐洲；黃仁勳稱不需為 CoreWeave 兜底；成分股 30 檔全跌，連跌 8 天，為 2008 年 10 月以來最長</td></tr>
-        <tr><td class="d">10/19–21</td><td class="x"><span class="up">+3.3%</span><small>累計</small></td><td class="k"><span class="chip">技術性反彈</span></td><td class="t">震盪整理</td></tr>
-        <tr><td class="d">10/22</td><td class="x"><span class="dn"><b>-6.72%</b></span></td><td class="k"><span class="chip c-cr">信用</span><span class="chip c-er">財報</span></td><td class="t">Lam 財測 86 億美元受供應鏈限制，-11.8%；Meta 上調資本支出、自由現金流轉負，-7%；黃仁勳：資金需求遠超可取得資金；石油約 113 美元</td></tr>
-        <tr><td class="d">10/26–28</td><td class="x"><span class="up">+8.4%</span><small>累計</small></td><td class="k"><span class="chip c-mp">貨幣政策</span></td><td class="t">10/28 FOMC 以 10 比 2 按兵不動，兩位委員主張升息</td></tr>
+        <tr><td class="d">10/19–21</td><td class="x"><span class="up">+3.3%</span></td><td class="k"><span class="chip">技術性反彈</span></td><td class="t">震盪整理</td></tr>
+        <tr class="big"><td class="d">10/22</td><td class="x"><span class="dn"><b>-6.72%</b></span></td><td class="k"><span class="chip c-cr">信用</span><span class="chip c-er">財報</span></td><td class="t">Lam 財測 86 億美元受供應鏈限制，-11.8%；Meta 上調資本支出、自由現金流轉負，-7%；黃仁勳：資金需求遠超可取得資金；石油約 113 美元</td></tr>
+        <tr><td class="d">10/26–28</td><td class="x"><span class="up">+8.4%</span></td><td class="k"><span class="chip c-mp">貨幣政策</span></td><td class="t">10/28 FOMC 以 10 比 2 按兵不動，兩位委員主張升息</td></tr>
         <tr><td class="d">10/29</td><td class="x"><span class="dn">-1.42%</span></td><td class="k"><span class="chip c-er">財報</span></td><td class="t">微軟資本支出從 1,750 億下修至 1,700 億美元，稱第三方 GPU 交付延遲；Alphabet 維持指引、自由現金流為負，盤後約 -10%</td></tr>
-        <tr><td class="d">10/30</td><td class="x"><span class="dn"><b>-7.20%</b></span></td><td class="k"><span class="chip c-er">財報</span></td><td class="t">英特爾 Q4 營收指引 150–160 億美元，低於預期的 170.7 億，約 -29%，1974 年以來最差；亞馬遜不如預期，資本支出 2,200 億、自由現金流 -424 億美元</td></tr>
+        <tr class="big"><td class="d">10/30</td><td class="x"><span class="dn"><b>-7.20%</b></span></td><td class="k"><span class="chip c-er">財報</span></td><td class="t">英特爾 Q4 營收指引 150–160 億美元，低於預期的 170.7 億，約 -29%，1974 年以來最差；亞馬遜不如預期，資本支出 2,200 億、自由現金流 -424 億美元</td></tr>
         <tr><td class="d">11/2</td><td class="x"><span class="dn">-3.37%</span></td><td class="k"><span class="chip">延續賣壓</span><span class="chip">併購</span></td><td class="t">約 7 成 S&amp;P 成分股上漲，晶片幾乎全跌，單日蒸發逾 4,000 億美元；Marvell 以 1,150 億美元併購 Lumentum，股價重挫；SOX 創這輪新低</td></tr>
       </tbody>
     </table>
     <div class="notes">
-      <p>[註1]：SOX 為當日收盤漲跌幅，「累計」為區間內累計漲跌幅，由 Yahoo 收盤價計算。</p>
+      <p>[註1]：SOX 為當日收盤漲跌幅，日期為區間者為該區間漲跌幅，由 Yahoo 收盤價計算。</p>
       <p>[註2]：導火線為媒體事後歸因，10/7、10/16、11/2 的因果關係較弱；10/26–28 的反彈原因未查到明確說法，FOMC 僅為同期事件，不代表是反彈主因。</p>
     </div>
   </section>
