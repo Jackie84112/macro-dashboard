@@ -212,27 +212,26 @@ function eventBand(e, i0, i1, X, stepPx){
   const half=Math.max(EVENT_MIN_W, EVENT_DAYS*stepPx)/2;
   return {x0:X(i)-half, x1:X(i)+half, x:X(i), half};
 }
-// 底色同融資頁「融資年增≥40%」：淡暖紅、上下欄對齊；重疊的帶子先合併，顏色才不會疊深
-function drawEvents(panels, i0, i1, X, stepPx, padL, right){
+// 底色同融資頁「融資年增≥40%」的淡紅；上欄只畫指數事件、下欄只畫利差事件
+function drawEvents(list, top, bottom, i0, i1, X, stepPx, padL, right){
   if(!state.show.events) return;
-  const bands=[...EVENTS_UP,...EVENTS_LOW].map(e=>eventBand(e,i0,i1,X,stepPx)).filter(Boolean)
-    .map(b=>[Math.max(b.x0,padL),Math.min(b.x1,right)]).sort((a,b)=>a[0]-b[0]);
-  const merged=[];
-  for(const b of bands){ const m=merged[merged.length-1];
-    if(m && b[0]<=m[1]) m[1]=Math.max(m[1],b[1]); else merged.push([...b]); }
   ctx.save(); ctx.fillStyle="rgba(217,79,61,0.10)";
-  for(const [l,r] of merged) for(const [top,bottom] of panels) ctx.fillRect(l,top,r-l,bottom-top);
+  for(const e of list){
+    const b=eventBand(e,i0,i1,X,stepPx); if(!b) continue;
+    const l=Math.max(b.x0,padL), r=Math.min(b.x1,right);
+    ctx.fillRect(l, top, r-l, bottom-top);
+  }
   ctx.restore();
 }
-// 目前游標所在日期落在哪些底色帶內（滑鼠在帶子範圍內就算命中）
-function eventsAt(i){
+// 游標所在欄、所在日期落在哪些底色帶內：上欄只列指數事件、下欄只列利差事件
+function eventsAt(i, my){
   if(!state.show.events || !LAY) return [];
-  const {X,i0,i1,stepPx}=LAY, x=X(i), out=[];
-  for(const e of [...EVENTS_UP,...EVENTS_LOW]){
+  const {X,i0,i1,stepPx,split}=LAY, x=X(i), out=[];
+  for(const e of (my<split ? EVENTS_UP : EVENTS_LOW)){
     const b=eventBand(e,i0,i1,X,stepPx);
-    if(b && Math.abs(x-b.x)<=Math.max(b.half,EVENT_HIT)+0.5 && !out.includes(e)) out.push(e);
+    if(b && Math.abs(x-b.x)<=Math.max(b.half,EVENT_HIT)+0.5) out.push(e);
   }
-  return out.sort((a,b)=>a.d<b.d?-1:1);
+  return out;
 }
 function drawLine(arr, i0, i1, X, Y, color, width){
   ctx.strokeStyle=color; ctx.lineWidth=width; ctx.beginPath(); let st=false;
@@ -319,7 +318,8 @@ function draw(){
   }
 
   // 事件底色在格線與資料線之間
-  drawEvents([[h1t,h1b],[h2t,h2b]],i0,i1,X,stepPx,padL,W-padR);
+  drawEvents(EVENTS_UP,h1t,h1b,i0,i1,X,stepPx,padL,W-padR);
+  drawEvents(EVENTS_LOW,h2t,h2b,i0,i1,X,stepPx,padL,W-padR);
 
   // 線
   for(const s of LOW){ if(state.show[s.k]) drawLine(RAW[s.k],i0,i1,X,s.k==="dgs10"?Y2:Y3,s.color,1.6); }
@@ -340,7 +340,7 @@ function draw(){
     for(const s of LOW){ if(!state.show[s.k]) continue; const v=RAW[s.k][hoverI];
       if(v!=null){ ctx.fillStyle=s.color; ctx.beginPath(); ctx.arc(x,(s.k==="dgs10"?Y2:Y3)(v),3.2,0,7); ctx.fill(); } }
   }
-  LAY={padL,padR,W,i0,i1,X,stepPx};
+  LAY={padL,padR,W,i0,i1,X,stepPx,split:(h1b+h2t)/2};
 }
 
 function idxFromEvent(ev){
@@ -357,7 +357,7 @@ function renderTip(ev){
     if(v!=null) html+=`<div class="r"><i style="--dc:${s.color}">${s.name}</i><b>${v.toLocaleString("en-US",{maximumFractionDigits:0})}</b></div>`; }
   for(const s of LOW){ if(!state.show[s.k]) continue; const v=RAW[s.k][hoverI];
     if(v!=null) html+=`<div class="r"><i style="--dc:${s.color}">${s.name}</i><b>${s.fmt(v)}</b></div>`; }
-  const evs=eventsAt(hoverI);
+  const evs=eventsAt(hoverI, ev.clientY-cv.getBoundingClientRect().top);
   if(evs.length) html+=`<div class="evs">`+evs.map(e=>`<div class="ev"><i></i><span>${+e.d.slice(5,7)}/${+e.d.slice(8,10)} ${e.t}</span></div>`).join("")+`</div>`;
   tip.innerHTML=html; tip.style.display="block";
   const r=cv.getBoundingClientRect(), mx=ev.clientX-r.left, my=ev.clientY-r.top, bw=tip.offsetWidth;
