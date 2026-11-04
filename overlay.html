@@ -10,7 +10,7 @@
     --bg:#F6F5F2; --card:#FFFFFF; --ink:#22262B; --muted:#6B7178;
     --line:#E4E2DC; --accent:#B04A2F;
     --spx:#2563EB; --ndx:#7C3AED; --sox:#DC2626;
-    --dgs10:#D97706; --ig:#1D7A46; --hy:#22262B;
+    --dgs10:#D97706; --ig:#1D7A46; --hy:#22262B; --mag7:#D97706;
   }
   *{box-sizing:border-box}
   body{background:var(--bg);color:var(--ink);
@@ -38,16 +38,16 @@
   .chartbox{position:relative;}
   canvas{display:block;width:100%;height:600px;}
   @media (max-width:600px){ canvas{height:480px;} }
-  #tip{position:absolute;pointer-events:none;background:rgba(34,38,43,.94);color:#F2F1EE;
+  .ctip{position:absolute;pointer-events:none;background:rgba(34,38,43,.94);color:#F2F1EE;
     border-radius:8px;padding:9px 12px;font-size:12.5px;line-height:1.55;display:none;
     min-width:190px;z-index:5;font-variant-numeric:tabular-nums;}
-  #tip .t{color:#B9BEC4;margin-bottom:3px;}
-  #tip .r{display:flex;justify-content:space-between;gap:14px;}
-  #tip .r i{font-style:normal;display:flex;align-items:center;gap:6px;}
-  #tip .r i::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--dc);}
-  #tip .evs{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.22);}
-  #tip .ev{display:flex;align-items:baseline;gap:6px;}
-  #tip .ev i{flex:none;width:8px;height:8px;border-radius:2px;background:#E8806F;}
+  .ctip .t{color:#B9BEC4;margin-bottom:3px;}
+  .ctip .r{display:flex;justify-content:space-between;gap:14px;}
+  .ctip .r i{font-style:normal;display:flex;align-items:center;gap:6px;}
+  .ctip .r i::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--dc);}
+  .ctip .evs{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.22);}
+  .ctip .ev{display:flex;align-items:baseline;gap:6px;}
+  .ctip .ev i{flex:none;width:8px;height:8px;border-radius:2px;background:#E8806F;}
   /* SOX 導火線時間軸 */
   .tl-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-bottom:10px;}
   .tl-head h2{font-size:17px;font-weight:500;margin:0;letter-spacing:.3px;}
@@ -74,6 +74,13 @@
   .chip.c-cp{background:#F0EBFB;color:#6D28D9;}
   .notes{margin:12px 0 0;font-size:12px;color:var(--muted);line-height:1.6;}
   .notes p{margin:2px 0;}
+  /* 指數本益比 */
+  #cvPE{height:420px;}
+  table.pe tr.sub td{background:#FAF9F6;color:var(--muted);}
+  table.pe tr.sub td.n{padding-left:28px;}
+  table.pe tr.hl td{background:#F9ECE7;}
+  table.pe .up,table.pe .dn{font-weight:700;}
+  table.pe .na{color:var(--muted);}
   @media (max-width:600px){
     table.tl thead{display:none;}
     table.tl tr{display:grid;grid-template-columns:auto auto 1fr;gap:2px 10px;align-items:center;
@@ -82,6 +89,14 @@
     table.tl td{padding:0;border:0;}
     table.tl td.k{white-space:normal;}
     table.tl td.t{grid-column:1/-1;}
+    #cvPE{height:340px;}
+    table.tl.pe{font-size:12.5px;}
+    table.tl.pe thead{display:table-header-group;}
+    table.tl.pe tr{display:table-row;}
+    table.tl.pe th,table.tl.pe td{padding:7px 4px;border-bottom:1px solid var(--line);}
+    table.tl.pe th{border-bottom-color:var(--ink);letter-spacing:0;}
+    table.tl.pe tr:last-child td{border-bottom:0;}
+    table.tl.pe tr.sub td.n{padding-left:12px;}
   }
 </style>
 </head>
@@ -95,7 +110,7 @@
     </div>
   </header>
 
-  <section class="card controls">
+  <section class="card controls" id="ctlMain">
     <div class="grp"><span class="lbl">區間</span>
       <button class="rng" data-r="63">3M</button><button class="rng" data-r="126">6M</button>
       <button class="rng" data-r="252">1Y</button><button class="rng" data-r="504">2Y</button>
@@ -118,7 +133,7 @@
 
   <section class="card chartbox">
     <canvas id="cv"></canvas>
-    <div id="tip"></div>
+    <div id="tip" class="ctip"></div>
   </section>
 
   <section class="card tl-card">
@@ -146,6 +161,54 @@
     <div class="notes">
       <p>[註1]：SOX 為當日收盤漲跌幅，日期為區間者為該區間漲跌幅，由 Yahoo 收盤價計算。</p>
       <p>[註2]：導火線為媒體事後歸因，10/7、10/16、11/2 的因果關係較弱；10/26–28 的反彈原因未查到明確說法，FOMC 僅為同期事件，不代表是反彈主因。</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="tl-head">
+      <h2>SPX / MAG7 / SOX Trailing P/E 比較</h2>
+      <span id="peSub">近四季 GAAP 淨利，月底</span>
+    </div>
+    <div class="controls" id="ctlPE">
+      <div class="grp"><span class="lbl">區間</span>
+        <button class="rng" data-r="12">1Y</button><button class="rng" data-r="24">2Y</button>
+        <button class="rng" data-r="60">5Y</button><button class="rng on" data-r="all">ALL</button>
+      </div>
+      <div class="grp"><span class="lbl">指數</span>
+        <button class="tog" data-s="spx" style="--dc:var(--spx)"><span class="dot"></span>S&amp;P 500</button>
+        <button class="tog" data-s="mag7" style="--dc:var(--mag7)"><span class="dot"></span>七巨頭 MAG7</button>
+        <button class="tog" data-s="sox" style="--dc:var(--sox)"><span class="dot"></span>SOX 半導體</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="chartbox">
+      <canvas id="cvPE"></canvas>
+      <div id="tipPE" class="ctip"></div>
+    </div>
+    <div class="notes">
+      <p>[註1]：SPX 為 multpl.com 之 S&amp;P 500 as-reported 近四季本益比；MAG7、SOX 為自建，淨利取 SEC EDGAR XBRL 近四季 GAAP 淨利、價格取 Yahoo 月收盤，季報以申報日起算（point-in-time）；個股 P/E 已與 stockanalysis.com 現值逐檔核對（19/24 檔誤差 &lt;2%）。</p>
+      <p>[註2]：SOX 用指數權重規則（前五大上限 8%、其餘 4%，逐月重算）計算 Σw ÷ Σ(w×E/P)，含虧損股；成分為現行 30 檔回溯（GFS 除外，含存活者偏差）；TSM/ASML 2022 起用 stockanalysis 季度淨利，之前分別以證交所 2330 本益比反推與 20-F 年度盈餘；AVGO 2018/4 前、MRVL 2021/4 前因改制前 CIK 不同未納入。MAG7 為市值加權 Σ市值 ÷ Σ淨利。</p>
+      <p>[註3]：trailing 口徑在獲利谷底會飆高、獲利高峰偏低，與 forward P/E 的敘事可能相反，兩者不可直接比較。</p>
+    </div>
+  </section>
+
+  <section class="card tl-card">
+    <div class="tl-head">
+      <h2>Trailing P/E：目前 vs 10 年平均</h2>
+      <span>近四季已實現盈餘</span>
+    </div>
+    <table class="tl pe">
+      <thead><tr><th>指數</th><th class="x">資料月</th><th class="x">目前 P/E</th><th class="x">10 年平均</th><th class="x">相對均值</th></tr></thead>
+      <tbody id="peBody"></tbody>
+    </table>
+    <div class="notes">
+      <p>[註1]：那斯達克綜合無免費歷史，以那斯達克 100（自建，排除 ARM/PDD/NBIS/FER/SHOP/TRI/CCEP 等 20-F 申報者）替代。</p>
+      <p>[註2]：道瓊、那斯達克 100、費半為自建（SEC EDGAR XBRL 近四季 GAAP 淨利、Yahoo 月收盤，成分＝現行名單含存活者偏差）：道瓊 ΣP/ΣEPS（29 檔，Visa 股數無法取得）；NDX Σ市值/Σ淨利；費半主列用指數權重規則（前五大 8%、其餘 4%）含虧損股，另列剔除虧損與無上限市值加權兩種口徑供對照。</p>
+      <p>[註3]：S&amp;P 500 為 multpl.com（S&amp;P as-reported）；上證為上交所官方平均市盈率；台股為證交所個股本益比 × 現股本加總近似（排除虧損股，非官方大盤本益比，官方值通常較高）。</p>
+      <p>[註4]：恒生、KOSPI 取 Siblis Research 免費月底快照（2026/9），10 年平均無免費來源；Siblis 同日 forward 12M：恒生 10.48、KOSPI 5.11。</p>
+      <p>[註5]：trailing 口徑與 forward P/E 不可直接比較；10 年平均以 2016/11–2026/10 月底值計。</p>
     </div>
   </section>
 </div>
@@ -374,11 +437,11 @@ cv.addEventListener("click", ev=>{
   hoverI=idxFromEvent(ev); draw();
   if(tipOn && hoverI>=0) renderTip(ev); else tip.style.display="none";
 });
-document.querySelectorAll("button.rng").forEach(b=>b.addEventListener("click",()=>{
-  document.querySelectorAll("button.rng").forEach(x=>x.classList.remove("on"));
+document.querySelectorAll("#ctlMain button.rng").forEach(b=>b.addEventListener("click",()=>{
+  document.querySelectorAll("#ctlMain button.rng").forEach(x=>x.classList.remove("on"));
   b.classList.add("on"); state.range=b.dataset.r; draw();
 }));
-document.querySelectorAll("button.tog").forEach(b=>b.addEventListener("click",()=>{
+document.querySelectorAll("#ctlMain button.tog").forEach(b=>b.addEventListener("click",()=>{
   const k=b.dataset.s; state.show[k]=!state.show[k]; b.classList.toggle("off",!state.show[k]); draw();
 }));
 window.addEventListener("resize", draw);
@@ -392,6 +455,109 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
   document.getElementById("sub").textContent+=` ｜ ${M[0].slice(0,7).replace("-","/")} – ${M[N-1].slice(0,7).replace("-","/")}`;
   draw();
 });
+</script>
+<script>
+// 指數本益比：資料 data/pe.json 手動更新（見 README）；互動同上方第一張圖
+(function(){
+  const S=[
+    {k:"spx",  name:"S&P 500",    color:"#2563EB"},
+    {k:"mag7", name:"七巨頭 MAG7", color:"#D97706"},
+    {k:"sox",  name:"SOX",        color:"#DC2626"},
+  ];
+  const FONT="'Noto Sans TC','Microsoft JhengHei',sans-serif";
+  const st={range:"all",show:{spx:true,mag7:true,sox:true}};
+  const cv=document.getElementById("cvPE"), tip=document.getElementById("tipPE"), ctx=cv.getContext("2d");
+  let RAW={}, D=[], n=0, L=null, hover=-1, tipOn=false;
+  const range=()=>st.range==="all"?[0,n-1]:[Math.max(0,n-1-(+st.range)),n-1];
+
+  function render(){
+    if(!n) return;
+    const dpr=window.devicePixelRatio||1, W=cv.clientWidth, H=cv.clientHeight;
+    cv.width=W*dpr; cv.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+    const padL=62, padR=48, top=24, bot=H-30, [i0,i1]=range(), nvis=i1-i0;
+    const X=i=>padL+(i-i0)/(nvis||1)*(W-padL-padR);
+    let lo=Infinity, hi=-Infinity;
+    for(const s of S){ if(!st.show[s.k]) continue; const [a,b]=extent(RAW[s.k],i0,i1); lo=Math.min(lo,a); hi=Math.max(hi,b); }
+    if(!isFinite(lo)){ lo=10; hi=50; }
+    const pad=Math.max((hi-lo)*0.08,0.5); lo-=pad; hi+=pad;
+    const Y=v=>bot-(v-lo)/(hi-lo)*(bot-top);
+
+    ctx.font="11px "+FONT; ctx.lineWidth=1;
+    for(const t of niceLinTicks(lo,hi)){
+      const y=Y(t);
+      ctx.strokeStyle="rgba(0,0,0,0.06)"; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+      ctx.textAlign="right"; ctx.fillStyle="#8A9097"; ctx.fillText(parseFloat(t.toFixed(1)), padL-8, y+3.5);
+    }
+    // X 軸：2 年內逐月，更長只標 1 月與 7 月（同第一張圖）
+    ctx.textAlign="center"; ctx.fillStyle="#8A9097";
+    let lastX=-999;
+    for(let i=i0;i<=i1;i++){
+      const mm=+D[i].slice(5,7);
+      if(nvis>24 && mm!==1 && mm!==7) continue;
+      const x=X(i); if(x-lastX<44) continue;
+      ctx.fillText(D[i].slice(0,4)+"/"+mm, x, H-10); lastX=x;
+    }
+    for(const s of S){ if(!st.show[s.k]) continue;
+      ctx.strokeStyle=s.color; ctx.lineWidth=1.5; ctx.beginPath(); let on=false;
+      for(let i=i0;i<=i1;i++){ const v=RAW[s.k][i]; if(v==null) continue; on?ctx.lineTo(X(i),Y(v)):(ctx.moveTo(X(i),Y(v)),on=true); }
+      ctx.stroke();
+    }
+    ctx.textAlign="left"; ctx.fillStyle="#6B7178"; ctx.font="11.5px "+FONT;
+    ctx.fillText("Trailing P/E（倍）", padL, top-8);
+    if(hover>=i0 && hover<=i1){
+      const x=X(hover);
+      ctx.strokeStyle="rgba(34,38,43,0.35)"; ctx.lineWidth=1; ctx.setLineDash([2,3]);
+      ctx.beginPath(); ctx.moveTo(x,top); ctx.lineTo(x,bot); ctx.stroke(); ctx.setLineDash([]);
+      for(const s of S){ if(!st.show[s.k]) continue; const v=RAW[s.k][hover];
+        if(v!=null){ ctx.fillStyle=s.color; ctx.beginPath(); ctx.arc(x,Y(v),3.2,0,7); ctx.fill(); } }
+    }
+    L={padL,padR,W,i0,i1};
+  }
+  function idx(ev){
+    if(!L) return -1;
+    const mx=ev.clientX-cv.getBoundingClientRect().left;
+    if(mx<L.padL||mx>L.W-L.padR) return -1;
+    return Math.round(L.i0+(mx-L.padL)/(L.W-L.padL-L.padR)*(L.i1-L.i0));
+  }
+  function showTip(ev){
+    const d=D[hover]; if(!d){ tip.style.display="none"; return; }
+    let html=`<div class="t">${d.slice(0,4)}/${+d.slice(5,7)} 月底</div>`;
+    for(const s of S){ if(!st.show[s.k]) continue; const v=RAW[s.k][hover];
+      if(v!=null) html+=`<div class="r"><i style="--dc:${s.color}">${s.name}</i><b>${v.toFixed(2)} 倍</b></div>`; }
+    tip.innerHTML=html; tip.style.display="block";
+    const r=cv.getBoundingClientRect(), mx=ev.clientX-r.left, my=ev.clientY-r.top, bw=tip.offsetWidth;
+    tip.style.left=Math.min(Math.max(mx-bw/2,8), cv.clientWidth-bw-8)+"px";
+    tip.style.top=(my<160? my+26 : my-tip.offsetHeight-18)+"px";
+  }
+  cv.addEventListener("pointermove",ev=>{ hover=idx(ev); render(); if(tipOn&&hover>=0) showTip(ev); else tip.style.display="none"; });
+  cv.addEventListener("pointerleave",()=>{ hover=-1; tip.style.display="none"; render(); });
+  cv.addEventListener("click",ev=>{ tipOn=!tipOn; hover=idx(ev); render(); if(tipOn&&hover>=0) showTip(ev); else tip.style.display="none"; });
+  document.querySelectorAll("#ctlPE button.rng").forEach(b=>b.addEventListener("click",()=>{
+    document.querySelectorAll("#ctlPE button.rng").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on"); st.range=b.dataset.r; render();
+  }));
+  document.querySelectorAll("#ctlPE button.tog").forEach(b=>b.addEventListener("click",()=>{
+    const k=b.dataset.s; st.show[k]=!st.show[k]; b.classList.toggle("off",!st.show[k]); render();
+  }));
+  window.addEventListener("resize",render);
+
+  const num=v=>v==null?'<span class="na">—</span>':v.toFixed(2);
+  fetch("data/pe.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
+    D=j.series.spx.map(p=>p[0]); n=D.length;
+    const pos=new Map(D.map((d,i)=>[d,i]));
+    for(const s of S){ const a=new Array(n).fill(null); j.series[s.k].forEach(p=>{ if(pos.has(p[0])) a[pos.get(p[0])]=p[1]; }); RAW[s.k]=a; }
+    const last=D[n-1];
+    document.getElementById("peSub").textContent=`近四季 GAAP 淨利，月底 ｜ 最新（${last.slice(0,4)}/${+last.slice(5,7)}）：`
+      +S.map(s=>`${s.k==="mag7"?"MAG7":s.name} ${RAW[s.k][n-1].toFixed(2)}`).join("、");
+    document.getElementById("peBody").innerHTML=j.table.map(r=>{
+      const sub=r.name.startsWith("　"), name=r.name.replace(/^　/,"");
+      const rel=r.rel==null?'<span class="na">—</span>':`<span class="${r.rel>0?"up":"dn"}">${r.rel>0?"+":""}${r.rel.toFixed(1)}%</span>`;
+      const cls=sub?"sub":(name.startsWith("台灣")?"hl":"");
+      return `<tr class="${cls}"><td class="n">${name}</td><td class="x">${r.month||"—"}</td><td class="x">${num(r.pe)}</td><td class="x">${num(r.avg10)}</td><td class="x">${rel}</td></tr>`;
+    }).join("");
+    render();
+  });
+})();
 </script>
 </body>
 </html>
