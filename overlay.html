@@ -84,6 +84,7 @@
   /* 板塊報酬 vs EPS 超預期 */
   .sb-head,.sb-row{display:grid;grid-template-columns:150px 1fr 1fr;gap:0 18px;align-items:center;}
   .sb-head{font-size:12px;color:var(--muted);letter-spacing:1px;padding:6px 0;border-bottom:1px solid var(--ink);}
+  .sb-head div+div{padding-left:55.56%;} /* 對齊零軸：(0-MIN)/(MAX-MIN)，MIN=-30、MAX=24 */
   .sb-row{padding:5px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;}
   .sb-row:hover{background:#FAF9F6;}
   .sb-row.total{border-top:1px solid var(--ink);border-bottom:0;margin-top:-1px;}
