@@ -81,6 +81,27 @@
   table.pe tr.hl td{background:#F9ECE7;}
   table.pe .up,table.pe .dn{font-weight:700;}
   table.pe .na{color:var(--muted);}
+  /* 板塊報酬 vs EPS 超預期 */
+  .sb-head,.sb-row{display:grid;grid-template-columns:150px 1fr 1fr;gap:0 18px;align-items:center;}
+  .sb-head{font-size:12px;color:var(--muted);letter-spacing:1px;padding:6px 0;border-bottom:1px solid var(--ink);}
+  .sb-row{padding:5px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;}
+  .sb-row:hover{background:#FAF9F6;}
+  .sb-row.total{border-top:1px solid var(--ink);border-bottom:0;margin-top:-1px;}
+  .sb-name{font-size:13.5px;white-space:nowrap;}
+  .sb-name small{font-size:12px;color:var(--muted);margin-left:6px;}
+  .sb-cell{display:flex;align-items:center;gap:8px;min-width:0;}
+  .sb-cell .m{display:none;flex:none;width:58px;font-size:11.5px;color:var(--muted);}
+  .sb-track{position:relative;flex:1;height:20px;min-width:0;}
+  .sb-track::before{content:"";position:absolute;top:-5px;bottom:-5px;left:var(--z);width:1px;background:#C9C6BF;}
+  .sb-bar{position:absolute;top:3px;height:14px;}
+  .sb-bar.up{background:#DC2626;border-radius:0 4px 4px 0;}
+  .sb-bar.dn{background:#15803D;border-radius:4px 0 0 4px;}
+  .sb-val{position:absolute;top:0;line-height:20px;font-size:12.5px;white-space:nowrap;}
+  @media (max-width:600px){
+    .sb-head{display:none;}
+    .sb-row{grid-template-columns:1fr;gap:2px 0;padding:8px 0;}
+    .sb-cell .m{display:block;}
+  }
   @media (max-width:600px){
     table.tl thead{display:none;}
     table.tl tr{display:grid;grid-template-columns:auto auto 1fr;gap:2px 10px;align-items:center;
@@ -205,7 +226,45 @@
       <p>[註1]：那斯達克綜合無免費歷史，以那斯達克 100（自建，排除 ARM/PDD/NBIS/FER/SHOP/TRI/CCEP 等 20-F 申報者）替代。</p>
     </div>
   </section>
+
+  <section class="card tl-card" id="sectorBeat">
+    <div class="tl-head">
+      <h2>10 月板塊報酬 vs Q3 EPS 超預期</h2>
+      <span>依 10 月報酬排序；兩欄比例尺相同，紅為正、綠為負</span>
+    </div>
+    <div class="sb-head"><div>板塊</div><div>10 月報酬</div><div>EPS 超預期</div></div>
+    <div id="sbRows"></div>
+    <div class="notes">
+      <p>[註1]：10 月報酬為板塊 ETF 還原報酬（9/30→10/30），由 Yahoo 收盤價計算。</p>
+      <p>[註2]：EPS 超預期取自 FactSet Earnings Insight（10/30），為已公布公司的加總口徑；當時 60% 公司已公布，NVIDIA、Apple 尚未公布。</p>
+      <p>[註3]：通訊服務 -21.5% 含 Meta 98.9 億美元訴訟費用及 Alphabet 87 億美元股權投資淨損（GAAP）。</p>
+    </div>
+  </section>
 </div>
+
+<script>
+// 板塊報酬 vs EPS 超預期：數字手動更新（來源見註解）
+(function(){
+  const ROWS=[
+    ["能源","XLE",13.85,8.8],["必需消費","XLP",10.94,4.0],["公用事業","XLU",10.12,6.4],
+    ["醫療保健","XLV",9.77,13.2],["原物料","XLB",8.30,2.9],["非必需消費","XLY",6.01,0.3],
+    ["金融","XLF",5.82,3.1],["房地產","XLRE",5.52,2.1],["工業","XLI",0.25,7.5],
+    ["資訊科技","XLK",-8.30,5.2],["通訊服務","XLC",-9.98,-21.5],["標普 500","SPY",-0.91,1.9],
+  ];
+  const MIN=-30, MAX=24, pct=v=>(v-MIN)/(MAX-MIN)*100, Z=pct(0);
+  const fmt=(v,d)=>(v>0?"+":"")+v.toFixed(d)+"%";
+  const cell=(m,v,d)=>{
+    const p=pct(v), up=v>=0, s=fmt(v,d);
+    const bar=up?`left:${Z}%;width:${p-Z}%`:`left:${p}%;width:${Z-p}%`;
+    const val=up?`left:calc(${p}% + 6px)`:`right:calc(${100-p}% + 6px)`;
+    return `<div class="sb-cell" title="${m} ${s}"><span class="m">${m}</span><div class="sb-track" style="--z:${Z}%">`
+      +`<div class="sb-bar ${up?"up":"dn"}" style="${bar}"></div><span class="sb-val" style="${val}">${s}</span></div></div>`;
+  };
+  document.getElementById("sbRows").innerHTML=ROWS.map(r=>
+    `<div class="sb-row${r[1]==="SPY"?" total":""}"><div class="sb-name">${r[0]}<small>${r[1]}</small></div>`
+    +cell("10 月報酬",r[2],2)+cell("EPS 超預期",r[3],1)+`</div>`).join("");
+})();
+</script>
 
 <script>
 const UP = [
