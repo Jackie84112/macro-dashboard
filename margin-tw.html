@@ -102,8 +102,8 @@
       <button class="tog" data-s="fin" style="--dc:var(--mar)"><span class="dot"></span>融資餘額</button>
     </div>
     <div class="grp"><span class="lbl">底色區間</span>
-      <button class="tog" data-s="crash" style="--dc:#E8806F" title="大盤融資維持率低於 140%"><span class="dot"></span>股災級 &lt;140%</button>
-      <button class="tog off" data-s="mid" style="--dc:#F0C36B" title="大盤融資維持率 140%–160%"><span class="dot"></span>中型修正 140–160%</button>
+      <button class="tog" data-s="crash" style="--dc:#E8806F" title="大盤融資維持率低於 150%"><span class="dot"></span>股災級 &lt;150%</button>
+      <button class="tog off" data-s="mid" style="--dc:#F0C36B" title="大盤融資維持率 150%–160%"><span class="dot"></span>中型修正 150–160%</button>
     </div>
   </section>
 
@@ -119,7 +119,7 @@
   </section>
 
   <section class="card jump" id="t-event">
-    <h2 class="lead-h">跌破 140% 歷次事件 <span class="h-sub">T = 首次跌破 140% 當日</span></h2>
+    <h2 class="lead-h">跌破 150% 歷次事件 <span class="h-sub">T = 首次跌破 150% 當日</span></h2>
     <div class="tablewrap"><table id="eventTable"></table></div>
     <div id="eventNotes"></div>
   </section>
@@ -133,7 +133,7 @@
   <footer id="foot"></footer>
 </div>
 <script>
-const NORMAL = 160, BREAK = 140;   // 使用者 2026-11-09 定案：≥160 正常、140–160 中型修正、<140 股災級
+const NORMAL = 160, BREAK = 150;   // 使用者 2026-11-09 定案：≥160 正常、150–160 中型修正、<150 股災級
 // 事件區間（使用者 2026-11-09 定案）：紅點畫在區間內 0050 最低收盤，名稱只在浮標內顯示，不直接寫在圖上
 const EVENTS = [
   {name:"美債殖利率飆升、中美貿易戰", start:"2018-10-11", end:"2018-10-31"},
@@ -328,7 +328,7 @@ function renderCards(){
   document.getElementById("signals").innerHTML =
     card(level, "t-zone", "大盤融資維持率", {green:"正常水位", yellow:"中型修正", red:"股災級修正"}[level],
       `${L.r.toFixed(2)}%（${md(L.fDate)}）｜${gapTo >= 0 ? `距 ${BREAK}% 尚有 ${gapTo.toFixed(2)} 點` : `低於 ${BREAK}% 達 ${(-gapTo).toFixed(2)} 點`}`,
-      `<li><i class="r"></i>股災級修正：&lt; ${BREAK}%（2020 疫情、2022 升息約 ${BREAK}%）</li><li><i class="y"></i>中型修正：${BREAK}%–${NORMAL}%</li><li><i class="g"></i>正常水位：≥ ${NORMAL}%</li>`) +
+      `<li><i class="r"></i>股災級修正：&lt; ${BREAK}%（2020 疫情、2022 升息約 140%）</li><li><i class="y"></i>中型修正：${BREAK}%–${NORMAL}%</li><li><i class="g"></i>正常水位：≥ ${NORMAL}%</li>`) +
     card("plain", "t-recent", "0050 股價", "位置，不判斷",
       `${L.p.toFixed(2)}（${md(L.pDate)}）｜距 ${md(J.peakDate)} 高點 ${signed(L.pFromPeak)}`,
       `<li>波段高點 ${L.pPeak.toFixed(2)}（${slash(J.peakDate)}，與大盤監控同）</li><li>高點後最低收盤 ${L.pLow.toFixed(2)}，距今 ${signed((L.p / L.pLow - 1) * 100)}</li>`) +
