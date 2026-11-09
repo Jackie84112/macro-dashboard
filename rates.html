@@ -340,7 +340,7 @@ footer a { color: inherit; }
     <div class="notes" data-notes="yields"></div>
   </section>
 
-  <h2 class="sec">信用<small>高收益公司債，日資料</small></h2>
+  <h2 class="sec">信用<small>信用利差，日資料</small></h2>
 
   <section class="card">
     <div class="card-head">
@@ -374,22 +374,6 @@ footer a { color: inherit; }
     </div>
     <div class="chart" id="chart-oasd" role="img" aria-label="各評級信用利差變化長條圖" style="height:300px"></div>
     <div class="notes" data-notes="oasd"></div>
-  </section>
-
-  <section class="card">
-    <div class="card-head">
-      <div>
-        <h3>高收益公司債有效殖利率</h3>
-        <p class="desc">日資料，單位 %。ICE 美銀美林 BB／B／CCC 級以下（FRED 只提供近 3 年）。</p>
-      </div>
-      <div class="stat" id="stat-hy"></div>
-    </div>
-    <div class="tabs credit-range" role="group" aria-label="信用圖時間範圍">
-      <button data-m="3" aria-pressed="false">3 個月</button>
-      <button data-m="6" aria-pressed="false">6 個月</button>
-    </div>
-    <div class="chart" id="chart-hy" role="img" aria-label="高收益公司債殖利率折線圖"></div>
-    <div class="notes" data-notes="credit"></div>
   </section>
 
   <h2 class="sec">數據表</h2>
@@ -767,22 +751,6 @@ function renderCurve() {
   }, true);
 }
 
-// ---------- 信用與油價 ----------
-function renderHy() {
-  const t = weekPair(DATA.hy_ccc), col = SERIES_COLORS();
-  document.getElementById("stat-hy").innerHTML =
-    `<div class="value">${t.v.toFixed(2)}%</div>${deltaHtml(t.v, t.pv, true, " bp", 0, 100)}<div class="meta">CCC 級以下，${fmtDay(t.d)}（較一週前）</div>`;
-  charts.hy.setOption(base({
-    legend: legend(),
-    tooltip: { ...base().tooltip, formatter: multiTip(fmtDay, "%", 2) },
-    series: [
-      line("BB 級", DATA.hy_bb, col[0]),
-      line("B 級", DATA.hy_b, col[1]),
-      line("CCC 級以下", DATA.hy_ccc, col[2], { markLine: weekLine() }),
-    ],
-  }), true);
-}
-
 // ---------- 信用利差 OAS ----------
 const OAS_IG = [["oas_aaa", "AAA"], ["oas_aa", "AA"], ["oas_a", "A"], ["oas_bbb", "BBB"]];
 const OAS_HY = [["oas_bb", "BB"], ["oas_b", "B"], ["oas_hy", "高收益全體"]];
@@ -934,7 +902,7 @@ function renderOil() {
   }), true);
 }
 
-// 信用圖（OAS、高收益殖利率）的 3／6 個月開關：再按一次取消，回到跟隨上方「時間範圍」
+// 信用利差圖（OAS）的 3／6 個月開關：再按一次取消，回到跟隨上方「時間範圍」
 let creditMonths = null;
 function startDateMonths(allSeries, m) {
   const last = allSeries.map(s => s[s.length - 1][0]).sort().pop();
@@ -950,10 +918,10 @@ function syncCreditTabs() {
 function applyRange() {
   const groups = {
     infl: Object.values(DATA.infl), fedview: [DATA.pce6], yields: [DATA.dgs10], curve: [DATA.t10y2y],
-    hy: [DATA.hy_ccc], oas: [DATA.oas_hy], oil: [DATA.wti],
+    oas: [DATA.oas_hy], oil: [DATA.wti],
   };
   for (const [k, series] of Object.entries(groups)) {
-    const start = creditMonths && (k === "oas" || k === "hy") ? startDateMonths(series, creditMonths) : startDate(series);
+    const start = creditMonths && k === "oas" ? startDateMonths(series, creditMonths) : startDate(series);
     charts[k].dispatchAction(start
       ? { type: "dataZoom", startValue: start, end: 100 }
       : { type: "dataZoom", start: 0, end: 100 });
@@ -963,7 +931,7 @@ function applyRange() {
 
 function renderAll() {
   renderInfl(); renderFedview(); renderPath(); renderFwBars(); renderYields(); renderCurve();
-  renderHy(); renderOas(); renderOasd(); renderOil(); applyRange();
+  renderOas(); renderOasd(); renderOil(); applyRange();
 }
 
 // ---------- 數據表 ----------
@@ -1128,7 +1096,7 @@ Promise.all([
     renderFedwatch();
     startFomcCountdown();
     renderNotes();
-    for (const k of ["infl", "fedview", "path", "fw0", "fw1", "yields", "curve", "hy", "oas", "oasd", "oil"].filter(k => document.getElementById("chart-" + k))) charts[k] = echarts.init(document.getElementById("chart-" + k));
+    for (const k of ["infl", "fedview", "path", "fw0", "fw1", "yields", "curve", "oas", "oasd", "oil"].filter(k => document.getElementById("chart-" + k))) charts[k] = echarts.init(document.getElementById("chart-" + k));
     renderAll();
     const t = new Date(DATA.updated.replace("Z", ":00Z"));
     document.getElementById("updated").textContent =
