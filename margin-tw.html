@@ -102,8 +102,8 @@
       <button class="tog" data-s="fin" style="--dc:var(--mar)"><span class="dot"></span>融資餘額</button>
     </div>
     <div class="grp"><span class="lbl">底色區間</span>
-      <button class="tog" data-s="crash" style="--dc:#E8806F" title="大盤融資維持率低於 150%"><span class="dot"></span>股災級 &lt;150%</button>
-      <button class="tog off" data-s="mid" style="--dc:#F0C36B" title="大盤融資維持率 150%–170%"><span class="dot"></span>中型修正 150–170%</button>
+      <button class="tog" data-s="crash" style="--dc:#E8806F" title="大盤融資維持率低於 140%"><span class="dot"></span>股災級 &lt;140%</button>
+      <button class="tog off" data-s="mid" style="--dc:#F0C36B" title="大盤融資維持率 140%–160%"><span class="dot"></span>中型修正 140–160%</button>
     </div>
   </section>
 
@@ -119,7 +119,7 @@
   </section>
 
   <section class="card jump" id="t-event">
-    <h2 class="lead-h">跌破 150% 歷次事件 <span class="h-sub">T = 首次跌破 150% 當日</span></h2>
+    <h2 class="lead-h">跌破 140% 歷次事件 <span class="h-sub">T = 首次跌破 140% 當日</span></h2>
     <div class="tablewrap"><table id="eventTable"></table></div>
     <div id="eventNotes"></div>
   </section>
@@ -133,7 +133,7 @@
   <footer id="foot"></footer>
 </div>
 <script>
-const NORMAL = 170, BREAK = 150;
+const NORMAL = 160, BREAK = 140;   // 使用者 2026-11-09 定案：≥160 正常、140–160 中型修正、<140 股災級
 // 事件區間（使用者 2026-11-09 定案）：紅點畫在區間內 0050 最低收盤，名稱只在浮標內顯示，不直接寫在圖上
 const EVENTS = [
   {name:"美債殖利率飆升、中美貿易戰", start:"2018-10-11", end:"2018-10-31"},
@@ -146,6 +146,7 @@ const EVENTS = [
   {name:"美伊戰爭", start:"2026-02-26", end:"2026-03-31"},
   {name:"去槓桿", start:"2026-06-22", end:"2026-07-30"},
 ];
+const MIN_MONTHS = 5;   // 水位報酬表至少幾個月才列報酬
 const SNAP_PX = 7;   // 游標距紅點幾像素內就吸附，ALL 區間一天不到 1 像素，不吸附很難點中
 const state = {range:"all", show:{p50:true, fin:true, crash:true, mid:false}};
 const cv = document.getElementById("cv"), tip = document.getElementById("tip"), ctx = cv.getContext("2d");
@@ -224,7 +225,7 @@ function draw(){
   for(const t of niceLinTicks(rlo, rhi)){ const y = Y2(t);
     ctx.strokeStyle = "rgba(0,0,0,0.06)"; ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
     ctx.textAlign = "right"; ctx.fillStyle = "#8A9097"; ctx.fillText(Math.round(t) + "%", padL - 8, y + 3.5); }
-  // 170／150 參考線
+  // 正常水位／股災級參考線
   ctx.setLineDash([3,4]);
   ctx.strokeStyle = "#8A9097"; ctx.beginPath(); ctx.moveTo(padL, Y2(NORMAL)); ctx.lineTo(W - padR, Y2(NORMAL)); ctx.stroke();
   ctx.strokeStyle = "#D94F3D"; ctx.beginPath(); ctx.moveTo(padL, Y2(BREAK)); ctx.lineTo(W - padR, Y2(BREAK)); ctx.stroke();
@@ -262,7 +263,7 @@ function draw(){
     ctx.beginPath(); ctx.arc(X(T[e.i]), Y1(reb.p50[e.i]), 4, 0, 7); ctx.fill(); }
   // 欄標題
   ctx.textAlign = "left"; ctx.fillStyle = "#6B7178"; ctx.font = "11.5px 'Noto Sans TC','Microsoft JhengHei',sans-serif";
-  ctx.fillText("大盤融資維持率 %（紅點線 = 150% 股災級修正，灰點線 = 170% 正常水位）", padL, h2t - 8);
+  ctx.fillText(`大盤融資維持率 %（紅點線 = ${BREAK}% 股災級修正，灰點線 = ${NORMAL}% 正常水位）`, padL, h2t - 8);
 
   // 十字線
   if(hoverI >= i0 && hoverI <= i1){
@@ -326,8 +327,8 @@ function renderCards(){
   const card = (cls, to, name, state, why, rule) => `<div class="signal ${cls}" data-to="${to}" role="link" tabindex="0" title="點擊跳到對應表格">${cls === "plain" ? "" : '<span class="lamp" aria-hidden="true"></span>'}<span><div class="name">${name}</div><div class="state">${state}</div><div class="why">${why}</div><ul class="rule">${rule}</ul></span></div>`;
   document.getElementById("signals").innerHTML =
     card(level, "t-zone", "大盤融資維持率", {green:"正常水位", yellow:"中型修正", red:"股災級修正"}[level],
-      `${L.r.toFixed(2)}%（${md(L.fDate)}）｜${gapTo >= 0 ? `距 150% 尚有 ${gapTo.toFixed(2)} 點` : `低於 150% 達 ${(-gapTo).toFixed(2)} 點`}`,
-      `<li><i class="r"></i>股災級修正：&lt; 150%（2020 疫情、2022 升息約 140%）</li><li><i class="y"></i>中型修正：150%–170%</li><li><i class="g"></i>正常水位：≥ 170%</li>`) +
+      `${L.r.toFixed(2)}%（${md(L.fDate)}）｜${gapTo >= 0 ? `距 ${BREAK}% 尚有 ${gapTo.toFixed(2)} 點` : `低於 ${BREAK}% 達 ${(-gapTo).toFixed(2)} 點`}`,
+      `<li><i class="r"></i>股災級修正：&lt; ${BREAK}%（2020 疫情、2022 升息約 ${BREAK}%）</li><li><i class="y"></i>中型修正：${BREAK}%–${NORMAL}%</li><li><i class="g"></i>正常水位：≥ ${NORMAL}%</li>`) +
     card("plain", "t-recent", "0050 股價", "位置，不判斷",
       `${L.p.toFixed(2)}（${md(L.pDate)}）｜距 ${md(J.peakDate)} 高點 ${signed(L.pFromPeak)}`,
       `<li>波段高點 ${L.pPeak.toFixed(2)}（${slash(J.peakDate)}，與大盤監控同）</li><li>高點後最低收盤 ${L.pLow.toFixed(2)}，距今 ${signed((L.p / L.pLow - 1) * 100)}</li>`) +
@@ -341,19 +342,25 @@ function renderTables(){
   document.getElementById("zoneTable").innerHTML =
     `<tr><th rowspan="2">維持率水位</th><th rowspan="2">月數</th><th rowspan="2">占比</th><th colspan="2" class="gl">T+3 月</th><th colspan="2" class="gl">T+6 月</th><th colspan="2" class="gl">T+12 月</th></tr>
      <tr><th class="gl">平均報酬</th><th>上漲機率</th><th class="gl">平均報酬</th><th>上漲機率</th><th class="gl">平均報酬</th><th>上漲機率</th></tr>` +
-    J.zones.map((z, i) => `<tr${i === curZone ? ' class="act"' : ""}><td class="tl">${z.name}${i === curZone ? "（目前）" : ""}</td><td>${z.n}</td><td>${z.share}%</td>${cell(z.r3, "gl")}<td>${z.w3 ?? "—"}%</td>${cell(z.r6, "gl")}<td>${z.w6 ?? "—"}%</td>${cell(z.r12, "gl")}<td>${z.w12 ?? "—"}%</td></tr>`).join("");
+    J.zones.map((z, i) => {
+      // 樣本太少的水位只列月數，平均與上漲機率沒有參考價值
+      const thin = z.n < MIN_MONTHS, ret = (r, w) => thin ? `<td class="gl">—</td><td>—</td>` : `${cell(r, "gl")}<td>${w == null ? "—" : w + "%"}</td>`;
+      return `<tr${i === curZone ? ' class="act"' : ""}><td class="tl">${z.name}${i === curZone ? "（目前）" : ""}</td><td>${z.n}</td><td>${z.share}%</td>${ret(z.r3, z.w3)}${ret(z.r6, z.w6)}${ret(z.r12, z.w12)}</tr>`;
+    }).join("");
+  const thinZone = J.zones.find(z => z.n < MIN_MONTHS);
   document.getElementById("zoneNotes").innerHTML = notes([
     `樣本 ${J.zoneStart.slice(0, 7).replace("-", "/")}–${J.zoneEnd.slice(0, 7).replace("-", "/")}，0050 為 Yahoo 還原權息價；重疊的月份報酬彼此不獨立，勝率與平均僅供參考。`,
-    `水位定義同大盤監控：≥170% 正常水位、150–170% 中型修正、&lt;150% 股災級修正。`]);
+    `水位定義同大盤監控：≥${NORMAL}% 正常水位、${BREAK}–${NORMAL}% 中型修正、&lt;${BREAK}% 股災級修正。`,
+    ...(thinZone ? [`月底低於 ${BREAK}% 的月份太少（${thinZone.n} 個月），不列報酬，後續表現請看下方事件表。`] : [])]);
 
   const open = J.events.some(e => !e.end);
   document.getElementById("eventTable").innerHTML =
-    `<tr><th rowspan="2">首破日</th><th rowspan="2">當日維持率</th><th rowspan="2">最低維持率</th><th rowspan="2">回到 170%</th><th rowspan="2">融資餘額減幅</th><th colspan="5" class="gl">0050</th></tr>
+    `<tr><th rowspan="2">首破日</th><th rowspan="2">當日維持率</th><th rowspan="2">最低維持率</th><th rowspan="2">回到 ${NORMAL}%</th><th rowspan="2">融資餘額減幅</th><th colspan="5" class="gl">0050</th></tr>
      <tr><th class="gl">T 日距前高</th><th>T+3 月</th><th>T+6 月</th><th>T+12 月</th><th>後 12 月最大回撤</th></tr>` +
     J.events.map(e => `<tr${e.end ? "" : ' class="act"'}><td>${slash(e.start)}</td><td>${e.ratio.toFixed(2)}%</td><td>${e.low.toFixed(2)}%（${slash(e.lowDate)}）</td><td>${e.end ? slash(e.end) : "進行中"}</td><td class="neg">${signed(e.finCut)}</td>${cell(e.fromHigh, "gl")}${cell(e.r3)}${cell(e.r6)}${cell(e.r12)}${cell(e.dd, "", e.ddOpen ? "＊" : "")}</tr>`).join("") +
     (open ? "" : `<tr class="act"><td>本波尚未跌破</td><td>${L.r.toFixed(2)}%（${slash(L.fDate)}）</td><td>${L.rLow.toFixed(2)}%（${slash(L.rLowDate)}）</td><td>—</td><td class="neg">${signed(L.fFromHigh)}</td>${cell(L.pFromHigh, "gl")}<td>—</td><td>—</td><td>—</td><td>—</td></tr>`);
   document.getElementById("eventNotes").innerHTML = notes([
-    `維持率回到 170% 才算事件結束，期間再度跌破不另計；融資餘額減幅 = 首破前 6 個月高點 → 首破後 6 個月低點，「本波」列為近一年高點到最新。`,
+    `維持率回到 ${NORMAL}% 才算事件結束，期間再度跌破不另計；融資餘額減幅 = 首破前 6 個月高點 → 首破後 6 個月低點，「本波」列為近一年高點到最新。`,
     `0050 距前高 = 距近 250 個交易日最高收盤；數值標註＊號指未滿 12 個月，回撤僅計算至最新。`,
     `0050 資料自 2009/3/10 起，更早的事件（含 2008 金融海嘯，維持率最低 117.36%）不列。`,
     `維持率 2023/11 起為逐日資料，更早以月底樣本為主、股災期間另有逐日或事件日樣本，首破日可能晚於實際日期。`]);

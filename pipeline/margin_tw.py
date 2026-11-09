@@ -6,7 +6,7 @@
 
 用法：python pipeline/margin_tw.py                       補近 10 天、重算 JSON（排程用）
       python pipeline/margin_tw.py --no-fetch            不抓證交所，只用現有歷史重算
-      python pipeline/margin_tw.py --backfill 起 迄 ...  補指定區間（YYYY-MM-DD，可多組），不重算
+      python pipeline/margin_tw.py --recalc 起 迄 ...    用現行公式重抓全部歷史＋指定區間，寫到 .new 檔
 """
 import bisect
 import csv
@@ -21,12 +21,13 @@ import requests
 
 ROOT = Path(__file__).resolve().parent.parent
 HIST, OUT = ROOT / "data" / "margin-tw-history.csv", ROOT / "data" / "margin-tw.json"
+CLOSES = ROOT / "data" / "margin-tw-closes.json"   # 各股最近收盤價，停牌股沿用
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36"}
 TW = dt.timezone(dt.timedelta(hours=8))
 TWSE_DELAY = 1.5           # 證交所限流，勿低於 1.4 秒
 PEAK_DATE = "2026-10-06"   # 與大盤監控同一個波段高點（換波段時手動改）
 P50_START = "2009-03-10"   # Yahoo 0050 在此之前有壞點，見 clean_0050
-BREAK, NORMAL = 150, 170   # 股災級修正線、正常水位線（同大盤監控維持率說明）
+BREAK, NORMAL = 140, 160   # 股災級修正線、正常水位線（使用者 2026-11-09 定案，同大盤監控維持率說明）
 RECENT = 15                # 頁面近期明細的筆數
 # 證交所憑證在 Python 3.13 以上的嚴格檢查會驗不過，只有這些版本才略過驗證；讀的是公開資料
 VERIFY = sys.version_info < (3, 13)
@@ -55,8 +56,10 @@ def twse(path, **params):
     raise RuntimeError(f"證交所 {path} {params.get('date')} 連續失敗")
 
 
-def fetch_day(ymd):
-    """回傳 (維持率, 融資餘額億)；非交易日或融資還沒公布回 None。先查融資，假日少打一次。"""
+def fetch_day(ymd, last):
+    """回傳 (維持率, 融資餘額億)；非交易日或融資還沒公布回 None。先查融資，假日少打一次。
+    last＝各股最近一次收盤價，會就地更新：當天停牌或無成交的股票沒有收盤價，要沿用前價，
+    否則市值被算成 0（例：2024/8/6 矽統停牌，維持率少算 0.75 點）。"""
     jm = twse("marginTrading/MI_MARGN", date=ymd, selectType="ALL")
     tabs = jm.get("tables") or []
     if jm.get("stat") != "OK" or len(tabs) < 2 or not tabs[1].get("data"):
@@ -78,7 +81,8 @@ def fetch_day(ymd):
                     close[row[ci].strip()] = c
     if not close:
         return None
-    mv = sum((num(r[bi]) or 0) * 1000 * close.get(r[0].strip(), 0) for r in tabs[1]["data"])
+    last.update(close)
+    mv = sum((num(r[bi]) or 0) * 1000 * last.get(r[0].strip(), 0) for r in tabs[1]["data"])
     return round(mv / fin * 100, 2), round(fin / 1e8, 1)
 
 
@@ -89,30 +93,73 @@ def load_hist():
         return {r["date"]: (float(r["ratio"]), float(r["fin"])) for r in csv.DictReader(f)}
 
 
-def save_hist(hist):
-    with HIST.open("w", encoding="utf-8", newline="") as f:
+def save_hist(hist, path=HIST):
+    with path.open("w", encoding="utf-8", newline="") as f:
         w = csv.writer(f, lineterminator="\n")
         w.writerow(["date", "ratio", "fin"])
         for d in sorted(hist):
             w.writerow([d, *hist[d]])
 
 
+def load_closes(path=CLOSES):
+    return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+
+
+def save_closes(last, path=CLOSES):
+    path.write_text(json.dumps(last, separators=(",", ":"), sort_keys=True), encoding="utf-8")
+
+
 def fill(hist, start, end):
-    """補 start–end 間缺的平日；每 20 筆存一次，中斷後可續跑。回傳新增筆數。"""
-    added, d = 0, start
+    """補 start–end 間缺的平日；回傳新增筆數。"""
+    added, d, last = 0, start, load_closes()
     while d <= end:
         iso = d.isoformat()
         if d.weekday() < 5 and iso not in hist:
-            v = fetch_day(d.strftime("%Y%m%d"))
+            v = fetch_day(d.strftime("%Y%m%d"), last)
             if v:
                 hist[iso] = v
                 added += 1
-                if added % 20 == 0:
-                    save_hist(hist)
-                    print(f"已補 {added} 筆，到 {iso}", flush=True)
         d += dt.timedelta(days=1)
     save_hist(hist)
+    if added:
+        save_closes(last)
     return added
+
+
+def recalc(windows):
+    """用目前公式由舊到新重抓全部歷史＋指定區間，寫到 .new 檔，比對無誤再手動換掉正式檔。
+    沿用前價需要依日期順序處理；每 20 筆存一次，中斷後從最後一天接著跑。"""
+    old = load_hist()
+    new_hist, new_close = HIST.with_suffix(".new.csv"), CLOSES.with_suffix(".new.json")
+    done = {}
+    if new_hist.exists():
+        with new_hist.open(encoding="utf-8", newline="") as f:
+            done = {r["date"]: (float(r["ratio"]), float(r["fin"])) for r in csv.DictReader(f)}
+    last = load_closes(new_close)
+    days = set(old)
+    for s, e in windows:
+        d, stop = dt.date.fromisoformat(s), dt.date.fromisoformat(e)
+        while d <= stop:
+            if d.weekday() < 5:
+                days.add(d.isoformat())
+            d += dt.timedelta(days=1)
+    resume = max(done, default="")
+    todo = [d for d in sorted(days) if d > resume]
+    print(f"重算 {len(todo)} 個日期（已完成 {len(done)} 筆）", flush=True)
+    for n, iso in enumerate(todo, 1):
+        v = fetch_day(iso.replace("-", ""), last)
+        if v:
+            done[iso] = v
+        elif iso in old:      # 舊資料有、這次抓不到：保留舊值並提示
+            done[iso] = old[iso]
+            print(f"{iso} 抓不到，保留舊值", flush=True)
+        if n % 20 == 0:
+            save_hist(done, new_hist)
+            save_closes(last, new_close)
+            print(f"進度 {n}/{len(todo)}，到 {iso}", flush=True)
+    save_hist(done, new_hist)
+    save_closes(last, new_close)
+    print("重算完成", len(done), "筆", flush=True)
 
 
 def yahoo_0050():
@@ -183,7 +230,7 @@ def month_ends(hist, today):
 
 def zones(hist, px, today):
     ends = [d for d in month_ends(hist, today) if d >= px.days[0]]
-    defs = [("≥ 170%　正常水位", lambda v: v >= NORMAL), ("150–170%　中型修正", lambda v: BREAK <= v < NORMAL), ("< 150%　股災級修正", lambda v: v < BREAK)]
+    defs = [(f"≥ {NORMAL}%　正常水位", lambda v: v >= NORMAL), (f"{BREAK}–{NORMAL}%　中型修正", lambda v: BREAK <= v < NORMAL), (f"< {BREAK}%　股災級修正", lambda v: v < BREAK)]
     out = []
     for name, f in defs:
         sub = [d for d in ends if f(hist[d][0])]
@@ -197,7 +244,7 @@ def zones(hist, px, today):
 
 
 def events(hist, px):
-    """跌破 150% 事件：回到 170% 正常水位才算結束，之後再破才是新事件。0050 開始有資料前的事件不列。"""
+    """跌破 BREAK 事件：回到 NORMAL 正常水位才算結束，之後再破才是新事件。0050 開始有資料前的事件不列。"""
     out, cur = [], None
     days = sorted(hist)
     for d in days:
@@ -297,11 +344,9 @@ def build(hist):
 def main():
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     hist = load_hist()
-    if "--backfill" in sys.argv:
-        a = sys.argv[sys.argv.index("--backfill") + 1:]
-        for s, e in zip(a[::2], a[1::2]):
-            n = fill(hist, dt.date.fromisoformat(s), dt.date.fromisoformat(e))
-            print(f"{s}–{e} 補了 {n} 筆", flush=True)
+    if "--recalc" in sys.argv:
+        a = sys.argv[sys.argv.index("--recalc") + 1:]
+        recalc(list(zip(a[::2], a[1::2])))
         return
     today = dt.datetime.now(TW).date()
     if "--no-fetch" not in sys.argv:
