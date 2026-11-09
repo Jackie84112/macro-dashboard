@@ -22,6 +22,8 @@ jobs:
       - run: pip install pandas requests
       - run: python pipeline/labor.py
       - run: python pipeline/rates.py
+      - run: python pipeline/margin_tw.py
+        continue-on-error: true   # 台股來源失敗不擋其他頁更新
       - name: 有變動才提交
         run: |
           git config user.name "github-actions[bot]"
