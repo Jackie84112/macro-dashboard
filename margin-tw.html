@@ -229,6 +229,11 @@ function draw(){
   ctx.setLineDash([3,4]);
   ctx.strokeStyle = "#8A9097"; ctx.beginPath(); ctx.moveTo(padL, Y2(NORMAL)); ctx.lineTo(W - padR, Y2(NORMAL)); ctx.stroke();
   ctx.strokeStyle = "#D94F3D"; ctx.beginPath(); ctx.moveTo(padL, Y2(BREAK)); ctx.lineTo(W - padR, Y2(BREAK)); ctx.stroke();
+  // 170% 只畫 2024 年起（使用者 2026-11-09 定案：近年中位數已升到 171 左右，此線才有參考意義）
+  const line170 = Date.parse("2024-01-01T00:00:00");
+  if(t1 > line170 && Y2(170) >= h2t){
+    ctx.strokeStyle = "#8A9097"; ctx.beginPath(); ctx.moveTo(X(Math.max(line170, t0)), Y2(170)); ctx.lineTo(W - padR, Y2(170)); ctx.stroke();
+  }
   ctx.setLineDash([]);
 
   // X 軸
