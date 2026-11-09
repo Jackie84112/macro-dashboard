@@ -4,7 +4,7 @@
 
 - `index.html`：就業狀況頁（三張圖＋最下方就業狀況數據表，15 個指標全部由 FRED 自動重算、上色）
 - `rates.html`：貨幣成本頁（通膨、點陣圖 vs FedWatch、公債殖利率、高收益債、CDS、油價＋數據表）
-- `overlay.html`：股債信用疊圖（S&P 500／Nasdaq-100／SOX、10 年期殖利率、投資級／垃圾級全體 OAS，區間起點＝100 同基期）；資料 `data/overlay.json` 由 rates.py 產生；最下方指數本益比圖表與表格的 `data/pe.json` 為手動更新（專案總經指數本益比：`build_pe.py all` → `export_site.py`）
+- `overlay.html`：股債信用疊圖（S&P 500／Nasdaq-100／SOX、10 年期殖利率、投資級／垃圾級全體 OAS，區間起點＝100 同基期）；資料 `data/overlay.json` 由 rates.py 產生；最下方指數本益比圖表與表格的 `data/pe.json` 為手動更新（專案總經指數本益比：`build_pe.py all` → `export_site.py`）；Forward 圖表的 `data/pe_forward.json` 同為手動更新（`build_forward.py`，MAG7／SOX 每跑一次累積一點，勿刪舊資料）
 - `pipeline/rates.py`：抓 FRED（殖利率最近幾日改用財政部、WTI 用 Yahoo CL=F 期貨，因 FRED 有延遲）→ 寫 `data/rates.json`
 - `data/rates-manual.json`：**手動資料**——點陣圖（每季 SEP 後）、FedWatch 本週／上週、CDS、各區塊註解文字（每期雙周報更新）
 - `data/calendar.json`：BLS／BEA／Fed 發布日曆（「下次發布」欄用）。**每年底要手動補隔年日期**（PCE 目前只到 2026/12）

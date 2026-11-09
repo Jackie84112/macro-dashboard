@@ -81,6 +81,9 @@
   table.pe tr.hl td{background:#F9ECE7;}
   table.pe .up,table.pe .dn{font-weight:700;}
   table.pe .na{color:var(--muted);}
+  #cvFwd{height:420px;}
+  .pe-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:stretch;}
+  @media (max-width:980px){ .pe-two{grid-template-columns:minmax(0,1fr);} }
   /* 板塊報酬 vs EPS 超預期 */
   .sb-head,.sb-row{display:grid;grid-template-columns:150px 1fr 1fr;gap:0 18px;align-items:center;}
   .sb-head{font-size:12px;color:var(--muted);letter-spacing:1px;padding:6px 0;border-bottom:1px solid var(--ink);}
@@ -111,7 +114,7 @@
     table.tl td{padding:0;border:0;}
     table.tl td.k{white-space:normal;}
     table.tl td.t{grid-column:1/-1;}
-    #cvPE{height:340px;}
+    #cvPE,#cvFwd{height:340px;}
     table.tl.pe{font-size:12.5px;}
     table.tl.pe thead{display:table-header-group;}
     table.tl.pe tr{display:table-row;}
@@ -220,6 +223,37 @@
     </div>
   </section>
 
+  <section class="card">
+    <div class="tl-head">
+      <h2>SPX / MAG7 / SOX Forward P/E 比較</h2>
+      <span id="fwdSub">未來 12 個月預估盈餘</span>
+    </div>
+    <div class="controls" id="ctlFwd">
+      <div class="grp"><span class="lbl">區間</span>
+        <button class="rng" data-r="12">1Y</button><button class="rng" data-r="24">2Y</button>
+        <button class="rng" data-r="60">5Y</button><button class="rng on" data-r="all">ALL</button>
+      </div>
+      <div class="grp"><span class="lbl">指數</span>
+        <button class="tog" data-s="spx" style="--dc:var(--spx)"><span class="dot"></span>S&amp;P 500</button>
+        <button class="tog" data-s="mag7" style="--dc:var(--mag7)"><span class="dot"></span>七巨頭 MAG7</button>
+        <button class="tog" data-s="sox" style="--dc:var(--sox)"><span class="dot"></span>SOX 半導體</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="chartbox">
+      <canvas id="cvFwd"></canvas>
+      <div id="tipFwd" class="ctip"></div>
+    </div>
+    <div class="notes">
+      <p>[註1]：S&amp;P 500 為 FactSet Earnings Insight 週報公布的未來 12 個月本益比，歷史每月取一份週報（2022/8、11、12 與 2023/8 抓不到），近 8 週逐週；序列平均 19.12 倍，與 FactSet 公布的 10 年平均 19.1 倍相符。</p>
+      <p>[註2]：MAG7、SOX 為自建：個股當年度與下年度預估 EPS（stockanalysis）依財年剩餘時間加權成未來 12 個月，價格取 Yahoo 收盤；加總公式與 Trailing 圖相同。兩者沒有免費歷史，<span id="fwdSince"></span>起才開始累積，因此目前只有圓點、沒有線。</p>
+      <p>[註3]：Trailing 圖用 GAAP 已實現淨利，Forward 圖用分析師預估盈餘，兩圖的差距不全是盈餘成長。</p>
+    </div>
+  </section>
+
+  <div class="pe-two">
   <section class="card tl-card">
     <div class="tl-head">
       <h2>Trailing P/E：目前 vs 10 年平均</h2>
@@ -234,6 +268,23 @@
       <p>[註2]：恒生、KOSPI 只有 Siblis 免費的月底快照，無法更新到最新一天，資料時點以表內為準。</p>
     </div>
   </section>
+
+  <section class="card tl-card">
+    <div class="tl-head">
+      <h2>Forward P/E：目前 vs 10 年平均</h2>
+      <span>未來 12 個月預估盈餘</span>
+    </div>
+    <table class="tl pe">
+      <thead><tr><th>指數</th><th class="x">資料時點</th><th class="x">目前 P/E</th><th class="x">10 年平均</th><th class="x">相對均值</th></tr></thead>
+      <tbody id="fwdBody"></tbody>
+    </table>
+    <div class="notes">
+      <p>[註1]：只有 S&amp;P 500 有 10 年平均（FactSet 公布值）；其餘無免費歷史，故留空。道瓊、台灣加權無免費 forward 來源。</p>
+      <p>[註2]：那斯達克 100、上證、恒生、KOSPI 為 Siblis 免費的月底快照，資料時點以表內為準。</p>
+      <p>[註3]：費半對權重與個股很敏感：Wolfspeed 預估虧損，在 4% 權重下會明顯推高主口徑；美光本益比極低，會明顯拉低主口徑，因此並列子項。權重為 8%／4% 規則近似，非官方權重。</p>
+    </div>
+  </section>
+  </div>
 
   <section class="card tl-card" id="sectorBeat">
     <div class="tl-head">
@@ -617,6 +668,121 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
     document.getElementById("peSub").textContent=`近四季 GAAP 淨利，歷史為月底 ｜ 最新（${peDateLabel(last)}）：`
       +S.map(s=>`${s.k==="mag7"?"MAG7":s.name} ${RAW[s.k][n-1].toFixed(2)}`).join("、");
     document.getElementById("peBody").innerHTML=j.table.map(r=>{
+      const sub=r.name.startsWith("　"), name=r.name.replace(/^　/,"");
+      const rel=r.rel==null?'<span class="na">—</span>':`<span class="${r.rel>0?"up":"dn"}">${r.rel>0?"+":""}${r.rel.toFixed(1)}%</span>`;
+      const cls=sub?"sub":(name.startsWith("台灣")?"hl":"");
+      return `<tr class="${cls}"><td class="n">${name}</td><td class="x">${r.month||"—"}</td><td class="x">${num(r.pe)}</td><td class="x">${num(r.avg10)}</td><td class="x">${rel}</td></tr>`;
+    }).join("");
+    render();
+  });
+})();
+</script>
+<script>
+// Forward P/E：資料 data/pe_forward.json 手動更新（見 README）；X 軸依實際日期，因歷史為月頻、近期為週頻
+(function(){
+  const S=[
+    {k:"spx",  name:"S&P 500",    color:"#2563EB"},
+    {k:"mag7", name:"七巨頭 MAG7", color:"#D97706"},
+    {k:"sox",  name:"SOX",        color:"#DC2626"},
+  ];
+  const FONT="'Noto Sans TC','Microsoft JhengHei',sans-serif";
+  const st={range:"all",show:{spx:true,mag7:true,sox:true}};
+  const cv=document.getElementById("cvFwd"), tip=document.getElementById("tipFwd"), ctx=cv.getContext("2d");
+  const TS=d=>Date.UTC(+d.slice(0,4),+d.slice(5,7)-1,+d.slice(8,10));
+  const slash=d=>d.replace(/-/g,"/");
+  let RAW={}, D=[], T=[], n=0, L=null, hover=-1, tipOn=false;
+  function range(){
+    if(st.range==="all") return [0,n-1];
+    const e=new Date(T[n-1]); e.setUTCMonth(e.getUTCMonth()-(+st.range));
+    const i=T.findIndex(t=>t>=e.getTime());
+    return [i<0?0:i,n-1];
+  }
+  function render(){
+    if(!n) return;
+    const dpr=window.devicePixelRatio||1, W=cv.clientWidth, H=cv.clientHeight;
+    cv.width=W*dpr; cv.height=H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+    const padL=62, padR=48, top=24, bot=H-30, [i0,i1]=range();
+    const t0=T[i0], t1=T[i1], X=t=>padL+(t-t0)/((t1-t0)||1)*(W-padL-padR);
+    let lo=Infinity, hi=-Infinity;
+    for(const s of S){ if(!st.show[s.k]) continue; const [a,b]=extent(RAW[s.k],i0,i1); lo=Math.min(lo,a); hi=Math.max(hi,b); }
+    if(!isFinite(lo)){ lo=10; hi=30; }
+    const pad=Math.max((hi-lo)*0.08,0.5); lo-=pad; hi+=pad;
+    const Y=v=>bot-(v-lo)/(hi-lo)*(bot-top);
+
+    ctx.font="11px "+FONT; ctx.lineWidth=1;
+    for(const t of niceLinTicks(lo,hi)){
+      const y=Y(t);
+      ctx.strokeStyle="rgba(0,0,0,0.06)"; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke();
+      ctx.textAlign="right"; ctx.fillStyle="#8A9097"; ctx.fillText(parseFloat(t.toFixed(1)), padL-8, y+3.5);
+    }
+    // X 軸：2 年內逐月，更長只標 1 月與 7 月（同上方兩張圖）
+    ctx.textAlign="center"; ctx.fillStyle="#8A9097";
+    const long=(t1-t0)>730*864e5; let lastX=-999;
+    const c=new Date(t0); c.setUTCDate(1); c.setUTCMonth(c.getUTCMonth()+1);
+    for(;c.getTime()<=t1;c.setUTCMonth(c.getUTCMonth()+1)){
+      const mm=c.getUTCMonth()+1; if(long && mm!==1 && mm!==7) continue;
+      const x=X(c.getTime()); if(x-lastX<44) continue;
+      ctx.fillText(c.getUTCFullYear()+"/"+mm, x, H-10); lastX=x;
+    }
+    for(const s of S){ if(!st.show[s.k]) continue;
+      ctx.strokeStyle=s.color; ctx.lineWidth=1.5; ctx.beginPath(); let on=false, last=-1;
+      for(let i=i0;i<=i1;i++){ const v=RAW[s.k][i]; if(v==null) continue; on?ctx.lineTo(X(T[i]),Y(v)):(ctx.moveTo(X(T[i]),Y(v)),on=true); last=i; }
+      ctx.stroke();
+      // 最新點畫圓點；MAG7、SOX 累積初期只有這一點
+      if(last>=0){ ctx.fillStyle=s.color; ctx.beginPath(); ctx.arc(X(T[last]),Y(RAW[s.k][last]),3.6,0,7); ctx.fill(); }
+    }
+    ctx.textAlign="left"; ctx.fillStyle="#6B7178"; ctx.font="11.5px "+FONT;
+    ctx.fillText("Forward P/E（倍）", padL, top-8);
+    if(hover>=i0 && hover<=i1){
+      const x=X(T[hover]);
+      ctx.strokeStyle="rgba(34,38,43,0.35)"; ctx.lineWidth=1; ctx.setLineDash([2,3]);
+      ctx.beginPath(); ctx.moveTo(x,top); ctx.lineTo(x,bot); ctx.stroke(); ctx.setLineDash([]);
+      for(const s of S){ if(!st.show[s.k]) continue; const v=RAW[s.k][hover];
+        if(v!=null){ ctx.fillStyle=s.color; ctx.beginPath(); ctx.arc(x,Y(v),3.2,0,7); ctx.fill(); } }
+    }
+    L={padL,padR,W,i0,i1,t0,t1};
+  }
+  function idx(ev){
+    if(!L) return -1;
+    const mx=ev.clientX-cv.getBoundingClientRect().left;
+    if(mx<L.padL||mx>L.W-L.padR) return -1;
+    const t=L.t0+(mx-L.padL)/(L.W-L.padL-L.padR)*(L.t1-L.t0);
+    let best=L.i0;
+    for(let i=L.i0;i<=L.i1;i++) if(Math.abs(T[i]-t)<Math.abs(T[best]-t)) best=i;
+    return best;
+  }
+  function showTip(ev){
+    const d=D[hover]; if(!d){ tip.style.display="none"; return; }
+    let html=`<div class="t">${slash(d)}</div>`;
+    for(const s of S){ if(!st.show[s.k]) continue; const v=RAW[s.k][hover];
+      if(v!=null) html+=`<div class="r"><i style="--dc:${s.color}">${s.name}</i><b>${v.toFixed(2)} 倍</b></div>`; }
+    tip.innerHTML=html; tip.style.display="block";
+    const r=cv.getBoundingClientRect(), mx=ev.clientX-r.left, my=ev.clientY-r.top, bw=tip.offsetWidth;
+    tip.style.left=Math.min(Math.max(mx-bw/2,8), cv.clientWidth-bw-8)+"px";
+    tip.style.top=(my<160? my+26 : my-tip.offsetHeight-18)+"px";
+  }
+  cv.addEventListener("pointermove",ev=>{ hover=idx(ev); render(); if(tipOn&&hover>=0) showTip(ev); else tip.style.display="none"; });
+  cv.addEventListener("pointerleave",()=>{ hover=-1; tip.style.display="none"; render(); });
+  cv.addEventListener("click",ev=>{ tipOn=!tipOn; hover=idx(ev); render(); if(tipOn&&hover>=0) showTip(ev); else tip.style.display="none"; });
+  document.querySelectorAll("#ctlFwd button.rng").forEach(b=>b.addEventListener("click",()=>{
+    document.querySelectorAll("#ctlFwd button.rng").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on"); st.range=b.dataset.r; render();
+  }));
+  document.querySelectorAll("#ctlFwd button.tog").forEach(b=>b.addEventListener("click",()=>{
+    const k=b.dataset.s; st.show[k]=!st.show[k]; b.classList.toggle("off",!st.show[k]); render();
+  }));
+  window.addEventListener("resize",render);
+
+  const num=v=>v==null?'<span class="na">—</span>':v.toFixed(2);
+  fetch("data/pe_forward.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
+    D=[...new Set(S.flatMap(s=>j.series[s.k].map(p=>p[0])))].sort(); T=D.map(TS); n=D.length;
+    const pos=new Map(D.map((d,i)=>[d,i]));
+    for(const s of S){ const a=new Array(n).fill(null); j.series[s.k].forEach(p=>{a[pos.get(p[0])]=p[1];}); RAW[s.k]=a; }
+    const lastOf=k=>j.series[k][j.series[k].length-1];
+    document.getElementById("fwdSub").textContent="未來 12 個月預估盈餘 ｜ 最新："
+      +S.map(s=>`${s.k==="mag7"?"MAG7":s.name} ${lastOf(s.k)[1].toFixed(2)}（${slash(lastOf(s.k)[0]).slice(5)}）`).join("、");
+    document.getElementById("fwdSince").textContent=slash(j.series.mag7[0][0]);
+    document.getElementById("fwdBody").innerHTML=j.table.map(r=>{
       const sub=r.name.startsWith("　"), name=r.name.replace(/^　/,"");
       const rel=r.rel==null?'<span class="na">—</span>':`<span class="${r.rel>0?"up":"dn"}">${r.rel>0?"+":""}${r.rel.toFixed(1)}%</span>`;
       const cls=sub?"sub":(name.startsWith("台灣")?"hl":"");
