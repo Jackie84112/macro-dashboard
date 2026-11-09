@@ -666,7 +666,7 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
 fetch("data/pe_sector.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
   const fill=(id,sub,label,o,d)=>{
     document.getElementById(sub).textContent=`${label}（${o.asof.replace(/-/g,"/")}）`;
-    document.getElementById(id).innerHTML=o.rows.map(r=>`<tr class="${r.total?"total":""}"><td class="n">${r.name}</td><td class="x">${r.pe.toFixed(d)}</td><td class="x">${r.avg5.toFixed(d)}</td><td class="x">${r.avg10.toFixed(d)}</td><td class="x"><span class="${r.rel>0?"up":"dn"}">${r.rel>0?"+":""}${r.rel.toFixed(1)}%</span></td></tr>`).join("");
+    document.getElementById(id).innerHTML=o.rows.map(r=>`<tr class="${r.total?"total":(r.name==="資訊科技"||r.name==="通訊服務")?"hl":""}"><td class="n">${r.name}</td><td class="x">${r.pe.toFixed(d)}</td><td class="x">${r.avg5.toFixed(d)}</td><td class="x">${r.avg10.toFixed(d)}</td><td class="x"><span class="${r.rel>0?"up":"dn"}">${r.rel>0?"+":""}${r.rel.toFixed(1)}%</span></td></tr>`).join("");
   };
   fill("secTrl","secTrlSub","worldperatio",j.trailing,2);
   fill("secFwd","secFwdSub","FactSet Earnings Insight",j.forward,1);
