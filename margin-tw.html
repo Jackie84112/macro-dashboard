@@ -136,6 +136,10 @@
 const NORMAL = 170, BREAK = 150;
 // 事件區間（使用者 2026-11-09 定案）：紅點畫在區間內 0050 最低收盤，名稱只在浮標內顯示，不直接寫在圖上
 const EVENTS = [
+  {name:"美債殖利率飆升、中美貿易戰", start:"2018-10-11", end:"2018-10-31"},
+  {name:"新冠疫情", start:"2020-03-13", end:"2020-03-23"},
+  {name:"Fed 升息", start:"2022-06-30", end:"2022-07-01"},
+  {name:"Fed 升息、美國對中晶片管制", start:"2022-09-28", end:"2022-10-31"},
   {name:"川普關稅", start:"2025-02-21", end:"2025-04-09"},
   {name:"Michael Burry 放空", start:"2025-10-31", end:"2025-11-24"},
   {name:"美伊戰爭", start:"2026-02-26", end:"2026-03-31"},
@@ -253,8 +257,8 @@ function draw(){
     ctx.stroke(); ctx.setLineDash([]); ctx.lineWidth = 1; }
   // 事件紅點
   if(state.show.p50) for(const e of EVENTS){ if(e.i < i0 || reb.p50[e.i] == null) continue;
-    ctx.fillStyle = "#D93025"; ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.arc(X(T[e.i]), Y1(reb.p50[e.i]), 4.5, 0, 7); ctx.fill(); ctx.stroke(); ctx.lineWidth = 1; }
+    ctx.fillStyle = "#D93025";
+    ctx.beginPath(); ctx.arc(X(T[e.i]), Y1(reb.p50[e.i]), 4, 0, 7); ctx.fill(); }
   // 欄標題
   ctx.textAlign = "left"; ctx.fillStyle = "#6B7178"; ctx.font = "11.5px 'Noto Sans TC','Microsoft JhengHei',sans-serif";
   ctx.fillText("大盤融資維持率 %（紅點線 = 150% 股災級修正，灰點線 = 170% 正常水位）", padL, h2t - 8);
