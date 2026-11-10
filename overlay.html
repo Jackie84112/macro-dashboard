@@ -221,7 +221,7 @@
     <div class="notes">
       <p>[註1]：SPX 為 multpl.com 之 S&amp;P 500 as-reported 近四季本益比；MAG7、SOX 為自建，淨利取 SEC EDGAR XBRL 近四季 GAAP 淨利、價格取 Yahoo 月收盤，季報以申報日起算（point-in-time）；個股 P/E 已與 stockanalysis.com 現值逐檔核對（19/24 檔誤差 &lt;2%）。</p>
       <p>[註2]：歷史點為月底，最後一點為手動更新當時的最新收盤；淨利只計入當時已申報的財報，已公布但尚未申報 10-Q 的公司仍用上一季。</p>
-      <p>[註3]：點一下圖表顯示浮標與橫虛線，虛線右側為百分比水位，再點一下消失；水位＝該值在 2016/12 起全部月底點（含最新點）中的百分位，100% 為歷史最高、接近 0% 為歷史最低。</p>
+      <p>[註3]：橫虛線與右側百分比水位常駐顯示，預設為最新一點，滑鼠移到圖上會跟著游標的月份；點一下顯示浮標，再點一下收起；水位＝該值在 2016/12 起全部月底點（含最新點）中的百分位，100% 為歷史最高、接近 0% 為歷史最低。</p>
     </div>
   </section>
 
@@ -612,22 +612,23 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
     }
     ctx.textAlign="left"; ctx.fillStyle="#6B7178"; ctx.font="11.5px "+FONT;
     ctx.fillText("Trailing P/E（倍）", padL, top-8);
+    // 橫虛線＋右側百分比水位：滑鼠在圖上跟著游標的月份，移開時停在區間最後一點（最新），常駐不消失
+    { const hp=(hover>=i0 && hover<=i1)?hover:i1;
+      ctx.lineWidth=1; ctx.setLineDash([4,4]); ctx.font="11px "+FONT; ctx.textAlign="left";
+      const lab=[];
+      for(const s of S){ if(!st.show[s.k]) continue; const v=RAW[s.k][hp]; if(v==null) continue;
+        const y=Y(v); ctx.strokeStyle=s.color; ctx.globalAlpha=0.7;
+        ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); ctx.globalAlpha=1;
+        lab.push({y, c:s.color, t:pctRank(s.k,hp)+"%"}); }
+      ctx.setLineDash([]);
+      lab.sort((a,b)=>a.y-b.y);   // 數值接近時標籤上下錯開，間距至少 13px
+      for(let i=1;i<lab.length;i++) if(lab[i].y-lab[i-1].y<13) lab[i].y=lab[i-1].y+13;
+      for(const l of lab){ ctx.fillStyle=l.c; ctx.fillText(l.t, W-padR+6, l.y+3.5); }
+    }
     if(hover>=i0 && hover<=i1){
       const x=X(hover);
       ctx.strokeStyle="rgba(34,38,43,0.35)"; ctx.lineWidth=1; ctx.setLineDash([2,3]);
       ctx.beginPath(); ctx.moveTo(x,top); ctx.lineTo(x,bot); ctx.stroke(); ctx.setLineDash([]);
-      if(tipOn){   // 點一下：各線在該值畫橫虛線，右側標百分比水位；再點一下消失
-        ctx.lineWidth=1; ctx.setLineDash([4,4]); ctx.font="11px "+FONT; ctx.textAlign="left";
-        const lab=[];
-        for(const s of S){ if(!st.show[s.k]) continue; const v=RAW[s.k][hover]; if(v==null) continue;
-          const y=Y(v); ctx.strokeStyle=s.color; ctx.globalAlpha=0.7;
-          ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(W-padR,y); ctx.stroke(); ctx.globalAlpha=1;
-          lab.push({y, c:s.color, t:pctRank(s.k,hover)+"%"}); }
-        ctx.setLineDash([]);
-        lab.sort((a,b)=>a.y-b.y);   // 數值接近時標籤上下錯開，間距至少 13px
-        for(let i=1;i<lab.length;i++) if(lab[i].y-lab[i-1].y<13) lab[i].y=lab[i-1].y+13;
-        for(const l of lab){ ctx.fillStyle=l.c; ctx.fillText(l.t, W-padR+6, l.y+3.5); }
-      }
       for(const s of S){ if(!st.show[s.k]) continue; const v=RAW[s.k][hover];
         if(v!=null){ ctx.fillStyle=s.color; ctx.beginPath(); ctx.arc(x,Y(v),3.2,0,7); ctx.fill(); } }
     }
