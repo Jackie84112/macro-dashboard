@@ -221,7 +221,7 @@
     <div class="notes">
       <p>[註1]：SPX 為 multpl.com 之 S&amp;P 500 as-reported 近四季本益比；MAG7、SOX 為自建，淨利取 SEC EDGAR XBRL 近四季 GAAP 淨利、價格取 Yahoo 月收盤，季報以申報日起算（point-in-time）；個股 P/E 已與 stockanalysis.com 現值逐檔核對（19/24 檔誤差 &lt;2%）。</p>
       <p>[註2]：歷史點為月底，最後一點為手動更新當時的最新收盤；淨利只計入當時已申報的財報，已公布但尚未申報 10-Q 的公司仍用上一季。</p>
-      <p>[註3]：點一下圖表顯示浮標與橫虛線，再點一下消失；水位＝該值在 2016/12 起全部月底點（含最新點）中的百分位，100% 為歷史最高、接近 0% 為歷史最低。</p>
+      <p>[註3]：點一下圖表顯示浮標與橫虛線，虛線右側為百分比水位，再點一下消失；水位＝該值在 2016/12 起全部月底點（含最新點）中的百分位，100% 為歷史最高、接近 0% 為歷史最低。</p>
     </div>
   </section>
 
@@ -643,7 +643,7 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
     const d=D[hover]; if(!d){ tip.style.display="none"; return; }
     let html=`<div class="t">${peDateLabel(d)}</div>`;
     for(const s of S){ if(!st.show[s.k]) continue; const v=RAW[s.k][hover];
-      if(v!=null) html+=`<div class="r"><i style="--dc:${s.color}">${s.name}</i><b>${v.toFixed(2)} 倍｜水位 ${pctRank(s.k,hover)}%</b></div>`; }
+      if(v!=null) html+=`<div class="r"><i style="--dc:${s.color}">${s.name}</i><b>${v.toFixed(2)} 倍</b></div>`; }
     tip.innerHTML=html; tip.style.display="block";
     const r=cv.getBoundingClientRect(), mx=ev.clientX-r.left, my=ev.clientY-r.top, bw=tip.offsetWidth;
     tip.style.left=Math.min(Math.max(mx-bw/2,8), cv.clientWidth-bw-8)+"px";
