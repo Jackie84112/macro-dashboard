@@ -79,6 +79,10 @@
   table.pe tr.sub td{background:#FAF9F6;color:var(--muted);}
   table.pe tr.sub td.n{padding-left:28px;}
   table.pe tr.hl td{background:#F9ECE7;}
+  table.pe tr.sub.fold{display:none;}
+  table.pe tr.pgrp{cursor:pointer;}
+  table.pe tr.pgrp .car{display:inline-block;width:14px;color:var(--muted);font-size:10px;transition:transform .15s;}
+  table.pe tr.pgrp.open .car{transform:rotate(90deg);}
   table.pe .up,table.pe .dn{font-weight:700;}
   table.pe .na{color:var(--muted);}
   table.pe tr.total td{font-weight:700;background:#FAF9F6;}
@@ -238,6 +242,8 @@
       <p>[註1]：那斯達克綜合無免費歷史，以那斯達克 100（自建，排除 ARM/PDD/NBIS/FER/SHOP/TRI/CCEP 等 20-F 申報者）替代。</p>
       <p>[註2]：恒生、KOSPI 只有 Siblis 免費的月底快照，無法更新到最新一天，資料時點以表內為準。</p>
       <p>[註3]：費半下方四列為事件期間 SOX 收盤最低點當日的 P/E，算法與費半主列相同：價格取當日收盤，盈餘只計入當日前已申報的財報；10 年平均為當日前 10 年的月底值加當日值。收盤最低點：川普關稅 3,562.94、Michael Burry 放空 6,352.07、美伊戰爭 7,142.33、去槓桿 10,447.49。</p>
+      <p>[註4]：台灣加權下方四列為同一日曆日的台股收盤 P/E（台股收盤早於美股，不一定是台股自己的低點），算法與台灣加權主列相同（TWSE 個股本益比 × 現股本近似，排除虧損股）；10 年平均為當日前 10 年的月底值加當日值，台股資料自 2016/1 起，川普關稅（2025/4/8）只涵蓋約 9 年 3 個月。</p>
+      <p>[註5]：費半、台灣加權兩列可點開查看四個事件的 P/E，再點一下收起。</p>
     </div>
   </section>
 
@@ -670,12 +676,22 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
     const last=D[n-1];
     document.getElementById("peSub").textContent=`近四季 GAAP 淨利，歷史為月底 ｜ 最新（${peDateLabel(last)}）：`
       +S.map(s=>`${s.k==="mag7"?"MAG7":s.name} ${RAW[s.k][n-1].toFixed(2)}`).join("、");
-    document.getElementById("peBody").innerHTML=j.table.map(r=>{
-      const sub=r.name.startsWith("　"), name=r.name.replace(/^　/,"");
+    // 事件子列（名稱以全形空白開頭）歸屬上方主列，預設折疊，點主列展開／收起
+    let g=-1;
+    const rows=j.table.map((r,k)=>{ const sub=r.name.startsWith("　"); if(!sub) g=k; return {r,sub,g}; });
+    const hasSub=new Set(rows.filter(x=>x.sub).map(x=>x.g));
+    document.getElementById("peBody").innerHTML=rows.map(({r,sub,g},k)=>{
+      const name=r.name.replace(/^　/,"");
       const rel=r.rel==null?'<span class="na">—</span>':`<span class="${r.rel>0?"up":"dn"}">${r.rel>0?"+":""}${r.rel.toFixed(1)}%</span>`;
-      const cls=sub?"sub":(name.startsWith("台灣")?"hl":"");
-      return `<tr class="${cls}"><td class="n">${name}</td><td class="x">${r.month||"—"}</td><td class="x">${num(r.pe)}</td><td class="x">${num(r.avg10)}</td><td class="x">${rel}</td></tr>`;
+      const grp=!sub&&hasSub.has(k);
+      const cls=sub?"sub fold":[(name.startsWith("台灣")||name.startsWith("美國費城"))?"hl":"", grp?"pgrp":""].join(" ").trim();
+      const car=grp?'<span class="car">▶</span>':"";
+      return `<tr class="${cls}" data-g="${g}"><td class="n">${car}${name}</td><td class="x">${r.month||"—"}</td><td class="x">${num(r.pe)}</td><td class="x">${num(r.avg10)}</td><td class="x">${rel}</td></tr>`;
     }).join("");
+    document.querySelectorAll("#peBody tr.pgrp").forEach(tr=>tr.addEventListener("click",()=>{
+      const open=tr.classList.toggle("open");
+      document.querySelectorAll(`#peBody tr.sub[data-g="${tr.dataset.g}"]`).forEach(x=>x.classList.toggle("fold",!open));
+    }));
     render();
   });
 })();
