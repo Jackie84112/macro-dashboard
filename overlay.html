@@ -167,6 +167,21 @@
 
   <section class="card tl-card">
     <div class="tl-head">
+      <h2>SOX 事件低點的公司債殖利率</h2>
+      <span>10 年期公債殖利率 ＋ 信用利差（OAS）</span>
+    </div>
+    <table class="tl">
+      <thead><tr><th>事件</th><th class="x">時間</th><th class="x">投資級殖利率</th><th class="x">垃圾級殖利率</th></tr></thead>
+      <tbody id="evYld"></tbody>
+    </table>
+    <div class="notes">
+      <p>[註1]：殖利率＝當日 10 年期公債殖利率（FRED DGS10，最近幾天以美國財政部資料補）＋當日 ICE BofA 投資級／垃圾級 OAS（FRED BAMLC0A0CM／BAMLH0A0HYM2），與上圖同一份資料；當日無資料時取前一個交易日。</p>
+      <p>[註2]：OAS 是相對整條公債曲線的利差，指數存續期間不等於 10 年，加總結果為近似值，非 ICE 公布的指數殖利率。</p>
+    </div>
+  </section>
+
+  <section class="card tl-card">
+    <div class="tl-head">
       <h2>SOX 導火線時間軸</h2>
       <span>2026/10/6 收盤 13,218 → 11/9 收盤 10,034，-24.1%（11/5 收盤低點 9,011，-31.8%）</span>
     </div>
@@ -578,6 +593,13 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
   M=[...dates].sort(); N=M.length;
   const pos=new Map(M.map((d,i)=>[d,i]));
   keys.forEach(k=>{ const a=new Array(N).fill(null); j[k].forEach(p=>{a[pos.get(p[0])]=p[1];}); RAW[k]=a; });
+  // 事件低點殖利率表：10Y + OAS（bp→%），取當日或前一個交易日
+  const asof=(k,d)=>{ for(let i=M.length-1;i>=0;i--) if(M[i]<=d && RAW[k][i]!=null) return RAW[k][i]; return null; };
+  document.getElementById("evYld").innerHTML=SOX_LOWS.map(e=>{
+    const y=asof("dgs10",e.d), ig=asof("oas_ig",e.d), hy=asof("oas_hy",e.d);
+    const f=o=>(y==null||o==null)?'<span class="na">—</span>':(y+o/100).toFixed(2)+"%";
+    return `<tr><td>${e.t.replace("（SOX 低點）","")}</td><td class="x">${e.d}</td><td class="x">${f(ig)}</td><td class="x">${f(hy)}</td></tr>`;
+  }).join("");
   document.getElementById("sub").textContent+=` ｜ ${M[0].slice(0,7).replace("-","/")} – ${M[N-1].slice(0,7).replace("-","/")}`;
   draw();
 });
