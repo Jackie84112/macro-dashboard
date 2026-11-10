@@ -338,6 +338,13 @@ const EVENTS_LOW = [
   {d:"2026-09-22", t:"Oracle 專案貸款受阻"},
   {d:"2026-10-15", t:"PPI CPI超預期，Coreweave CDS飆升"},
 ];
+// SOX 事件低點（同 Trailing P/E 表費半事件列）：SOX 線上畫紅點，並往下拉淡紅虛線到利差欄，方便對照信用利差
+const SOX_LOWS = [
+  {d:"2025-04-08", t:"川普關稅（SOX 低點）"},
+  {d:"2025-11-20", t:"Michael Burry 放空（SOX 低點）"},
+  {d:"2026-03-30", t:"美伊戰爭（SOX 低點）"},
+  {d:"2026-07-29", t:"去槓桿（SOX 低點）"},
+];
 const EVENT_DAYS = 1, EVENT_MIN_W = 4, EVENT_HIT = 4;   // 底色帶寬＝事件當天；長區間至少 4px；滑鼠容許 ±4px 才點得到
 const state = {range:"all", show:{spx:true,ndx:true,sox:true,dgs10:true,oas_ig:true,oas_hy:true,events:true}};
 const cv = document.getElementById("cv"), tip = document.getElementById("tip");
@@ -393,6 +400,11 @@ function eventsAt(i, my){
   if(!state.show.events || !LAY) return [];
   const {X,i0,i1,stepPx,split}=LAY, x=X(i), out=[];
   for(const e of (my<split ? EVENTS_UP : EVENTS_LOW)){
+    const b=eventBand(e,i0,i1,X,stepPx);
+    if(b && Math.abs(x-b.x)<=Math.max(b.half,EVENT_HIT)+0.5) out.push(e);
+  }
+  // SOX 低點紅點：上下兩欄都列（虛線貫穿兩欄）
+  if(state.show.sox) for(const e of SOX_LOWS){
     const b=eventBand(e,i0,i1,X,stepPx);
     if(b && Math.abs(x-b.x)<=Math.max(b.half,EVENT_HIT)+0.5) out.push(e);
   }
@@ -489,6 +501,19 @@ function draw(){
   // 線
   for(const s of LOW){ if(state.show[s.k]) drawLine(RAW[s.k],i0,i1,X,s.k==="dgs10"?Y2:Y3,s.color,1.6); }
   for(const s of UP){ if(state.show[s.k]) drawLine(reb[s.k],i0,i1,X,Y1,s.color,1.5); }
+
+  // SOX 事件低點：紅點（白邊）＋往下貫穿利差欄的淡紅虛線；跟「事件」按鈕一起開關
+  if(state.show.events && state.show.sox){
+    for(const e of SOX_LOWS){
+      const i=M.indexOf(e.d); if(i<i0||i>i1) continue;
+      const v=reb.sox[i]; if(v==null) continue;
+      const x=X(i), y=Y1(v);
+      ctx.strokeStyle="rgba(220,38,38,0.45)"; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.moveTo(x,y+6); ctx.lineTo(x,h2b); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle="#DC2626"; ctx.strokeStyle="#fff"; ctx.lineWidth=1.5;
+      ctx.beginPath(); ctx.arc(x,y,5,0,7); ctx.fill(); ctx.stroke();
+    }
+  }
 
   // 欄標題
   ctx.textAlign="left"; ctx.fillStyle="#6B7178"; ctx.font="11.5px 'Noto Sans TC','Microsoft JhengHei',sans-serif";
