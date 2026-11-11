@@ -102,7 +102,7 @@
   table.rcv tr.dv-row.fold{display:none;}
   .rt{position:relative;width:120px;height:8px;background:#EFEEEA;border-radius:4px;display:inline-block;vertical-align:middle;}
   .rt i{position:absolute;left:0;top:0;bottom:0;background:#2563EB;border-radius:4px;}
-  .rt b{position:absolute;top:-3px;bottom:-3px;width:1px;background:#8C9096;}
+  .rt b{position:absolute;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:#1F2328;}
   .rtv{display:inline-block;width:42px;text-align:right;}
   table.dv .sub-h{color:var(--muted);font-size:12px;}
   table.rcv tr.dv-row>td{padding:4px 0 12px 24px;background:#FCF6F3;}
@@ -203,7 +203,7 @@
     </table>
     <div class="notes">
       <p>[註1]：去槓桿後，投資級利差始終沒有修復到 SOX 收復所需的水準，9 月下旬還反向擴大，超過去槓桿期間最高點。利差惡化、股價上漲的背離從 9/24 維持到 10/6，大約兩週；點「去槓桿」列可展開利差對照。</p>
-      <p>[註2]：點「CDS+民主黨勝選」列可展開本波進度；藍條＝目前利差已回吐的比例，豎線＝三次已收復事件在 SOX 回補到與目前相同進度時的回吐比例，藍條在豎線右側代表利差修復進度符合或快於過去經驗。</p>
+      <p>[註2]：點「CDS+民主黨勝選」列可展開本波進度；藍條＝利差從本波最寬往「要回到」區間中點已走了幾成，豎線＝SOX 從低點往 10/6 高點已回補幾成；藍條超過豎線代表利差修復跟上或快於股價，落在豎線左側代表利差落後股價。</p>
     </div>
   </section>
 
@@ -673,20 +673,16 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
     const maxIn=(k,a,b)=>{ let m=-Infinity; for(let i=0;i<M.length;i++){ if(M[i]>=a&&M[i]<=b&&RAW[k][i]!=null) m=Math.max(m,RAW[k][i]); } return m; };
     const na='<span class="na">—</span>', rets={oas_ig:[],oas_hy:[]}, hist=[], last=M[M.length-1];
     const K=[["oas_ig","投資級利差"],["oas_hy","垃圾級利差"]];
-    // 本波展開表：要回到＋目前進度（藍條＝實際回吐；豎線＝三次已收復事件在 SOX 回補到相同進度時的回吐）
+    // 本波展開表：要回到＋目前進度（藍條＝利差往目標走了幾成；豎線＝SOX 回補進度）
     const nowRow=e=>{
       const P=RAW.sox[idx(e.pk)], L=RAW.sox[idx(e.lo)], C=RAW.sox[idx(last)], p=(C-L)/(P-L);
       const rows=K.map(([k,n])=>{
         const pre=asof(k,e.pk), wide=maxIn(k,e.pk,last), cur=asof(k,last);
         const lo=Math.min(...rets[k]), hi=Math.max(...rets[k]);
         const a=Math.round(wide-hi*(wide-pre)), b=Math.round(wide-lo*(wide-pre)), need=a===b?`${a}`:`${a}–${b}`;
-        const g=Math.max(0,Math.min(1,(wide-cur)/(wide-pre)));
-        const ticks=hist.map(h=>{
-          let j=-1; for(let i=h.il+1;i<=h.ir;i++) if(RAW.sox[i]!=null && (RAW.sox[i]-h.L)/(h.P-h.L)>=p){ j=i; break; }
-          if(j<0) return "";
-          const v=Math.max(0,Math.min(1,(h.wide[k]-asof(k,M[j]))/(h.wide[k]-h.pre[k])));
-          return `<b style="left:${(v*100).toFixed(1)}%" title="${h.t}：${Math.round(v*100)}%"></b>`;
-        }).join("");
+        // 進度＝利差從本波最寬往「要回到」中點走了幾成；豎線＝SOX 回補進度（利差應同步走到的位置）
+        const tgt=wide-(lo+hi)/2*(wide-pre), g=Math.max(0,Math.min(1,(wide-cur)/(wide-tgt)));
+        const ticks=`<b style="left:${(Math.max(0,Math.min(1,p))*100).toFixed(1)}%" title="SOX 回補 ${Math.round(p*100)}%"></b>`;
         return `<tr><td class="n">${n}</td><td class="x">${pre} bp</td><td class="x">${wide} bp</td><td class="x">${cur} bp</td><td class="x"><b>${need} bp</b></td>`
           +`<td class="x"><span class="rt"><i style="width:${(g*100).toFixed(1)}%"></i>${ticks}</span><span class="rtv">${Math.round(g*100)}%</span></td></tr>`;
       }).join("");
