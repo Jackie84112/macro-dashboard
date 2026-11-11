@@ -96,6 +96,12 @@
   table.rcv tr.hl td{background:#F9ECE7;}
   .dv-wrap{overflow-x:auto;}
   table.dv td.n{white-space:nowrap;}
+  table.rcv tr.dvg{cursor:pointer;}
+  table.rcv tr.dvg .car{display:inline-block;width:14px;color:var(--muted);font-size:10px;transition:transform .15s;}
+  table.rcv tr.dvg.open .car{transform:rotate(90deg);}
+  table.rcv tr.dv-row.fold{display:none;}
+  table.rcv tr.dv-row>td{padding:4px 0 12px 24px;background:#FCF6F3;}
+  table.rcv tr.dv-row:hover{background:none;}
   table.pe tr.total td{font-weight:700;background:#FAF9F6;}
   .pe-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:stretch;}
   @media (max-width:980px){ .pe-two{grid-template-columns:minmax(0,1fr);} }
@@ -139,6 +145,7 @@
     table.tl.pe tr.sub td.n{padding-left:12px;}
     table.rcv:not(.pe) tr.hl{background:#F9ECE7;}
     table.rcv:not(.pe) tr.hl td{background:none;}
+    table.rcv tr.dv-row>td{grid-column:1/-1;padding:4px 0 8px;}
   }
 </style>
 </head>
@@ -189,17 +196,6 @@
         <th class="x">垃圾級利差 bp<br>跌前 → 最寬 → 收復日</th><th class="x">垃圾級回吐</th></tr></thead>
       <tbody id="rcvHist"></tbody>
     </table>
-    <h3 class="rcv-h">去槓桿：利差沒修復到收復水準，反而擴大超過該波最寬，SOX 未收復</h3>
-    <div class="dv-wrap">
-    <table class="tl pe rcv dv">
-      <thead><tr><th></th><th class="x">6/22 前高時</th><th class="x">應降到</th><th class="x">實際最低</th><th class="x">去槓桿最高</th><th class="x">背離期間最高（10/1）</th><th class="x">10/6 SOX 高點時</th></tr></thead>
-      <tbody>
-        <tr><td class="n">投資級利差 bp</td><td class="x">74</td><td class="x">≤ 76</td><td class="x"><b>77</b>（未達標）</td><td class="x">82</td><td class="x"><b>86</b></td><td class="x">83</td></tr>
-        <tr><td class="n">垃圾級利差 bp</td><td class="x">265</td><td class="x">≤ 272</td><td class="x">260（已達標）</td><td class="x">287</td><td class="x"><b>324</b></td><td class="x">303</td></tr>
-        <tr><td class="n">SOX</td><td class="x">14,635</td><td class="x">回到 14,635</td><td class="x"><span class="na">—</span></td><td class="x">10,447（7/29 低點）</td><td class="x">12,829</td><td class="x"><b>13,218</b></td></tr>
-      </tbody>
-    </table>
-    </div>
     <h3 class="rcv-h">本波：SOX 要回到 10/6 高點（13,218）</h3>
     <table class="tl rcv">
       <thead><tr><th></th><th class="x">10/6 高點當天</th><th class="x">本波最寬</th><th class="x">目前</th><th class="x">要回到</th><th class="x">還要收窄</th></tr></thead>
@@ -208,7 +204,8 @@
     <div class="notes">
       <p>[註1]：回吐＝（最寬 − 收復日）÷（最寬 − 跌前），即擴大的利差在 SOX 收復當天已收回幾成；最寬取跌前高點到低點後 20 天內的最大值。</p>
       <p>[註2]：要回到＝本波最寬 −（三次已收復事件回吐比例的最小～最大）× 本波擴大幅度；本波最寬與目前值隨資料每日更新，若利差再擴大，目標會跟著變。</p>
-      <p>[註3]：去槓桿是反例：利差 8–9 月已回到跌前水準以下，SOX 仍未收復（最高只回到 10/6 的 13,218），利差回到目標是必要條件、不保證股價收復；僅四個樣本，為經驗觀察。</p>
+      <p>[註3]：去槓桿是反例：垃圾級利差 8 月底已回到跌前水準以下，投資級最低 77 bp，未回到跌前的 74 bp，SOX 仍未收復（最高只回到 10/6 的 13,218），利差回到目標是必要條件、不保證股價收復；僅四個樣本，為經驗觀察。</p>
+      <p>[註4]：去槓桿後，投資級利差始終沒有修復到 SOX 收復所需的水準，9 月下旬還反向擴大，超過去槓桿期間最高點。利差惡化、股價上漲的背離從 9/24 維持到 10/6，大約兩週；點「去槓桿」列可展開利差對照。</p>
     </div>
   </section>
 
@@ -418,6 +415,13 @@ const RCV_EVENTS = [
   {t:"去槓桿",           pk:"2026-06-22", lo:"2026-07-29"},
 ];
 const RCV_NOW_PK = "2026-10-06";
+// 去槓桿列點開的利差對照（靜態，數字取自 overlay.json）
+const DV_ROW = `<tr class="dv-row fold"><td colspan="8"><div class="dv-wrap"><table class="tl pe dv">
+  <thead><tr><th></th><th class="x">6/22 前高時</th><th class="x">應降到</th><th class="x">實際最低</th><th class="x">去槓桿最高</th><th class="x">背離期間最高（10/1）</th><th class="x">10/6 SOX 高點時</th></tr></thead>
+  <tbody>
+  <tr><td class="n">投資級利差 bp</td><td class="x">74</td><td class="x">≤ 76</td><td class="x"><b>77</b>（未達標）</td><td class="x">82</td><td class="x"><b>86</b></td><td class="x">83</td></tr>
+  <tr><td class="n">垃圾級利差 bp</td><td class="x">265</td><td class="x">≤ 272</td><td class="x">260（已達標）</td><td class="x">287</td><td class="x"><b>324</b></td><td class="x">303</td></tr>
+  </tbody></table></div></td></tr>`;
 // 殖利率表另外列的事件（只進表格，不畫紅點）
 const YLD_EXTRA = [
   {d:"2026-11-05", t:"CDS+民主黨勝選"},
@@ -679,10 +683,13 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
         const rec=asof(k,M[ir]), r=(wide-rec)/(wide-pre); rets[k].push(r);
         cells.push(`${pre} → ${wide} → ${rec}`, Math.round(r*100)+"%");
       }
-      return `<tr${e.t==="去槓桿"?' class="hl"':""}><td>${e.t}</td><td class="x">${ymd(e.pk)} → ${md(e.lo)}</td><td class="x">${((L/P-1)*100).toFixed(1)}%</td>`
-        +`<td class="x">${ir<0?'<span class="na">未收復</span>':ymd(M[ir])}</td>`+cells.map(c=>`<td class="x">${c}</td>`).join("")+`</tr>`;
+      const dv=e.t==="去槓桿";
+      return `<tr${dv?' class="hl dvg"':""}><td>${dv?'<span class="car">▶</span>':""}${e.t}</td><td class="x">${ymd(e.pk)} → ${md(e.lo)}</td><td class="x">${((L/P-1)*100).toFixed(1)}%</td>`
+        +`<td class="x">${ir<0?'<span class="na">未收復</span>':ymd(M[ir])}</td>`+cells.map(c=>`<td class="x">${c}</td>`).join("")+`</tr>`+(dv?DV_ROW:"");
     });
     document.getElementById("rcvHist").innerHTML=rowsH.join("");
+    const g=document.querySelector("#rcvHist tr.dvg");
+    if(g) g.addEventListener("click",()=>{ const o=g.classList.toggle("open"); g.nextElementSibling.classList.toggle("fold",!o); });
     const last=M[M.length-1];
     document.getElementById("rcvNow").innerHTML=[["oas_ig","投資級利差"],["oas_hy","垃圾級利差"]].map(([k,n])=>{
       const pre=asof(k,RCV_NOW_PK), wide=maxIn(k,RCV_NOW_PK,last), cur=asof(k,last);
