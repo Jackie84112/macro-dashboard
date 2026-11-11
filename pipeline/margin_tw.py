@@ -146,8 +146,18 @@ def recalc(windows):
     resume = max(done, default="")
     todo = [d for d in sorted(days) if d > resume]
     print(f"重算 {len(todo)} 個日期（已完成 {len(done)} 筆）", flush=True)
+    fails = 0
     for n, iso in enumerate(todo, 1):
-        v = fetch_day(iso.replace("-", ""), last)
+        try:
+            v = fetch_day(iso.replace("-", ""), last)
+            fails = 0
+        except RuntimeError as e:      # 個別日期會回攔截頁（如 2011-12-08），跳過；連續失敗才可能是限流，要停
+            v, fails = None, fails + 1
+            print(f"跳過：{e}", flush=True)
+            if fails >= 5:
+                save_hist(done, new_hist)
+                save_closes(last, new_close)
+                raise
         if v:
             done[iso] = v
         elif iso in old:      # 舊資料有、這次抓不到：保留舊值並提示
@@ -186,6 +196,38 @@ def clean_0050(px):
     breaks = [days[i] for i in range(1, len(days)) if px[days[i - 1]] / px[days[i]] > 2.5]
     cut = breaks[-1] if breaks else None
     return {d: (px[d] / 4 if cut and d < cut else px[d]) for d in days if d >= P50_START}
+
+
+def patch_0050(px, hist):
+    """Yahoo 偶有交易日整天缺值（如 2026-11-10），也會在收盤前回當天盤中價。
+    1. 台灣 14:00 前去掉當天那筆，避免盤中價入圖。
+    2. 近 40 天內有維持率卻沒有 0050 的日子，改用證交所 STOCK_DAY 原始收盤補，
+       乘上前一個共同日期的「Yahoo 還原價 ÷ 證交所收盤」換成還原口徑。"""
+    now = dt.datetime.now(TW)
+    today = now.strftime("%Y-%m-%d")
+    if now.hour < 14:
+        px.pop(today, None)
+    cutoff = (now.date() - dt.timedelta(days=40)).isoformat()
+    miss = [d for d in hist if d >= cutoff and d not in px]
+    if not miss:
+        return px
+    raw = {}
+    for ym in sorted({d[:7] for d in miss} | {min(miss)[:7]}):
+        try:
+            j = twse("afterTrading/STOCK_DAY", date=ym.replace("-", "") + "01", stockNo="0050")
+        except Exception as e:
+            print(f"證交所 0050 補值失敗：{e}")
+            continue
+        for row in j.get("data", []):
+            y, m, dd = row[0].split("/")
+            raw[f"{int(y) + 1911}-{m}-{dd}"] = num(row[6])
+    for d in sorted(miss):
+        common = [c for c in sorted(px) if c < d and c in raw and raw[c]]
+        if d in raw and raw[d] and common:
+            c = common[-1]
+            px[d] = raw[d] * px[c] / raw[c]
+            print(f"0050 {d} Yahoo 缺值，以證交所收盤 {raw[d]} 補")
+    return dict(sorted(px.items()))
 
 
 class Px:
@@ -300,7 +342,7 @@ def sensitivity(hist, px):
 def build(hist):
     old = json.loads(OUT.read_text(encoding="utf-8")) if OUT.exists() else {}
     try:
-        px = clean_0050(yahoo_0050())
+        px = patch_0050(clean_0050(yahoo_0050()), hist)
     except Exception as e:
         print(f"Yahoo 0050 失敗，沿用上次：{e}")
         if not old:
