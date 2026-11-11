@@ -52,6 +52,11 @@
   .tl-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-bottom:10px;}
   .tl-head h2{font-size:17px;font-weight:500;margin:0;letter-spacing:.3px;}
   .tl-head span{color:var(--muted);font-size:12.5px;}
+  .fold-card>summary{cursor:pointer;list-style:none;margin-bottom:0;}
+  .fold-card>summary::-webkit-details-marker{display:none;}
+  .fold-card[open]>summary{margin-bottom:10px;}
+  .fold-card .chev{margin-left:auto;align-self:center;color:var(--muted);transition:transform .15s;}
+  .fold-card[open] .chev{transform:rotate(180deg);}
   table.tl{width:100%;border-collapse:collapse;font-size:13.5px;line-height:1.65;}
   table.tl th{font-size:12px;font-weight:400;color:var(--muted);letter-spacing:1px;text-align:left;
     padding:6px 10px;border-bottom:1px solid var(--ink);white-space:nowrap;}
@@ -191,11 +196,12 @@
     </div>
   </section>
 
-  <section class="card tl-card">
-    <div class="tl-head">
+  <details class="card tl-card fold-card">
+    <summary class="tl-head">
       <h2>SOX 事件低點的公司債殖利率</h2>
       <span>10 年期公債殖利率 ＋ 信用利差（OAS）</span>
-    </div>
+      <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </summary>
     <table class="tl">
       <thead><tr><th>事件</th><th class="x">時間</th><th class="x">投資級殖利率</th><th class="x">垃圾級殖利率</th></tr></thead>
       <tbody id="evYld"></tbody>
@@ -204,7 +210,7 @@
       <p>[註1]：殖利率＝當日 10 年期公債殖利率（FRED DGS10，最近幾天以美國財政部資料補）＋當日 ICE BofA 投資級／垃圾級 OAS（FRED BAMLC0A0CM／BAMLH0A0HYM2），與上圖同一份資料；當日無資料時取前一個交易日。</p>
       <p>[註2]：OAS 是相對整條公債曲線的利差，指數存續期間不等於 10 年，加總結果為近似值，非 ICE 公布的指數殖利率。</p>
     </div>
-  </section>
+  </details>
 
   <section class="card tl-card">
     <div class="tl-head">
