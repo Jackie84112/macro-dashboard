@@ -3,8 +3,9 @@
 本機另寫 dashboard.html（Artifact 用）並更新疊圖數據 xlsx（路徑存在才寫）。
 用法：python build.py          手動月更（不顯示提示條）
       python build.py --auto   GitHub Actions 自動更新（頁首加「文字說明待更新」提示條）
+      python build.py --keep-note  每日自動（只刷新指數月線）：沿用網頁上既有提示條（有才留）
       只改版面不更新數據時：MARGIN_UPDATED=2026/10/06 python build.py（頁尾日期不變）"""
-import json, math, sys, io, os, datetime as dt
+import json, math, sys, io, os, re, datetime as dt
 import pandas as pd
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 sys.stdout.reconfigure(encoding="utf-8")
@@ -105,10 +106,14 @@ html=(tpl.replace("__DATA__",json.dumps(data,ensure_ascii=False))
          .replace("__UPDATED__",UPDATED))
 # 頁尾：指數最新月若為抓取當月 → 標註月中值日期
 fetched = ya.get("_fetched")
-idx_note = f" 為 {int(fetched[5:7])}/{int(fetched[8:10])} 月中值" if fetched and fetched[:7]==last_idx_month else ""
+_fd = dt.date.fromisoformat(fetched) if fetched else None
+idx_note = f" 為 {_fd.month}/{_fd.day} 月中值" if _fd and fetched[:7]==last_idx_month and (_fd+dt.timedelta(days=1)).month==_fd.month else ""   # 月底最後一天＝完整月收，不標月中值
 last_fin = f"{last_fin_month[:4]}/{int(last_fin_month[5:])}"   # 2026/8（不補零）
 auto_note = (f'\n      <p class="auto-note">⚠ 本頁已於 {UPDATED} 自動更新 FINRA 數據至 {last_fin}：圖表、槓桿熱度表與前兩個燈號已更新；'
              f'文字說明（各表註解、IBKR 表、Fed 救援空間表）尚待人工更新。</p>') if AUTO else ""
+if "--keep-note" in sys.argv and os.path.exists("../../margin.html"):   # 每日刷新：提示條沿用舊的（含原日期），人工月更後才消失
+    _m = re.search(r'\n\s*<p class="auto-note">.*?</p>', open("../../margin.html",encoding="utf-8").read(), re.S)
+    auto_note = _m.group(0) if _m else ""
 html=(html.replace("__AUTO_NOTE__",auto_note).replace("__LAST_FIN__",last_fin).replace("__IDX_NOTE__",idx_note))
 for tag in ("__DATA__","__BACKTEST_ROWS__","__LAST_MONTH__","__UPDATED__","__AUTO_NOTE__","__LAST_FIN__","__IDX_NOTE__"):
     assert tag not in html, tag

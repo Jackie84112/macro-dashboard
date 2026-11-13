@@ -22,11 +22,13 @@ def fetch_yahoo():
     for sym,k in [("^GSPC","spx"),("^NDX","ndx"),("^SOX","sox"),("^W5000","w5000")]:
         u=f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}?period1={p1}&period2={p2}&interval=1mo"
         rr=requests.get(u,headers=UA,timeout=60); rr.raise_for_status(); j=rr.json()
-        res=j["chart"]["result"][0]; ts=res["timestamp"]; cl=res["indicators"]["quote"][0]["close"]
+        res=j["chart"]["result"][0]; ts=res["timestamp"]
+        cl=res["indicators"]["quote"][0]["close"]
+        if sym=="^GSPC": last_trade=dt.datetime.fromtimestamp(res["meta"]["regularMarketTime"],dt.timezone.utc).strftime("%Y-%m-%d")   # 最新實際交易日（美股收盤在 UTC 同一天）
         ser={dt.datetime.fromtimestamp(t,dt.timezone.utc).strftime("%Y-%m"):c for t,c in zip(ts,cl)}
         while ser and ser[max(ser)] is None: del ser[max(ser)]   # 月初開盤前 Yahoo 會回當月空收盤，去尾避免 build 當成最新月
         out[k]=ser; print(k,len(ser),list(ser.items())[-3:])
-    out["_fetched"]=(dt.datetime.now(dt.timezone.utc)+dt.timedelta(hours=8)).strftime("%Y-%m-%d")
+    out["_fetched"]=last_trade   # 最新實際收盤日（不是抓取日，頁尾「月中值」日期才準）
     json.dump(out,open("yahoo_raw.json","w"))
 
 def fetch_ibkr():
