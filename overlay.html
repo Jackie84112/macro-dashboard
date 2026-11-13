@@ -209,16 +209,17 @@
   <details class="card tl-card fold-card">
     <summary class="tl-head">
       <h2>SOX 事件低點的公司債殖利率</h2>
-      <span>10 年期公債殖利率 ＋ 信用利差（OAS）</span>
+      <span>10 年期公債殖利率 ＋ 信用利差（OAS）｜5 年均值 4.97% / 7.46%</span>
       <svg class="chev" width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 6l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </summary>
     <table class="tl">
-      <thead><tr><th>事件</th><th class="x">時間</th><th class="x">投資級殖利率</th><th class="x">垃圾級殖利率</th></tr></thead>
+      <thead><tr><th>事件</th><th class="x">時間</th><th class="x">投資級殖利率（較均值）</th><th class="x">垃圾級殖利率（較均值）</th></tr></thead>
       <tbody id="evYld"></tbody>
     </table>
     <div class="notes">
       <p>[註1]：殖利率＝當日 10 年期公債殖利率（FRED DGS10，最近幾天以美國財政部資料補）＋當日 ICE BofA 投資級／垃圾級 OAS（FRED BAMLC0A0CM／BAMLH0A0HYM2），與上圖同一份資料；當日無資料時取前一個交易日。</p>
       <p>[註2]：OAS 是相對整條公債曲線的利差，指數存續期間不等於 10 年，加總結果為近似值，非 ICE 公布的指數殖利率。</p>
+      <p>[註3]：5 年均值＝近 5 年（2021/11/12–2026/11/9，約 1,245 個交易日）每日（10 年期公債殖利率＋OAS）的算術平均，投資級 4.97%、垃圾級 7.46%；括號內為事件日殖利率減均值（百分點）。</p>
     </div>
   </details>
 
@@ -424,6 +425,8 @@ const DV_ROW = `<tr class="dv-row fold"><td colspan="8"><div class="dv-wrap"><ta
 const YLD_EXTRA = [
   {d:"2026-11-05", t:"CDS+民主黨勝選"},
 ];
+// 近 5 年（2021/11/12–2026/11/9）日資料平均：（10Y 公債殖利率＋OAS）；FRED 只留近 3 年 ICE 資料，2021/11–2023/11 取自 FRED 2023–24 年存檔（Wayback），重疊日與現行值逐筆相同
+const YLD_AVG = {ig:4.97, hy:7.46};
 const EVENT_DAYS = 1, EVENT_MIN_W = 4, EVENT_HIT = 4;   // 底色帶寬＝事件當天；長區間至少 4px；滑鼠容許 ±4px 才點得到
 const state = {range:"all", show:{spx:true,ndx:true,sox:true,dgs10:true,oas_ig:true,oas_hy:true,events:true}};
 const cv = document.getElementById("cv"), tip = document.getElementById("tip");
@@ -661,8 +664,8 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
   const asof=(k,d)=>{ for(let i=M.length-1;i>=0;i--) if(M[i]<=d && RAW[k][i]!=null) return RAW[k][i]; return null; };
   document.getElementById("evYld").innerHTML=[...SOX_LOWS,...YLD_EXTRA].map(e=>{
     const y=asof("dgs10",e.d), ig=asof("oas_ig",e.d), hy=asof("oas_hy",e.d);
-    const f=o=>(y==null||o==null)?'<span class="na">—</span>':(y+o/100).toFixed(2)+"%";
-    return `<tr><td>${e.t.replace("（SOX 低點）","")}</td><td class="x">${e.d}</td><td class="x">${f(ig)}</td><td class="x">${f(hy)}</td></tr>`;
+    const f=(o,avg)=>{ if(y==null||o==null) return '<span class="na">—</span>'; const v=y+o/100, g=v-avg; return v.toFixed(2)+"%（"+(g>=0?"+":"−")+Math.abs(g).toFixed(2)+"%）"; };
+    return `<tr><td>${e.t.replace("（SOX 低點）","")}</td><td class="x">${e.d}</td><td class="x">${f(ig,YLD_AVG.ig)}</td><td class="x">${f(hy,YLD_AVG.hy)}</td></tr>`;
   }).join("");
   // 收復表：依 RAW 每日資料計算
   (function(){
