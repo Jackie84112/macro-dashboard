@@ -9,6 +9,11 @@ on:
 permissions:
   contents: write
 
+# 兩個排程共用同一群組，排隊執行，避免同時推送撞車
+concurrency:
+  group: repo-push
+  cancel-in-progress: false
+
 jobs:
   update:
     runs-on: ubuntu-latest
