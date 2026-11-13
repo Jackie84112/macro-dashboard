@@ -2,8 +2,8 @@ name: 融資槓桿自動更新
 
 on:
   schedule:
-    # 台灣時間週一至週六 07:30（美東前一個交易日收盤後）；FINRA 每月約第 3 週公布上月融資餘額
-    - cron: "30 23 * * 0-5"
+    # 台灣時間每天 08:00（UTC 00:00），與「更新資料」同時；FINRA 每月約第 3 週公布上月融資餘額
+    - cron: "0 0 * * *"
   workflow_dispatch:
     inputs:
       dry_run:
