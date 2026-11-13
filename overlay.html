@@ -664,7 +664,7 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
   const asof=(k,d)=>{ for(let i=M.length-1;i>=0;i--) if(M[i]<=d && RAW[k][i]!=null) return RAW[k][i]; return null; };
   document.getElementById("evYld").innerHTML=[...SOX_LOWS,...YLD_EXTRA].map(e=>{
     const y=asof("dgs10",e.d), ig=asof("oas_ig",e.d), hy=asof("oas_hy",e.d);
-    const f=(o,avg)=>{ if(y==null||o==null) return '<span class="na">—</span>'; const v=y+o/100, g=v-avg; return v.toFixed(2)+"%（"+(g>=0?"+":"−")+Math.abs(g).toFixed(2)+"%）"; };
+    const f=(o,avg)=>{ if(y==null||o==null) return '<span class="na">—</span>'; const v=y+o/100, g=v-avg; return v.toFixed(2)+'%<span class="'+(g>=0?"up":"dn")+'">（'+(g>=0?"+":"−")+Math.abs(g).toFixed(2)+"%）</span>"; };
     return `<tr><td>${e.t.replace("（SOX 低點）","")}</td><td class="x">${e.d}</td><td class="x">${f(ig,YLD_AVG.ig)}</td><td class="x">${f(hy,YLD_AVG.hy)}</td></tr>`;
   }).join("");
   // 收復表：依 RAW 每日資料計算
