@@ -188,6 +188,31 @@ def yahoo_0050():
     return dict(sorted(out.items()))
 
 
+def yahoo_soxx():
+    """SOXX（iShares 半導體 ETF）日線還原價，疊在 0050 上欄比較用（2026-11-17 使用者要求）。"""
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/SOXX?period1=0&period2={int(time.time()) + 86400}&interval=1d"
+    r = requests.get(url, headers=UA, timeout=60)
+    r.raise_for_status()
+    j = r.json()["chart"]["result"][0]
+    off = j["meta"].get("gmtoffset", 0)
+    out = {}
+    for t, a in zip(j["timestamp"], j["indicators"]["adjclose"][0]["adjclose"]):
+        day = dt.datetime.fromtimestamp(t + off, dt.timezone.utc)
+        if a is not None and day.weekday() < 5:
+            out[day.strftime("%Y-%m-%d")] = a
+    return dict(sorted(out.items()))
+
+
+def align_ffill(src, dates):
+    """美股日期對到台股交易日：取該日（含）以前最近一筆，美股休市日沿用前值。"""
+    days = sorted(src)
+    out = []
+    for d in dates:
+        k = bisect.bisect_right(days, d) - 1
+        out.append(round(src[days[k]], 2) if k >= 0 else None)
+    return out
+
+
 def clean_0050(px):
     """Yahoo 的 0050 有兩個問題（2026-11-09 與加權指數逐日比對確認）：
     1. 2025/6 一拆四只還原到 2014-01-02，再往前仍是原價，當天出現假的 −75%，要把斷點前除以 4。
@@ -348,6 +373,11 @@ def build(hist):
         if not old:
             raise
         px = {d: v for d, v in zip(old["dates"], old["p50"]) if v is not None}
+    try:
+        soxx = yahoo_soxx()
+    except Exception as e:
+        print(f"Yahoo SOXX 失敗，沿用上次：{e}")
+        soxx = {d: v for d, v in zip(old.get("dates", []), old.get("soxx", [])) if v is not None}
     p = Px(px)
     now = dt.datetime.now(TW)
     today = now.strftime("%Y-%m-%d")
@@ -370,6 +400,7 @@ def build(hist):
     res = {"updated": now.strftime("%Y/%m/%d %H:%M"), "peakDate": peak,
            "dates": dates,
            "p50": [round(px[d], 2) if d in px else None for d in dates],
+           "soxx": align_ffill(soxx, dates) if soxx else [None] * len(dates),
            "ratio": [hist[d][0] if d in hist else None for d in dates],
            "fin": [hist[d][1] if d in hist else None for d in dates],
            "zones": zs, "zoneStart": z0, "zoneEnd": z1, "events": events(hist, p), "sens": sensitivity(hist, p), "recent": recent,
