@@ -153,8 +153,8 @@
     </div>
     <div class="grp"><span class="lbl">下欄指標</span>
       <button class="tog" data-s="yoy" style="--dc:#1D7A46"><span class="dot"></span>融資年增率</button>
-      <button class="tog" data-s="ncNew" style="--dc:#E11D48"><span class="dot"></span>IBKR 暫估（最新）</button>
-      <button class="tog" data-s="ncHist" style="--dc:#E11D48"><span class="dot"></span>IBKR 暫估（歷史）</button>
+      <button class="tog" data-s="ncNew" style="--dc:#E11D48"><span class="dot"></span>暫估（最新）</button>
+      <button class="tog" data-s="ncHist" style="--dc:#E11D48"><span class="dot"></span>暫估（歷史）</button>
     </div>
     <div class="grp"><span class="lbl">底色區間</span>
       <button class="tog" data-s="hotZone" style="--dc:#E8806F" title="融資年增率 ≥40%"><span class="dot"></span>融資年增≥40%</button>
@@ -169,19 +169,20 @@
 
   <section class="card jump" id="t-dir">
     <h2 class="lead-h">槓桿方向：融資年增率</h2>
-    <h3 class="sub-h">IBKR 暫估 vs. 實際</h3>
+    <h3 class="sub-h">暫估 vs. 實際</h3>
     <div class="tablewrap">
     <table class="big">
       <tr><th>月份</th><th>IBKR MoM</th><th>暫估 FINRA MoM</th><th>實際 FINRA MoM</th><th>暫估 YoY</th><th>實際 YoY</th><th>YoY 誤差</th></tr>
       <tr><td>8 月</td><td class="pos">+1%</td><td>+0.6%</td><td class="pos">+2.6%</td><td>34.5%</td><td>37.2%</td><td>−2.7pp</td></tr>
       <tr><td>9 月</td><td class="pos">+4%</td><td>+2.1%</td><td class="pos">+1.8%</td><td>31.7%</td><td>31.4%</td><td>+0.3pp</td></tr>
       <tr><td>10 月</td><td class="pos">+2%</td><td>+1.1%</td><td class="neg">−2.1%</td><td>26.4%</td><td>22.4%</td><td>+4.0pp</td></tr>
-      <tr class="act"><td><b>11 月</b></td><td>12/1 公佈</td><td>—</td><td>12 月下旬公佈</td><td>—</td><td>—</td><td>—</td></tr>
+      <tr class="act"><td><b>11 月</b></td><td>12/1 公佈</td><td class="neg">−2.6%（指數回歸）</td><td>12 月下旬公佈</td><td>16.2%</td><td>—</td><td>—</td></tr>
     </table>
     </div>
     <p class="note lead" style="margin-bottom:0">[註1]：IBKR（盈透證券）每月 1 號公佈上月客戶融資餘額，比 FINRA 早約 3 週。</p>
     <p class="note lead" style="margin:2px 0 0">[註2]：11 月 YoY = 19.3% + 1.193 × FINRA 11 月 MoM；去年 11 月總額為 $1,214,321M，MoM 持平時 YoY 為 19.3%，要回到 10 月的 22.4% 需 MoM +2.6%。</p>
     <p class="note lead" style="margin-top:2px">[註3]：10 月 IBKR +2% 落在 ±3% 內，不判方向；實際 FINRA 10 月總額 $1,448,360M、MoM −2.1%，與暫估 +1.1% 差 3.2pp、方向相反，YoY 實際 22.4% 恰落在暫估區間下緣（22.3–30.5%）。同月 SOX −15.4%，FINRA 反映去槓桿而 IBKR 未動，屬「IBKR 沒動 ≠ 市場沒動」盲點。</p>
+    <p class="note lead" style="margin-top:2px">[註4]：11 月 IBKR 要 12/1 才公佈，先以指數回歸暫估（紅虛線）：以 2017/1–2026/10 共 118 個月擬合 FINRA MoM ≈ 0.03 + 0.43 × SPX 當月漲跌 + 0.17 × SOX 當月漲跌（R² 0.59，樣本外誤差 ±3.0pp，優於用歷史平均的 ±4.2pp）。代入 11 月至 11/16 的 SPX −2.2%、SOX −10.1%，得 MoM −2.6%，YoY = 10 月總額 $1,448,360M × (1 − 2.6%) ÷ 去年 11 月 $1,214,321M − 1 ≈ 16.2%（區間 12.6%–19.8%）。方向較確定：2017 年以來 SOX 單月跌逾 8% 的 12 個月，FINRA MoM 全為負。11 月尚未結束，指數後續漲跌會改變暫估，12/1 IBKR 出爐後改用 IBKR 換算。</p>
     <h3 class="sub-h" style="margin-top:18px">換算方式</h3>
     <div class="tablewrap">
     <table>
@@ -225,7 +226,7 @@ __BACKTEST_ROWS__
     <p class="note lead" style="margin-top:2px">[註3]：樣本僅 7 次，且 2007 為反例（降息 13 碼仍崩跌），本表為背景參考，非交易規則。</p>
   </section>
 
-  <footer><div>資料：FINRA Margin Statistics（滯後約 1 個月）｜Yahoo Finance 指數月收｜IBKR Monthly Brokerage Metrics（次月 1 號）</div><div>最後更新 __UPDATED__（融資數據至 __LAST_FIN__，指數月線至 __LAST_MONTH____IDX_NOTE__，IBKR 至 2026/10；紅色虛線段 = IBKR 暫估路徑，保留供對帳）</div></footer>
+  <footer><div>資料：FINRA Margin Statistics（滯後約 1 個月）｜Yahoo Finance 指數月收｜IBKR Monthly Brokerage Metrics（次月 1 號）</div><div>最後更新 __UPDATED__（融資數據至 __LAST_FIN__，指數月線至 __LAST_MONTH____IDX_NOTE__，IBKR 至 2026/10；紅色虛線段 = 暫估路徑（IBKR 換算；11 月為指數回歸），保留供對帳）</div></footer>
 </div>
 <script>
 const RAW = __DATA__;
@@ -447,7 +448,7 @@ function draw(){
   // panel titles
   ctx.textAlign="left"; ctx.fillStyle="#6B7178"; ctx.font="11.5px 'Noto Sans TC','Microsoft JhengHei',sans-serif";
   const t2=[];
-  if(state.show.yoy) t2.push("融資餘額年增率 %（左軸，紅點線 = 40% 警戒，紅虛線段 = IBKR 暫估）");
+  if(state.show.yoy) t2.push("融資餘額年增率 %（左軸，紅點線 = 40% 警戒，紅虛線段 = 暫估，FINRA 未出月份）");
   if(state.show.ratio) t2.push("融資／市值比 %（右軸，琥珀帶 = 1.5–2.2% 常態，虛線 = 2.5%）");
   ctx.fillText(t2.join("　×　"), padL, h2t-8);
 
@@ -482,12 +483,12 @@ function renderTip(ev){
     if(prev!=null) html+=`<div class="r"><i style="--dc:#8A9097">月變動</i><b>${((mar/prev-1)*100).toFixed(1)}%</b></div>`;
     if(yoy!=null&&state.show.yoy) html+=`<div class="r"><i style="--dc:#1D7A46">年增率</i><b style="color:${yoy>=40?'#FF9384':'#B4E3C6'}">${yoy>=0?"+":""}${yoy.toFixed(1)}%</b></div>`;
     if(ncHit&&state.show.yoy&&ncOn(ncHit)){ const e=ncHit.yoy-yoy;
-      html+=`<div class="r"><i style="--dc:#E11D48">IBKR 暫估</i><b style="color:#FF9384">${ncHit.yoy.toFixed(1)}%（誤差 ${e>=0?"+":""}${e.toFixed(1)}pp）</b></div>`; }
+      html+=`<div class="r"><i style="--dc:#E11D48">${ncHit.src||"IBKR 暫估"}</i><b style="color:#FF9384">${ncHit.yoy.toFixed(1)}%（誤差 ${e>=0?"+":""}${e.toFixed(1)}pp）</b></div>`; }
     const rat=RAW.ratio[hoverI];
     if(rat!=null&&state.show.ratio) html+=`<div class="r"><i style="--dc:#D97706">融資/市值</i><b style="color:${rat>=2.5?'#FF9384':'#F5C36B'}">${rat.toFixed(2)}%</b></div>`;
   } else {
     html+=`<div class="r"><i style="--dc:#22262B">融資餘額</i><b>FINRA 未公佈</b></div>`;
-    if(ncHit&&state.show.yoy&&ncOn(ncHit)) html+=`<div class="r"><i style="--dc:#E11D48">IBKR 暫估</i><b style="color:#FF9384">${ncHit.yoy.toFixed(1)}%</b></div>`;
+    if(ncHit&&state.show.yoy&&ncOn(ncHit)) html+=`<div class="r"><i style="--dc:#E11D48">${ncHit.src||"IBKR 暫估"}</i><b style="color:#FF9384">${ncHit.yoy.toFixed(1)}%</b></div>`;
   }
   const nm={spx:"S&P 500",ndx:"Nasdaq-100",sox:"SOX"};
   for(const k of ["spx","ndx","sox"]){ if(!state.show[k]) continue; const v=RAW[k][hoverI];
@@ -540,7 +541,7 @@ window.addEventListener("resize", draw);
   out.push({to:"t-dir", name:"槓桿方向：融資年增率",
     level: (sk==="C"||sk==="D")?"red":(sk==="B"?"yellow":"green"),
     why: STAGE_NOW.i<0 ? "" : (() => { const i=STAGE_NOW.i, est=RAW.yoy[i]==null, y=est?NCS.find(o=>o.month===M[i]).yoy:RAW.yoy[i];
-      return `${y.toFixed(1)}%（${M[i].replace("-","/")}${est?" IBKR 暫估":""}）｜${sk} ${{A:"累積",B:"風險出現",C:"背離",D:"轉負"}[sk]}`; })(),
+      return `${y.toFixed(1)}%（${M[i].replace("-","/")}${est?" "+(NCS.find(o=>o.month===M[i]).src||"IBKR 暫估"):""}）｜${sk} ${{A:"累積",B:"風險出現",C:"背離",D:"轉負"}[sk]}`; })(),
     rule:[["r","警示：C 背離或 D 轉負"],["y","注意：B 風險出現"],["g","正常：A 累積"]]});
   // ③ Fed 救援空間：最近一次 FOMC 決議（fed.json 手動維護）
   const F=RAW.fed;
