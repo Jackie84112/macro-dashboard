@@ -686,19 +686,21 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
         const pre=asof(k,e.pk), wide=maxIn(k,e.pk,last), cur=asof(k,last);
         const lo=Math.min(...rets[k]), hi=Math.max(...rets[k]);
         const a=Math.round(wide-hi*(wide-pre)), b=Math.round(wide-lo*(wide-pre)), need=a===b?`${a}`:`${a}–${b}`;
-        // 進度＝利差從本波最寬往目標底部（與下方折線圖同一個底：SPRK floor 85/303）走了幾成；豎線＝SOX 回補進度（利差應同步走到的位置）
-        const tgt=SPRK.find(s=>s.k===k).floor, g=Math.max(0,Math.min(1,(wide-cur)/(wide-tgt)));
+        // 進度＝利差從本波低點日（11/5）當天值往目標底部走了幾成（與下方折線圖同一算法，不設上下限）；豎線＝SOX 回補進度
+        const g=prog(e,k,cur), gw=Math.max(0,Math.min(1,g));
         const ticks=`<b style="left:${(Math.max(0,Math.min(1,p))*100).toFixed(1)}%" title="SOX 回補 ${Math.round(p*100)}%"></b>`;
         return `<tr><td class="n">${n}</td><td class="x">${pre} bp</td><td class="x">${wide} bp</td><td class="x">${cur} bp</td><td class="x"><b>${need} bp</b></td>`
-          +`<td class="x"><span class="rt"><i style="width:${(g*100).toFixed(1)}%"></i>${ticks}</span><span class="rtv">${Math.round(g*100)}%</span></td></tr>`;
+          +`<td class="x"><span class="rt"><i style="width:${(gw*100).toFixed(1)}%"></i>${ticks}</span><span class="rtv"${g<0?' style="color:#DC2626"':g>=1?' style="color:#15803D"':""}>${Math.round(g*100)}%</span></td></tr>`;
       }).join("");
       return `<tr class="dv-row fold"><td colspan="8"><div class="dv-wrap"><table class="tl pe dv">
         <thead><tr><th class="sub-h">SOX 回補 ${Math.round(p*100)}%（${Math.round(L).toLocaleString()} → ${Math.round(C).toLocaleString()}，目標 ${Math.round(P).toLocaleString()}）</th><th class="x">${md(e.pk)} 高點當天</th><th class="x">本波最寬</th><th class="x">目前</th><th class="x">要回到</th><th class="x">目前進度</th></tr></thead>
         <tbody>${rows}</tbody></table>
         <div class="sprk">${SPRK.map(s=>spark(e,s)).join("")}</div>
-        <div class="notes"><p>[註1]：${md(e.lo)} 起每日 ICE BofA OAS（FRED，晚一個交易日公布）；紅虛線＝監控目標低點，投資級 ${SPRK[0].floor} bp、垃圾級 ${SPRK[1].floor} bp，Y 軸底部即目標。</p><p>[註2]：滑鼠移到圖上，十字虛線右端顯示當日「往底部進度」＝（本波最寬 − 當日）÷（本波最寬 − 目標底部），與上方紅色進度條同一算法。</p></div>
+        <div class="notes"><p>[註1]：${md(e.lo)} 起每日 ICE BofA OAS（FRED，晚一個交易日公布）；紅虛線＝監控目標低點，投資級 ${SPRK[0].floor} bp、垃圾級 ${SPRK[1].floor} bp，Y 軸底部即目標。</p><p>[註2]：滑鼠移到圖上，十字虛線右端顯示當日「往底部進度」＝（${md(e.lo)} 當日 − 當日）÷（${md(e.lo)} 當日 − 目標底部），與上方紅色進度條同一算法；利差比 ${md(e.lo)} 還寬為負值，低於目標底部則超過 100%。</p></div>
         </div></td></tr>`;
     };
+    // 往底部進度：0%＝本波 SOX 低點日當天利差，100%＝目標底部；不設上下限（更寬為負、過頭超過 100%）
+    const prog=(e,k,v)=>{ const b=asof(k,e.lo), f=SPRK.find(s=>s.k===k).floor; return (b-v)/(b-f); };
     // 本波低點以來的每日利差折線（Y 軸底部＝目標低點）
     const SPRK=[{k:"oas_ig",n:"投資級利差",floor:85,c:"#1D7A46"},{k:"oas_hy",n:"垃圾級利差",floor:303,c:"#22262B"}];
     const spark=(e,s)=>{
@@ -719,10 +721,10 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
       pts.forEach((p,i)=>{ g+=`<circle cx="${X(i)}" cy="${Y(p[1])}" r="${i===n-1?3.5:2.5}" fill="${s.c}"><title>${md(p[0])}：${p[1]} bp</title></circle>`;
         if(lab||i===n-1) g+=`<text x="${X(i)}" y="${Y(p[1])-7}" text-anchor="middle" fill="${i===n-1?s.c:"#5F656C"}"${i===n-1?' font-weight="700"':""}>${p[1]}</text>`; });
       const first=pts[0][1], cur=pts[n-1][1], d=cur-s.floor;
-      // 滑鼠十字線：往底部進度＝利差從本波最寬（${e.pk} 起）往目標底部走了幾成
-      const wide=maxIn(s.k,e.pk,last), pg=v=>Math.round(Math.max(0,Math.min(1,(wide-v)/(wide-s.floor)))*100);
+      // 滑鼠十字線：往底部進度（同紅條，見 prog）
+      const pg=v=>Math.round(prog(e,s.k,v)*100);
       const J={x:pts.map((p,i)=>+X(i).toFixed(1)),y:pts.map(p=>+Y(p[1]).toFixed(1)),v:pts.map(p=>p[1]),d:pts.map(p=>md(p[0])),p:pts.map(p=>pg(p[1])),
-        l:pl,r:W-pr,t:pt,b:H-pb,w:wide,c:s.c};
+        l:pl,r:W-pr,t:pt,b:H-pb,c:s.c};
       g+=`<g class="xh" style="display:none;pointer-events:none"><line class="xv" stroke="#8C9096" stroke-dasharray="3 3"/><line class="xz" stroke="#8C9096" stroke-dasharray="3 3"/>`
         +`<circle r="4.5" fill="#fff" stroke="${s.c}" stroke-width="2"/><rect rx="3" fill="#fff" stroke="#D9D6CF"/><text class="xt1"/><text class="xt2" font-weight="700"/></g>`
         +`<rect x="${pl}" y="0" width="${W-pl}" height="${H}" fill="transparent"/>`;
