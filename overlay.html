@@ -726,7 +726,7 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
       g+=`<g class="xh" style="display:none;pointer-events:none"><line class="xv" stroke="#8C9096" stroke-dasharray="3 3"/><line class="xz" stroke="#8C9096" stroke-dasharray="3 3"/>`
         +`<circle r="4.5" fill="#fff" stroke="${s.c}" stroke-width="2"/><rect rx="3" fill="#fff" stroke="#D9D6CF"/><text class="xt1"/><text class="xt2" font-weight="700"/></g>`
         +`<rect x="${pl}" y="0" width="${W-pl}" height="${H}" fill="transparent"/>`;
-      return `<div class="sp"><div class="sp-h"><b>${s.n}</b>　${md(pts[0][0])} ${first} → ${md(pts[n-1][0])} <b>${cur}</b> bp　<span class="${d>0?"up":"dn"}">${d>0?`距目標 ${d} bp`:"已達目標"}</span></div>`
+      return `<div class="sp"><div class="sp-h"><b>${s.n}</b>　<span class="${d>0?"up":"dn"}">${d>0?`距目標 ${d} bp`:"已達目標"}</span></div>`
         +`<svg class="spsvg" data-j='${JSON.stringify(J)}' viewBox="0 0 ${W} ${H}" font-size="11" font-family="'Noto Sans TC',sans-serif">${g}</svg></div>`;
     };
     const rowsH=RCV_EVENTS.map(e=>{
