@@ -686,8 +686,8 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
         const pre=asof(k,e.pk), wide=maxIn(k,e.pk,last), cur=asof(k,last);
         const lo=Math.min(...rets[k]), hi=Math.max(...rets[k]);
         const a=Math.round(wide-hi*(wide-pre)), b=Math.round(wide-lo*(wide-pre)), need=a===b?`${a}`:`${a}–${b}`;
-        // 進度＝利差從本波最寬往「要回到」中點走了幾成；豎線＝SOX 回補進度（利差應同步走到的位置）
-        const tgt=wide-(lo+hi)/2*(wide-pre), g=Math.max(0,Math.min(1,(wide-cur)/(wide-tgt)));
+        // 進度＝利差從本波最寬往目標底部（與下方折線圖同一個底：SPRK floor 85/303）走了幾成；豎線＝SOX 回補進度（利差應同步走到的位置）
+        const tgt=SPRK.find(s=>s.k===k).floor, g=Math.max(0,Math.min(1,(wide-cur)/(wide-tgt)));
         const ticks=`<b style="left:${(Math.max(0,Math.min(1,p))*100).toFixed(1)}%" title="SOX 回補 ${Math.round(p*100)}%"></b>`;
         return `<tr><td class="n">${n}</td><td class="x">${pre} bp</td><td class="x">${wide} bp</td><td class="x">${cur} bp</td><td class="x"><b>${need} bp</b></td>`
           +`<td class="x"><span class="rt"><i style="width:${(g*100).toFixed(1)}%"></i>${ticks}</span><span class="rtv">${Math.round(g*100)}%</span></td></tr>`;
@@ -696,7 +696,7 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
         <thead><tr><th class="sub-h">SOX 回補 ${Math.round(p*100)}%（${Math.round(L).toLocaleString()} → ${Math.round(C).toLocaleString()}，目標 ${Math.round(P).toLocaleString()}）</th><th class="x">${md(e.pk)} 高點當天</th><th class="x">本波最寬</th><th class="x">目前</th><th class="x">要回到</th><th class="x">目前進度</th></tr></thead>
         <tbody>${rows}</tbody></table>
         <div class="sprk">${SPRK.map(s=>spark(e,s)).join("")}</div>
-        <div class="notes"><p>[註1]：${md(e.lo)} 起每日 ICE BofA OAS（FRED，晚一個交易日公布）；紅虛線＝監控目標低點，投資級 ${SPRK[0].floor} bp、垃圾級 ${SPRK[1].floor} bp，Y 軸底部即目標。</p><p>[註2]：滑鼠移到圖上，十字虛線右端顯示當日「往底部進度」＝（本波最寬 − 當日）÷（本波最寬 − 目標底部）；上方紅色進度條的目標是「要回到」區間中點，所以數字會略高於本圖。</p></div>
+        <div class="notes"><p>[註1]：${md(e.lo)} 起每日 ICE BofA OAS（FRED，晚一個交易日公布）；紅虛線＝監控目標低點，投資級 ${SPRK[0].floor} bp、垃圾級 ${SPRK[1].floor} bp，Y 軸底部即目標。</p><p>[註2]：滑鼠移到圖上，十字虛線右端顯示當日「往底部進度」＝（本波最寬 − 當日）÷（本波最寬 − 目標底部），與上方紅色進度條同一算法。</p></div>
         </div></td></tr>`;
     };
     // 本波低點以來的每日利差折線（Y 軸底部＝目標低點）
