@@ -105,6 +105,10 @@
   .rt b{position:absolute;top:-3px;bottom:-3px;width:1px;background:#8C9096;}
   .rtv{display:inline-block;width:42px;text-align:right;}
   table.dv .sub-h{color:var(--muted);font-size:12px;}
+  .sprk{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:14px;}
+  .sprk .sp-h{font-size:13px;margin-bottom:4px;white-space:normal;}
+  .sprk svg{width:100%;height:auto;display:block;}
+  @media (max-width:640px){ .sprk{grid-template-columns:1fr;} }
   table.rcv tr.dv-row>td{padding:4px 0 12px 24px;background:#FAF9F6;}
   table.rcv tr.dv-row:hover{background:none;}
   table.pe tr.total td{font-weight:700;background:#FAF9F6;}
@@ -690,7 +694,33 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
       }).join("");
       return `<tr class="dv-row fold"><td colspan="8"><div class="dv-wrap"><table class="tl pe dv">
         <thead><tr><th class="sub-h">SOX 回補 ${Math.round(p*100)}%（${Math.round(L).toLocaleString()} → ${Math.round(C).toLocaleString()}，目標 ${Math.round(P).toLocaleString()}）</th><th class="x">${md(e.pk)} 高點當天</th><th class="x">本波最寬</th><th class="x">目前</th><th class="x">要回到</th><th class="x">目前進度</th></tr></thead>
-        <tbody>${rows}</tbody></table></div></td></tr>`;
+        <tbody>${rows}</tbody></table>
+        <div class="sprk">${SPRK.map(s=>spark(e,s)).join("")}</div>
+        <div class="notes"><p>[註1]：${md(e.lo)} 起每日 ICE BofA OAS（FRED，晚一個交易日公布）；紅虛線＝監控目標低點，投資級 ${SPRK[0].floor} bp、垃圾級 ${SPRK[1].floor} bp，Y 軸底部即目標。</p></div>
+        </div></td></tr>`;
+    };
+    // 本波低點以來的每日利差折線（Y 軸底部＝目標低點）
+    const SPRK=[{k:"oas_ig",n:"投資級利差",floor:85,c:"#1D7A46"},{k:"oas_hy",n:"垃圾級利差",floor:303,c:"#22262B"}];
+    const spark=(e,s)=>{
+      const pts=[]; for(let i=0;i<M.length;i++) if(M[i]>=e.lo && RAW[s.k][i]!=null) pts.push([M[i],RAW[s.k][i]]);
+      if(!pts.length) return "";
+      const W=460,H=200,pl=40,pr=14,pt=24,pb=26, n=pts.length;
+      const mx=Math.max(...pts.map(p=>p[1])), span=Math.max(mx-s.floor,4), stp=span<=12?2:span<=30?5:span<=60?10:20;
+      const yMax=Math.ceil((mx+span*0.15)/stp)*stp;
+      const X=i=>pl+16+(n<2?0.5:i/(n-1))*(W-pl-pr-32), Y=v=>pt+(yMax-v)/(yMax-s.floor)*(H-pt-pb);
+      let g="";
+      for(let v=Math.ceil(s.floor/stp)*stp; v<=yMax; v+=stp){ if(v===s.floor) continue;
+        g+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="rgba(0,0,0,.07)"/><text x="${pl-6}" y="${Y(v)+3.5}" text-anchor="end" fill="#8A9097">${v}</text>`; }
+      g+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(s.floor)}" y2="${Y(s.floor)}" stroke="#DC2626" stroke-dasharray="4 3"/><text x="${pl-6}" y="${Y(s.floor)+3.5}" text-anchor="end" fill="#DC2626">${s.floor}</text>`;
+      const every=Math.ceil(n/9);
+      pts.forEach((p,i)=>{ if(i%every===0||i===n-1) g+=`<text x="${X(i)}" y="${H-8}" text-anchor="middle" fill="#8A9097">${md(p[0])}</text>`; });
+      g+=`<polyline fill="none" stroke="${s.c}" stroke-width="2" points="${pts.map((p,i)=>X(i).toFixed(1)+","+Y(p[1]).toFixed(1)).join(" ")}"/>`;
+      const lab=n<=15;
+      pts.forEach((p,i)=>{ g+=`<circle cx="${X(i)}" cy="${Y(p[1])}" r="${i===n-1?3.5:2.5}" fill="${s.c}"><title>${md(p[0])}：${p[1]} bp</title></circle>`;
+        if(lab||i===n-1) g+=`<text x="${X(i)}" y="${Y(p[1])-7}" text-anchor="middle" fill="${i===n-1?s.c:"#5F656C"}"${i===n-1?' font-weight="700"':""}>${p[1]}</text>`; });
+      const first=pts[0][1], cur=pts[n-1][1], d=cur-s.floor;
+      return `<div class="sp"><div class="sp-h"><b>${s.n}</b>　${md(pts[0][0])} ${first} → ${md(pts[n-1][0])} <b>${cur}</b> bp　<span class="${d>0?"up":"dn"}">${d>0?`距目標 ${d} bp`:"已達目標"}</span></div>`
+        +`<svg viewBox="0 0 ${W} ${H}" font-size="11" font-family="'Noto Sans TC',sans-serif">${g}</svg></div>`;
     };
     const rowsH=RCV_EVENTS.map(e=>{
       const ip=idx(e.pk), il=idx(e.lo), P=RAW.sox[ip], L=RAW.sox[il];
@@ -704,7 +734,7 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
       }
       if(ir>=0) hist.push(h);
       const dv=e.t==="去槓桿", fold=dv||e.now;
-      return {e, html:`<tr class="${[dv?"hl":"",fold?"dvg":""].join(" ").trim()}"><td>${fold?'<span class="car">▶</span>':""}${e.t}</td><td class="x">${ymd(e.pk)} → ${md(e.lo)}</td><td class="x">${((L/P-1)*100).toFixed(1)}%</td>`
+      return {e, html:`<tr class="${[e.now?"hl":"",fold?"dvg":""].join(" ").trim()}"><td>${fold?'<span class="car">▶</span>':""}${e.t}</td><td class="x">${ymd(e.pk)} → ${md(e.lo)}</td><td class="x">${((L/P-1)*100).toFixed(1)}%</td>`
         +`<td class="x">${ir<0?'<span class="na">未收復</span>':ymd(M[ir])}</td>`+cells.map(c=>`<td class="x">${c}</td>`).join("")+`</tr>`+(dv?DV_ROW:"")};
     });
     // 本波的展開表要用到全部已收復事件，最後才組
