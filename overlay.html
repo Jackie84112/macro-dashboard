@@ -696,7 +696,7 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
         <thead><tr><th class="sub-h">SOX 回補 ${Math.round(p*100)}%（${Math.round(L).toLocaleString()} → ${Math.round(C).toLocaleString()}，目標 ${Math.round(P).toLocaleString()}）</th><th class="x">${md(e.pk)} 高點當天</th><th class="x">本波最寬</th><th class="x">目前</th><th class="x">要回到</th><th class="x">目前進度</th></tr></thead>
         <tbody>${rows}</tbody></table>
         <div class="sprk">${SPRK.map(s=>spark(e,s)).join("")}</div>
-        <div class="notes"><p>[註1]：${md(e.lo)} 起每日 ICE BofA OAS（FRED，晚一個交易日公布）；紅虛線＝監控目標低點，投資級 ${SPRK[0].floor} bp、垃圾級 ${SPRK[1].floor} bp，Y 軸底部即目標。</p><p>[註2]：滑鼠移到圖上顯示當日「往底部進度」＝（本波最寬 − 當日）÷（本波最寬 − 目標底部）；上方紅色進度條的目標是「要回到」區間中點，所以數字會略高於本圖。</p></div>
+        <div class="notes"><p>[註1]：${md(e.lo)} 起每日 ICE BofA OAS（FRED，晚一個交易日公布）；紅虛線＝監控目標低點，投資級 ${SPRK[0].floor} bp、垃圾級 ${SPRK[1].floor} bp，Y 軸底部即目標。</p><p>[註2]：滑鼠移到圖上，十字虛線右端顯示當日「往底部進度」＝（本波最寬 − 當日）÷（本波最寬 − 目標底部）；上方紅色進度條的目標是「要回到」區間中點，所以數字會略高於本圖。</p></div>
         </div></td></tr>`;
     };
     // 本波低點以來的每日利差折線（Y 軸底部＝目標低點）
@@ -704,7 +704,7 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
     const spark=(e,s)=>{
       const pts=[]; for(let i=0;i<M.length;i++) if(M[i]>=e.lo && RAW[s.k][i]!=null) pts.push([M[i],RAW[s.k][i]]);
       if(!pts.length) return "";
-      const W=460,H=200,pl=40,pr=14,pt=24,pb=26, n=pts.length;
+      const W=460,H=200,pl=40,pr=44,pt=24,pb=26, n=pts.length;
       const mx=Math.max(...pts.map(p=>p[1])), span=Math.max(mx-s.floor,4), stp=span<=12?2:span<=30?5:span<=60?10:20;
       const yMax=Math.ceil((mx+span*0.15)/stp)*stp;
       const X=i=>pl+16+(n<2?0.5:i/(n-1))*(W-pl-pr-32), Y=v=>pt+(yMax-v)/(yMax-s.floor)*(H-pt-pb);
@@ -724,7 +724,7 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
       const J={x:pts.map((p,i)=>+X(i).toFixed(1)),y:pts.map(p=>+Y(p[1]).toFixed(1)),v:pts.map(p=>p[1]),d:pts.map(p=>md(p[0])),p:pts.map(p=>pg(p[1])),
         l:pl,r:W-pr,t:pt,b:H-pb,w:wide,c:s.c};
       g+=`<g class="xh" style="display:none;pointer-events:none"><line class="xv" stroke="#8C9096" stroke-dasharray="3 3"/><line class="xz" stroke="#8C9096" stroke-dasharray="3 3"/>`
-        +`<circle r="4.5" fill="#fff" stroke="${s.c}" stroke-width="2"/><rect rx="4" fill="#fff" stroke="#D9D6CF"/><text class="xt1" fill="#22262B" font-weight="700"/><text class="xt2"/></g>`
+        +`<circle r="4.5" fill="#fff" stroke="${s.c}" stroke-width="2"/><rect rx="3" fill="#fff" stroke="#D9D6CF"/><text class="xt1"/><text class="xt2" font-weight="700"/></g>`
         +`<rect x="${pl}" y="0" width="${W-pl}" height="${H}" fill="transparent"/>`;
       return `<div class="sp"><div class="sp-h"><b>${s.n}</b>　${md(pts[0][0])} ${first} → ${md(pts[n-1][0])} <b>${cur}</b> bp　<span class="${d>0?"up":"dn"}">${d>0?`距目標 ${d} bp`:"已達目標"}</span></div>`
         +`<svg class="spsvg" data-j='${JSON.stringify(J)}' viewBox="0 0 ${W} ${H}" font-size="11" font-family="'Noto Sans TC',sans-serif">${g}</svg></div>`;
@@ -757,11 +757,10 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
         const x=J.x[i], y=J.y[i];
         G.style.display="";
         set(lv,{x1:x,x2:x,y1:J.t,y2:J.b}); set(lh,{x1:J.l,x2:J.r,y1:y,y2:y}); set(dot,{cx:x,cy:y});
-        t1.textContent=`${J.d[i]}　${J.v[i]} bp`; t2.textContent=`往底部進度 ${J.p[i]}%`; t2.setAttribute("fill",J.p[i]>=100?"#15803D":"#DC2626");
-        const bw=Math.max(t1.getComputedTextLength(),t2.getComputedTextLength())+16, bh=38;
-        let bx=x+10; if(bx+bw>J.r) bx=x-10-bw;
-        let by=y-bh-8; if(by<2) by=y+8;
-        set(box,{x:bx,y:by,width:bw,height:bh}); set(t1,{x:bx+8,y:by+15}); set(t2,{x:bx+8,y:by+31});
+        // 百分比放在水平虛線右端（當天 bp 圖上已標，不另出浮標）
+        t2.textContent=`${J.p[i]}%`; t2.setAttribute("fill",J.p[i]>=100?"#15803D":"#DC2626");
+        const bw=t2.getComputedTextLength()+8, bh=16, bx=J.r+3, by=y-bh/2;
+        set(box,{x:bx,y:by,width:bw,height:bh}); set(t2,{x:bx+4,y:by+12});
       });
       sv.addEventListener("pointerleave",()=>{ G.style.display="none"; });
     });
