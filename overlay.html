@@ -96,6 +96,8 @@
   table.rcv tr.hl td{background:#F9ECE7;}
   .dv-wrap{overflow-x:auto;}
   table.dv td.n{white-space:nowrap;}
+  table.dv td.n a.src{color:inherit;text-decoration:underline dotted;text-underline-offset:3px;}
+  table.dv td.n a.src:hover{color:#2563EB;text-decoration-style:solid;}
   table.rcv tr.dvg{cursor:pointer;}
   table.rcv tr.dvg .car{display:inline-block;width:14px;color:var(--muted);font-size:10px;transition:transform .15s;}
   table.rcv tr.dvg.open .car{transform:rotate(90deg);}
@@ -678,18 +680,18 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
     const addDays=(d,n)=>{ const t=new Date(d+"T00:00:00Z"); t.setUTCDate(t.getUTCDate()+n); return t.toISOString().slice(0,10); };
     const maxIn=(k,a,b)=>{ let m=-Infinity; for(let i=0;i<M.length;i++){ if(M[i]>=a&&M[i]<=b&&RAW[k][i]!=null) m=Math.max(m,RAW[k][i]); } return m; };
     const na='<span class="na">—</span>', rets={oas_ig:[],oas_hy:[]}, hist=[], last=M[M.length-1];
-    const K=[["oas_ig","投資級利差"],["oas_hy","垃圾級利差"]];
+    const K=[["oas_ig","投資級利差","https://fred.stlouisfed.org/series/BAMLC0A0CM"],["oas_hy","垃圾級利差","https://fred.stlouisfed.org/series/BAMLH0A0HYM2"]];
     // 本波展開表：要回到＋目前進度（藍條＝利差往目標走了幾成；豎線＝SOX 回補進度）
     const nowRow=e=>{
       const P=RAW.sox[idx(e.pk)], L=RAW.sox[idx(e.lo)], C=RAW.sox[idx(last)], p=(C-L)/(P-L);
-      const rows=K.map(([k,n])=>{
+      const rows=K.map(([k,n,u])=>{
         const pre=asof(k,e.pk), wide=maxIn(k,e.pk,last), cur=asof(k,last);
         const lo=Math.min(...rets[k]), hi=Math.max(...rets[k]);
         const a=Math.round(wide-hi*(wide-pre)), b=Math.round(wide-lo*(wide-pre)), need=a===b?`${a}`:`${a}–${b}`;
         // 進度＝利差從本波低點日（11/5）當天值往目標底部走了幾成（與下方折線圖同一算法，不設上下限）；豎線＝SOX 回補進度
         const g=prog(e,k,cur), gw=Math.max(0,Math.min(1,g));
         const ticks=`<b style="left:${(Math.max(0,Math.min(1,p))*100).toFixed(1)}%" title="SOX 回補 ${Math.round(p*100)}%"></b>`;
-        return `<tr><td class="n">${n}</td><td class="x">${pre} bp</td><td class="x">${wide} bp</td><td class="x">${cur} bp</td><td class="x"><b>${need} bp</b></td>`
+        return `<tr><td class="n"><a class="src" href="${u}" target="_blank" rel="noopener" title="FRED 資料來源">${n}</a></td><td class="x">${pre} bp</td><td class="x">${wide} bp</td><td class="x">${cur} bp</td><td class="x"><b>${need} bp</b></td>`
           +`<td class="x"><span class="rt"><i style="width:${(gw*100).toFixed(1)}%"></i>${ticks}</span><span class="rtv"${g<0?' style="color:#DC2626"':g>=1?' style="color:#15803D"':""}>${Math.round(g*100)}%</span></td></tr>`;
       }).join("");
       return `<tr class="dv-row fold"><td colspan="8"><div class="dv-wrap"><table class="tl pe dv">
