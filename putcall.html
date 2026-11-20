@@ -47,7 +47,10 @@
   .ctip .r i::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--dc);}
   .ctip .evs{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.22);}
   .ctip .ev{display:flex;align-items:baseline;gap:6px;}
-  .ctip .ev i{flex:none;width:8px;height:8px;border-radius:2px;background:#E8806F;}
+  .ctip .ev i{flex:none;width:8px;height:8px;border-radius:50%;background:#DC2626;}
+  .ctip .evd{color:#D5D8DC;margin-top:3px;white-space:normal;}
+  .ctip.wide{width:340px;}
+  @media (max-width:600px){ .ctip.wide{width:min(300px, calc(100vw - 64px));} }
   .notes{font-size:12px;color:var(--muted);line-height:1.7;}
   .notes p{margin:2px 0;}
 </style>
@@ -89,6 +92,23 @@ const fmt = (v, d = 2) => v == null ? "—" : Number(v).toLocaleString("en-US", 
 const ymd = s => s.replace(/-/g, "/");
 const KIND = ["總", "個股", "指數"];
 let J, range = "all", kind = 0, band = true, pin = null;
+// 各次 SOX 暴跌原因（2026-11-20 使用者要求）：鍵＝低點日（data/putcall.json ev[1]），紅點畫在該日 SOX 收盤，說明只在點擊浮標內顯示。
+// 原因為媒體事後歸因；2026 年三波標題沿用使用者既有命名（大盤監控 PC_EVENTS、股債信用疊圖 SOX_LOWS、導火線時間軸）。新事件出現時在此補一筆。
+const CAUSE = {
+  "2018-12-24": ["貿易戰＋升息縮表＋記憶體循環反轉", "3 月美國對中啟動 301 關稅，全年層層加碼；Fed 全年升息 4 碼並縮表，12/19 再升息；記憶體報價下半年轉跌，半導體進入庫存修正。"],
+  "2019-05-31": ["美中關稅升級＋華為禁令", "5/5 川普宣布 2,000 億美元中國商品關稅由 10% 升至 25%（5/10 生效）；5/15 華為列入實體清單，美系晶片廠斷供。"],
+  "2020-03-18": ["新冠疫情", "疫情擴散到歐美、各國封城；3/16 SOX 單日 −15.9%，為 1994 年以來最大單日跌幅。"],
+  "2022-03-14": ["Fed 轉鷹＋俄烏戰爭", "1 月 FOMC 紀要釋出提早升息與縮表；2/24 俄羅斯入侵烏克蘭，油價飆升、通膨預期升溫。"],
+  "2022-07-01": ["激進升息＋高通膨＋衰退疑慮", "5 月升息 2 碼、6/15 升息 3 碼（1994 年以來最大）；5 月 CPI 年增 8.6%；消費性電子需求轉弱，美光 6/30 下修財測。"],
+  "2022-10-14": ["鮑爾鷹派＋對中晶片管制", "8/26 Jackson Hole 鮑爾強調不惜代價壓通膨；9、10 月公布的 CPI 都高於預期；10/7 美國發布對中先進晶片與設備出口管制。"],
+  "2023-10-30": ["美債殖利率飆升", "Fed「更高更久」，10 年債 10/19 逼近 5%；8/1 惠譽調降美國評等；10/7 以哈戰爭；10/17 美國擴大對中 AI 晶片管制。"],
+  "2024-04-19": ["降息延後＋設備股財報＋中東衝突", "3 月 CPI 高於預期，降息預期延後；ASML 4/17 訂單不如預期、台積電 4/18 下修產業成長預估；4/13 伊朗攻擊以色列、4/19 以色列反擊。"],
+  "2024-08-07": ["資金輪動＋管制疑慮＋日圓套利平倉", "7/11 CPI 降溫，資金由科技股轉向小型股；7/17 傳美國考慮更嚴對中晶片管制、川普稱台灣應付保護費；7/31 日銀升息、8/2 非農疲弱，8/5 日圓套利交易平倉、全球股市重挫。"],
+  "2025-04-08": ["DeepSeek＋川普關稅", "1/27 DeepSeek 低成本模型引發 AI 資本支出疑慮，輝達單日 −17%；4/2「解放日」對等關稅，全球股市連日重挫，4/9 宣布暫緩 90 天後反彈。"],
+  "2026-03-30": ["美伊戰爭", "美伊戰爭期間的下跌（2/26–3/31）；細部導火線尚未整理。"],
+  "2026-07-29": ["去槓桿", "融資部位去槓桿（FINRA 融資餘額 7 月下降），詳見融資槓桿頁；細部導火線尚未整理。"],
+  "2026-11-05": ["AI 融資疑慮（CDS）＋民主黨勝選", "10/8 FT 報導 OpenAI 年化營收約 500 億美元、低於傳聞；10 年債逼近 5.35%、Fed 預期再升息；CoreWeave 債券殖利率近 15%；10/30 英特爾財測不佳 −29%；11/5 民主黨贏得期中選舉後市場憂監管拖慢資料中心建設，SOX 單日 −12.25%。詳見股債信用疊圖「SOX 導火線時間軸」。"],
+};
 
 function draw() {
   if (!J) return;
@@ -135,6 +155,8 @@ function draw() {
   const path = (arr, Y) => { let p = "", up = false; arr.forEach((v, i) => { if (v == null) { up = false; return; } p += (up ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); up = true; }); return p; };
   g += `<path d="${path(M, Y1)}" fill="none" stroke="var(--pc)" stroke-width="${n > 800 ? 1.2 : 1.6}" stroke-linejoin="round"/>`;
   g += `<path d="${path(S, Y2)}" fill="none" stroke="var(--idx)" stroke-width="1.4" stroke-linejoin="round"/>`;
+  J.ev.forEach(e => { const k = pos[e[1]]; if (k == null || S[k] == null) return;
+    g += `<circle cx="${X(k).toFixed(1)}" cy="${Y2(S[k]).toFixed(1)}" r="4.5" fill="#DC2626" stroke="#fff" stroke-width="1.5"/>`; });
   g += `<text x="${L + 6}" y="${T + 15}" font-size="12.5" font-weight="500" fill="#22262B">${KIND[kind]} Put/Call（5 日平均）</text>`;
   g += `<text x="${L + 6}" y="${T + H1 + gap + 15}" font-size="12.5" font-weight="500" fill="#22262B">費城半導體 SOX（對數刻度）</text>`;
   el.innerHTML = `<svg width="${W}" height="${H}" role="img" aria-label="Put/Call 與費城半導體 SOX 長期走勢">${g}
@@ -154,7 +176,9 @@ function draw() {
   svg.addEventListener("pointermove", e => { if (pin == null) mark(idxAt(e)); });
   svg.addEventListener("pointerleave", () => { if (pin == null) clear(); });
   svg.addEventListener("click", e => {
-    const i = idxAt(e);
+    let i = idxAt(e);
+    const lowNear = J.ev.map(x => pos[x[1]]).find(k => k != null && Math.abs(X(k) - X(i)) <= 6);
+    if (lowNear != null) i = lowNear;
     if (pin === i) { pin = null; tip.style.display = "none"; return; }
     pin = i; mark(i);
     const ev = J.ev.find(x => D[i] >= x[0] && D[i] <= x[1]);
@@ -162,12 +186,16 @@ function draw() {
       <div class="r" style="--dc:var(--pc)"><i>${KIND[kind]} P/C 5 日均</i><b>${fmt(M[i])}</b></div>
       <div class="r" style="--dc:#9DB8F0"><i>當日</i><span>${fmt(R[i])}</span></div>
       <div class="r" style="--dc:var(--idx)"><i>SOX</i><b>${fmt(S[i], 0)}</b></div>`
-      + (ev ? `<div class="evs"><div class="ev"><i></i><span>SOX 暴跌 ${ymd(ev[0])}–${ymd(ev[1])}${ev[3] ? "（進行中）" : ""}，${(ev[2] * 100).toFixed(1)}%</span></div></div>` : "");
+      + (ev ? (() => { const c = CAUSE[ev[1]];
+        return `<div class="evs"><div class="ev"><i></i><span><b>${c ? c[0] : "原因待補"}</b>${D[i] === ev[1] ? "（SOX 低點）" : ""}</span></div>
+          <div class="evd">SOX ${ymd(ev[0])} 高點 → ${ymd(ev[1])} 低點，${(ev[2] * 100).toFixed(1)}%${ev[3] ? "（進行中）" : ""}</div>
+          ${c ? `<div class="evd">${c[1]}</div>` : ""}</div>`; })() : "");
+    tip.classList.toggle("wide", !!ev);
     tip.style.display = "block";
     const box = el.parentElement.getBoundingClientRect(), r = svg.getBoundingClientRect();
     const x = r.left - box.left + X(i), tw = tip.offsetWidth;
-    tip.style.left = (x + 14 + tw > box.width - 8 ? x - tw - 14 : x + 14) + "px";
-    tip.style.top = (e.clientY - box.top - 20) + "px";
+    tip.style.left = Math.max(8, x + 14 + tw > box.width - 8 ? x - tw - 14 : x + 14) + "px";
+    tip.style.top = Math.max(8, Math.min(e.clientY - box.top - 20, box.height - tip.offsetHeight - 8)) + "px";
   });
 }
 
@@ -188,7 +216,8 @@ fetch("data/putcall.json", {cache: "no-store"}).then(r => r.json()).then(j => {
   $("sub").textContent = `Cboe 美股選擇權 Put/Call（5 日平均）× 費城半導體 SOX，2017 年起；資料至 ${ymd(lastPc)}，更新 ${j.updated}（台灣時間）`;
   $("notes").innerHTML = `<p>[註1]：Put/Call＝賣權成交量 ÷ 買權成交量，越高代表買保護的人越多、市場越恐慌；總＝全部選擇權，個股＝散戶情緒為主，指數＝法人避險為主。</p>
     <p>[註2]：淡紅底＝費城半導體 SOX 從高點跌 15% 以上、到低點為止的期間（2017 年起共 ${j.ev.length} 次；跌與反彈都超過 15% 才算一段）${cur ? "，最右側較深色為目前這波，低點暫定為目前最低" : ""}。</p>
-    <p>[註3]：點圖上任一處可看當天數值，再點一次關閉。</p>`;
+    <p>[註3]：紅點＝每次暴跌的 SOX 最低收盤；點紅點或紅底內任一處，浮標會顯示這次暴跌的原因，再點一次關閉。</p>
+    <p>[註4]：暴跌原因為媒體事後歸因，同一波通常是多個因素疊加，僅列主要事件。</p>`;
   draw();
 }).catch(e => { $("sub").textContent = "資料讀取失敗：" + e; });
 </script>
