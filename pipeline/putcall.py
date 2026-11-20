@@ -57,7 +57,7 @@ def zigzag(px, r):
     if trend == -1:
         piv.append(("L", lo))
     pairs = list(zip(piv, piv[1:]))
-    return [[ds[i], ds[j], round(vs[j] / vs[i] - 1, 4), k == len(pairs) - 1 and trend == -1]
+    return [[ds[i], ds[j], round(vs[j] / vs[i] - 1, 6), k == len(pairs) - 1 and trend == -1]
             for k, ((a, i), (b, j)) in enumerate(pairs) if a == "H" and b == "L"]
 
 

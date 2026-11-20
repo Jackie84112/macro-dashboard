@@ -52,6 +52,27 @@
   .ctip.wide{width:340px;}
   @media (max-width:600px){ .ctip.wide{width:min(300px, calc(100vw - 64px));} }
   .notes{font-size:12px;color:var(--muted);line-height:1.7;}
+  /* 暴跌一覽表（樣式沿用股債信用疊圖 table.tl） */
+  .tl-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-bottom:10px;}
+  .tl-head h2{font-size:17px;font-weight:500;margin:0;letter-spacing:.3px;}
+  .tl-head span{color:var(--muted);font-size:12.5px;}
+  table.tl{width:100%;border-collapse:collapse;font-size:13.5px;line-height:1.6;}
+  table.tl th{font-size:12px;font-weight:400;color:var(--muted);letter-spacing:1px;text-align:left;
+    padding:6px 10px;border-bottom:1px solid var(--ink);white-space:nowrap;}
+  table.tl td{padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top;}
+  table.tl tbody tr:hover{background:#FAF9F6;}
+  table.tl tr.deep{background:var(--band);}
+  table.tl tbody tr.deep:hover{background:rgba(217,79,61,0.15);}
+  .tl .no{color:var(--muted);text-align:right;width:28px;font-variant-numeric:tabular-nums;}
+  .tl .d{white-space:nowrap;font-variant-numeric:tabular-nums;}
+  .tl .x{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums;font-weight:700;color:#DC2626;}
+  table.tl th.x{text-align:right;color:var(--muted);font-weight:400;}
+  .tl-notes{margin-top:10px;}
+  @media (max-width:600px){
+    table.tl{font-size:12.5px;}
+    table.tl th, table.tl td{padding:7px 5px;}
+    .tl .d{white-space:normal;}
+  }
   .notes p{margin:2px 0;}
 </style>
 </head>
@@ -81,6 +102,12 @@
   <section class="card chartbox">
     <div id="plot"></div>
     <div id="tip" class="ctip"></div>
+  </section>
+
+  <section class="card">
+    <div class="tl-head"><h2>SOX 暴跌一覽</h2><span id="tlSub"></span></div>
+    <table class="tl"><thead><tr><th class="no">#</th><th>高點 → 低點</th><th class="x">跌幅</th><th>原因</th></tr></thead><tbody id="tlBody"></tbody></table>
+    <div class="notes tl-notes"><p>[註]：淡紅底＝跌幅超過 30%；跌幅以 SOX 收盤價計算，原因與圖上紅點浮標相同。</p></div>
   </section>
 
   <section class="card notes" id="notes"></section>
@@ -218,6 +245,13 @@ fetch("data/putcall.json", {cache: "no-store"}).then(r => r.json()).then(j => {
     <p>[註2]：淡紅底＝費城半導體 SOX 從高點跌 15% 以上、到低點為止的期間（2017 年起共 ${j.ev.length} 次；跌與反彈都超過 15% 才算一段）${cur ? "，最右側較深色為目前這波，低點暫定為目前最低" : ""}。</p>
     <p>[註3]：紅點＝每次暴跌的 SOX 最低收盤；點紅點或紅底內任一處，浮標會顯示這次暴跌的原因，再點一次關閉。</p>
     <p>[註4]：暴跌原因為媒體事後歸因，同一波通常是多個因素疊加，僅列主要事件。</p>`;
+  // 暴跌一覽表：由 ev 自動列出，原因取 CAUSE；跌幅超過 30% 上淡紅底（2026-11-20 使用者要求）
+  const md = (a, b) => a.slice(0, 4) === b.slice(0, 4) ? b.slice(5).replace("-", "/").replace(/^0/, "").replace("/0", "/") : ymd(b);
+  $("tlBody").innerHTML = j.ev.map((e, k) => { const c = CAUSE[e[1]];
+    return `<tr${e[2] <= -0.30 ? ' class="deep"' : ""}><td class="no">${k + 1}</td>
+      <td class="d">${ymd(e[0])} → ${md(e[0], e[1])}${e[3] ? "（進行中）" : ""}</td>
+      <td class="x">${(e[2] * 100).toFixed(1)}%</td><td>${c ? c[0] : "原因待補"}</td></tr>`; }).join("");
+  $("tlSub").textContent = `2017 年起共 ${j.ev.length} 次，跌幅超過 30% 有 ${j.ev.filter(e => e[2] <= -0.30).length} 次`;
   draw();
 }).catch(e => { $("sub").textContent = "資料讀取失敗：" + e; });
 </script>
