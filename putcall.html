@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Put/Call 比率｜宏觀監控儀表板</title>
+<style>
+  /* 版面、按鈕、浮標沿用股債信用疊圖（overlay.html） */
+  :root{
+    --bg:#F6F5F2; --card:#FFFFFF; --ink:#22262B; --muted:#6B7178;
+    --line:#E4E2DC; --accent:#B04A2F;
+    --pc:#2563EB; --spx:#22262B; --band:rgba(217,79,61,0.10); --band-cur:rgba(217,79,61,0.20);
+  }
+  *{box-sizing:border-box}
+  body{background:var(--bg);color:var(--ink);
+    font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;
+    margin:0;padding:0 16px 40px;}
+  .wrap{max-width:1180px;margin:20px auto 0;display:flex;flex-direction:column;gap:14px;}
+  header{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px 16px;padding:4px 4px 0;}
+  h1{font-size:28px;margin:0;letter-spacing:.5px;}
+  .sub{color:var(--muted);font-size:13px;margin:0;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
+  .controls{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;}
+  .grp{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+  .grp .lbl{font-size:12px;color:var(--muted);letter-spacing:1px;margin-right:2px;}
+  button.rng{border:1px solid var(--line);background:transparent;color:var(--muted);
+    border-radius:7px;padding:5px 11px;font-size:13px;cursor:pointer;font-family:inherit;}
+  button.rng:hover{border-color:#C9C6BF;}
+  button.rng.on{background:var(--ink);color:#fff;border-color:var(--ink);}
+  button.tog{display:flex;align-items:center;gap:7px;border:1px solid var(--line);
+    background:transparent;border-radius:7px;padding:5px 11px;font-size:13px;cursor:pointer;
+    color:var(--ink);font-family:inherit;}
+  button.tog .dot{width:14px;height:10px;border-radius:2px;background:var(--dc);}
+  button.tog.off{color:#B8BCC1;}
+  button.tog.off .dot{background:#D8DADD;}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .chartbox{position:relative;}
+  #plot{width:100%;}
+  svg{display:block;touch-action:pan-y;}
+  svg text{font-family:inherit;font-variant-numeric:tabular-nums;}
+  .ctip{position:absolute;pointer-events:none;background:rgba(34,38,43,.94);color:#F2F1EE;
+    border-radius:8px;padding:9px 12px;font-size:12.5px;line-height:1.55;display:none;
+    min-width:200px;z-index:5;font-variant-numeric:tabular-nums;}
+  .ctip .t{color:#B9BEC4;margin-bottom:3px;}
+  .ctip .r{display:flex;justify-content:space-between;gap:14px;}
+  .ctip .r i{font-style:normal;display:flex;align-items:center;gap:6px;}
+  .ctip .r i::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--dc);}
+  .ctip .evs{margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.22);}
+  .ctip .ev{display:flex;align-items:baseline;gap:6px;}
+  .ctip .ev i{flex:none;width:8px;height:8px;border-radius:2px;background:#E8806F;}
+  .notes{font-size:12px;color:var(--muted);line-height:1.7;}
+  .notes p{margin:2px 0;}
+</style>
+</head>
+<body>
+<script src="nav.js?v=20261120a"></script>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Put/Call 比率</h1>
+      <p class="sub" id="sub">Cboe 美股選擇權 Put/Call（5 日平均）× 標普 500，2017 年起；淡紅底為標普暴跌期間</p>
+    </div>
+  </header>
+
+  <section class="card controls">
+    <div class="grp"><span class="lbl">區間</span>
+      <button class="rng" data-r="252">1Y</button><button class="rng" data-r="504">2Y</button>
+      <button class="rng" data-r="1260">5Y</button><button class="rng on" data-r="all">ALL</button>
+    </div>
+    <div class="grp" id="kind"><span class="lbl">Put/Call</span>
+      <button class="rng on" data-k="0">總</button><button class="rng" data-k="1">個股</button><button class="rng" data-k="2">指數</button>
+    </div>
+    <div class="grp"><span class="lbl">底色區間</span>
+      <button class="tog" id="bandTog" style="--dc:#F0C9C2"><span class="dot"></span>標普暴跌（高點→低點）</button>
+    </div>
+  </section>
+
+  <section class="card chartbox">
+    <div id="plot"></div>
+    <div id="tip" class="ctip"></div>
+  </section>
+
+  <section class="card notes" id="notes"></section>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const fmt = (v, d = 2) => v == null ? "—" : Number(v).toLocaleString("en-US", {minimumFractionDigits: d, maximumFractionDigits: d});
+const ymd = s => s.replace(/-/g, "/");
+const KIND = ["總", "個股", "指數"];
+let J, range = "all", kind = 0, band = true, pin = null;
+
+function draw() {
+  if (!J) return;
+  const el = $("plot"), allD = J.spx.d, allS = J.spx.v;
+  const raw = allD.map(d => J.pc[d] ? J.pc[d][kind] : null);
+  const ma = raw.map((_, i) => { if (i < 4) return null; const w = raw.slice(i - 4, i + 1); return w.some(x => x == null) ? null : w.reduce((a, b) => a + b, 0) / 5; });
+  let i0 = allD.findIndex(d => d >= J.start);
+  if (range !== "all") i0 = Math.max(i0, allD.length - +range);
+  const D = allD.slice(i0), M = ma.slice(i0), R = raw.slice(i0), S = allS.slice(i0), n = D.length - 1;
+  const W = Math.max(el.clientWidth, 280), narrow = W < 560;
+  const L = 4, Rm = 50, T = 8, H1 = narrow ? 230 : 330, gap = 18, H2 = narrow ? 120 : 170, B = 22, H = T + H1 + gap + H2 + B;
+  const X = i => L + (W - L - Rm) * i / n;
+  const ext = a => { const v = a.filter(x => x != null); const lo = Math.min(...v), hi = Math.max(...v), p = (hi - lo) * .06; return [lo - p, hi + p]; };
+  const [a1, b1] = ext(M), [a2, b2] = ext(S.map(v => v == null ? null : Math.log(v)));   // 標普用對數刻度，早年跌幅才看得出來
+  const Y1 = v => T + H1 * (1 - (v - a1) / (b1 - a1)), Y2 = v => T + H1 + gap + H2 * (1 - (Math.log(v) - a2) / (b2 - a2));
+  const pos = {}; D.forEach((d, i) => pos[d] = i);
+  const at = d => pos[d] ?? D.findIndex(x => x >= d);
+  let g = "";
+  if (band) J.ev.forEach(e => {
+    if (e[1] < D[0]) return;
+    const a = e[0] < D[0] ? 0 : at(e[0]), b = at(e[1]) < 0 ? n : at(e[1]);
+    const x1 = X(a), w = Math.max(X(b) - x1, 3), c = e[3] ? "var(--band-cur)" : "var(--band)";
+    g += `<rect x="${x1.toFixed(1)}" y="${T}" width="${w.toFixed(1)}" height="${H1}" fill="${c}"/><rect x="${x1.toFixed(1)}" y="${T + H1 + gap}" width="${w.toFixed(1)}" height="${H2}" fill="${c}"/>`;
+  });
+  const step = (a, b, k) => { const s = Math.pow(10, Math.floor(Math.log10((b - a) / k))); return [1, 2, 2.5, 5, 10].find(x => (b - a) / (s * x) <= k) * s; };
+  const st1 = step(a1, b1, 5);
+  for (let v = Math.ceil(a1 / st1) * st1; v <= b1; v += st1)
+    g += `<line x1="${L}" x2="${W - Rm}" y1="${Y1(v)}" y2="${Y1(v)}" stroke="#ECEAE5"/><text x="${W - Rm + 6}" y="${Y1(v) + 4}" font-size="11" fill="#6B7178">${v.toFixed(2)}</text>`;
+  const sT = (b2 - a2 > 0.7 ? [1000, 2000, 3000, 4000, 6000, 8000] : [1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 9000]).filter(v => Math.log(v) >= a2 && Math.log(v) <= b2);
+  (narrow ? sT.filter((_, i) => i % 2 === 0) : sT).forEach(v =>
+    g += `<line x1="${L}" x2="${W - Rm}" y1="${Y2(v)}" y2="${Y2(v)}" stroke="#ECEAE5"/><text x="${W - Rm + 6}" y="${Y2(v) + 4}" font-size="11" fill="#6B7178">${v.toLocaleString("en-US")}</text>`);
+  // X 軸：區間短標月份，長標年份
+  const monthly = n < 300;
+  let last = "", lastX = -99;
+  D.forEach((d, i) => {
+    const k = monthly ? d.slice(0, 7) : d.slice(0, 4);
+    if (k === last) return; last = k;
+    if (i === 0 && (monthly ? d.slice(-2) > "05" : d.slice(5) > "01-10")) return;   // 起點不是月初／年初就不標
+    if (X(i) - lastX < (monthly ? 52 : 40)) return; lastX = X(i);
+    const lab = monthly ? (d.slice(5, 7) === "01" ? d.slice(0, 4) : +d.slice(5, 7) + "月") : d.slice(0, 4);
+    g += `<line x1="${X(i)}" x2="${X(i)}" y1="${H - B}" y2="${H - B + 4}" stroke="#B9BDC2"/><text x="${X(i) + 3}" y="${H - 6}" font-size="11" fill="#6B7178">${lab}</text>`;
+  });
+  g += `<line x1="${L}" x2="${W - Rm}" y1="${H - B}" y2="${H - B}" stroke="#B9BDC2"/>`;
+  const path = (arr, Y) => { let p = "", up = false; arr.forEach((v, i) => { if (v == null) { up = false; return; } p += (up ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); up = true; }); return p; };
+  g += `<path d="${path(M, Y1)}" fill="none" stroke="var(--pc)" stroke-width="${n > 800 ? 1.2 : 1.6}" stroke-linejoin="round"/>`;
+  g += `<path d="${path(S, Y2)}" fill="none" stroke="var(--spx)" stroke-width="1.4" stroke-linejoin="round"/>`;
+  g += `<text x="${L + 6}" y="${T + 15}" font-size="12.5" font-weight="500" fill="#22262B">${KIND[kind]} Put/Call（5 日平均）</text>`;
+  g += `<text x="${L + 6}" y="${T + H1 + gap + 15}" font-size="12.5" font-weight="500" fill="#22262B">標普 500（對數刻度）</text>`;
+  el.innerHTML = `<svg width="${W}" height="${H}" role="img" aria-label="Put/Call 與標普 500 長期走勢">${g}
+    <line class="ch" y1="${T}" y2="${H - B}" stroke="#8C9096" stroke-width="1" style="display:none"/>
+    <circle class="d1" r="3.5" fill="var(--pc)" stroke="#fff" stroke-width="1.5" style="display:none"/>
+    <circle class="d2" r="3.5" fill="var(--spx)" stroke="#fff" stroke-width="1.5" style="display:none"/>
+    <rect class="hit" x="0" y="0" width="${W}" height="${H}" fill="transparent"/></svg>`;
+  const svg = el.firstChild, ch = svg.querySelector(".ch"), d1 = svg.querySelector(".d1"), d2 = svg.querySelector(".d2"), tip = $("tip");
+  const idxAt = e => { const r = svg.getBoundingClientRect(); return Math.max(0, Math.min(n, Math.round((e.clientX - r.left - L) / (W - L - Rm) * n))); };
+  const mark = i => {
+    ch.setAttribute("x1", X(i)); ch.setAttribute("x2", X(i)); ch.style.display = "";
+    d1.style.display = M[i] == null ? "none" : ""; if (M[i] != null) { d1.setAttribute("cx", X(i)); d1.setAttribute("cy", Y1(M[i])); }
+    d2.style.display = S[i] == null ? "none" : ""; if (S[i] != null) { d2.setAttribute("cx", X(i)); d2.setAttribute("cy", Y2(S[i])); }
+  };
+  const clear = () => { ch.style.display = d1.style.display = d2.style.display = "none"; };
+  // 與股債信用疊圖一致：游標只有十字線，點擊才開浮標
+  svg.addEventListener("pointermove", e => { if (pin == null) mark(idxAt(e)); });
+  svg.addEventListener("pointerleave", () => { if (pin == null) clear(); });
+  svg.addEventListener("click", e => {
+    const i = idxAt(e);
+    if (pin === i) { pin = null; tip.style.display = "none"; return; }
+    pin = i; mark(i);
+    const ev = J.ev.find(x => D[i] >= x[0] && D[i] <= x[1]);
+    tip.innerHTML = `<div class="t">${ymd(D[i])}</div>
+      <div class="r" style="--dc:var(--pc)"><i>${KIND[kind]} P/C 5 日均</i><b>${fmt(M[i])}</b></div>
+      <div class="r" style="--dc:#9DB8F0"><i>當日</i><span>${fmt(R[i])}</span></div>
+      <div class="r" style="--dc:var(--spx)"><i>標普 500</i><b>${fmt(S[i], 0)}</b></div>`
+      + (ev ? `<div class="evs"><div class="ev"><i></i><span>標普暴跌 ${ymd(ev[0])}–${ymd(ev[1])}${ev[3] ? "（進行中）" : ""}，${(ev[2] * 100).toFixed(1)}%</span></div></div>` : "");
+    tip.style.display = "block";
+    const box = el.parentElement.getBoundingClientRect(), r = svg.getBoundingClientRect();
+    const x = r.left - box.left + X(i), tw = tip.offsetWidth;
+    tip.style.left = (x + 14 + tw > box.width - 8 ? x - tw - 14 : x + 14) + "px";
+    tip.style.top = (e.clientY - box.top - 20) + "px";
+  });
+}
+
+document.querySelectorAll("button[data-r]").forEach(b => b.addEventListener("click", () => {
+  range = b.dataset.r; pin = null; $("tip").style.display = "none";
+  document.querySelectorAll("button[data-r]").forEach(x => x.classList.toggle("on", x === b)); draw();
+}));
+document.querySelectorAll("button[data-k]").forEach(b => b.addEventListener("click", () => {
+  kind = +b.dataset.k; pin = null; $("tip").style.display = "none";
+  document.querySelectorAll("button[data-k]").forEach(x => x.classList.toggle("on", x === b)); draw();
+}));
+$("bandTog").addEventListener("click", () => { band = !band; $("bandTog").classList.toggle("off", !band); draw(); });
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(draw, 150); });
+
+fetch("data/putcall.json", {cache: "no-store"}).then(r => r.json()).then(j => {
+  J = j;
+  const lastPc = Object.keys(j.pc).pop(), cur = j.ev.find(e => e[3]);
+  $("sub").textContent = `Cboe 美股選擇權 Put/Call（5 日平均）× 標普 500，2017 年起；資料至 ${ymd(lastPc)}，更新 ${j.updated}（台灣時間）`;
+  $("notes").innerHTML = `<p>[註1]：Put/Call＝賣權成交量 ÷ 買權成交量，越高代表買保護的人越多、市場越恐慌；總＝全部選擇權，個股＝散戶情緒為主，指數＝法人避險為主。</p>
+    <p>[註2]：淡紅底＝標普 500 從高點跌 7% 以上、到低點為止的期間（2017 年起共 ${j.ev.length} 次；跌與反彈都超過 7% 才算一段）${cur ? "，最右側較深色為目前這波，低點暫定為目前最低" : ""}。</p>
+    <p>[註3]：點圖上任一處可看當天數值，再點一次關閉。</p>`;
+  draw();
+}).catch(e => { $("sub").textContent = "資料讀取失敗：" + e; });
+</script>
+</body>
+</html>
