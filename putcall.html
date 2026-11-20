@@ -9,7 +9,7 @@
   :root{
     --bg:#F6F5F2; --card:#FFFFFF; --ink:#22262B; --muted:#6B7178;
     --line:#E4E2DC; --accent:#B04A2F;
-    --pc:#2563EB; --idx:#22262B; --band:rgba(217,79,61,0.10); --band-cur:rgba(217,79,61,0.20);
+    --pc:#2563EB; --lo5:#D97706; --hi5:#DC2626; --idx:#22262B; --band:rgba(217,79,61,0.10); --band-cur:rgba(217,79,61,0.20);
   }
   *{box-sizing:border-box}
   body{background:var(--bg);color:var(--ink);
@@ -94,6 +94,10 @@
     <div class="grp" id="kind"><span class="lbl">Put/Call</span>
       <button class="rng on" data-k="0">總</button><button class="rng" data-k="1">個股</button><button class="rng" data-k="2">指數</button>
     </div>
+    <div class="grp"><span class="lbl">參考線</span>
+      <button class="tog" id="refLo" style="--dc:var(--lo5)"><span class="dot" style="height:3px"></span>最低 5%＝警惕樂觀過頭</button>
+      <button class="tog" id="refHi" style="--dc:var(--hi5)"><span class="dot" style="height:3px"></span>最高 5%＝恐慌中</button>
+    </div>
     <div class="grp"><span class="lbl">底色區間</span>
       <button class="tog" id="bandTog" style="--dc:#F0C9C2"><span class="dot"></span>SOX 暴跌（高點→低點）</button>
     </div>
@@ -118,7 +122,17 @@ const $ = id => document.getElementById(id);
 const fmt = (v, d = 2) => v == null ? "—" : Number(v).toLocaleString("en-US", {minimumFractionDigits: d, maximumFractionDigits: d});
 const ymd = s => s.replace(/-/g, "/");
 const KIND = ["總", "個股", "指數"];
-let J, range = "all", kind = 0, band = true, pin = null;
+let J, range = "all", kind = 0, band = true, pin = null, showLo = true, showHi = true;
+// 參考線（2026-11-20 使用者要求）：每天取「前 252 個交易日 5 日均」的第 5／95 百分位，線會隨市場移動。
+// 回測（宏觀因果驗證\putcall\crash\levels.py）：總 P/C 落在最低 5% 時，SOX 之後 60 日內再跌 ≥20% 的機率約為平常兩倍。
+const LB = 252;
+function rollPct(ma, q) {
+  return ma.map((_, i) => {
+    if (i < LB + 4) return null;
+    const w = ma.slice(i - LB, i).filter(x => x != null).sort((a, b) => a - b);
+    return w.length < LB ? null : w[Math.floor(q / 100 * (w.length - 1))];
+  });
+}
 // 各次 SOX 暴跌原因（2026-11-20 使用者要求）：鍵＝低點日（data/putcall.json ev[1]），紅點畫在該日 SOX 收盤，說明只在點擊浮標內顯示。
 // 原因為媒體事後歸因；2026 年三波標題沿用使用者既有命名（大盤監控 PC_EVENTS、股債信用疊圖 SOX_LOWS、導火線時間軸）。新事件出現時在此補一筆。
 const CAUSE = {
@@ -142,12 +156,14 @@ function draw() {
   const ma = raw.map((_, i) => { if (i < 4) return null; const w = raw.slice(i - 4, i + 1); return w.some(x => x == null) ? null : w.reduce((a, b) => a + b, 0) / 5; });
   let i0 = allD.findIndex(d => d >= J.start);
   if (range !== "all") i0 = Math.max(i0, allD.length - +range);
+  const lo5all = rollPct(ma, 5), hi5all = rollPct(ma, 95);
   const D = allD.slice(i0), M = ma.slice(i0), R = raw.slice(i0), S = allS.slice(i0), n = D.length - 1;
+  const LO = lo5all.slice(i0), HI = hi5all.slice(i0);
   const W = Math.max(el.clientWidth, 280), narrow = W < 560;
   const L = 4, Rm = 50, T = 8, H1 = narrow ? 230 : 330, gap = 18, H2 = narrow ? 120 : 170, B = 22, H = T + H1 + gap + H2 + B;
   const X = i => L + (W - L - Rm) * i / n;
   const ext = a => { const v = a.filter(x => x != null); const lo = Math.min(...v), hi = Math.max(...v), p = (hi - lo) * .06; return [lo - p, hi + p]; };
-  const [a1, b1] = ext(M), [a2, b2] = ext(S.map(v => v == null ? null : Math.log(v)));   // SOX 用對數刻度，早年跌幅才看得出來
+  const [a1, b1] = ext([...M, ...(showLo ? LO : []), ...(showHi ? HI : [])]), [a2, b2] = ext(S.map(v => v == null ? null : Math.log(v)));   // SOX 用對數刻度，早年跌幅才看得出來
   const Y1 = v => T + H1 * (1 - (v - a1) / (b1 - a1)), Y2 = v => T + H1 + gap + H2 * (1 - (Math.log(v) - a2) / (b2 - a2));
   const pos = {}; D.forEach((d, i) => pos[d] = i);
   const at = d => pos[d] ?? D.findIndex(x => x >= d);
@@ -166,7 +182,7 @@ function draw() {
   (narrow ? sT.filter((_, i) => i % 2 === 0) : sT).forEach(v =>
     g += `<line x1="${L}" x2="${W - Rm}" y1="${Y2(v)}" y2="${Y2(v)}" stroke="#ECEAE5"/><text x="${W - Rm + 6}" y="${Y2(v) + 4}" font-size="11" fill="#6B7178">${v.toLocaleString("en-US")}</text>`);
   // X 軸：區間短標月份，長標年份
-  const monthly = n < 300;
+  const monthly = n < 600;
   let last = "", lastX = -99;
   D.forEach((d, i) => {
     const k = monthly ? d.slice(0, 7) : d.slice(0, 4);
@@ -178,6 +194,8 @@ function draw() {
   });
   g += `<line x1="${L}" x2="${W - Rm}" y1="${H - B}" y2="${H - B}" stroke="#B9BDC2"/>`;
   const path = (arr, Y) => { let p = "", up = false; arr.forEach((v, i) => { if (v == null) { up = false; return; } p += (up ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); up = true; }); return p; };
+  if (showLo) g += `<path d="${path(LO, Y1)}" fill="none" stroke="var(--lo5)" stroke-width="1.6" stroke-linejoin="round" opacity=".9"/>`;
+  if (showHi) g += `<path d="${path(HI, Y1)}" fill="none" stroke="var(--hi5)" stroke-width="1.6" stroke-linejoin="round" opacity=".9"/>`;
   g += `<path d="${path(M, Y1)}" fill="none" stroke="var(--pc)" stroke-width="${n > 800 ? 1.2 : 1.6}" stroke-linejoin="round"/>`;
   g += `<path d="${path(S, Y2)}" fill="none" stroke="var(--idx)" stroke-width="1.4" stroke-linejoin="round"/>`;
   J.ev.forEach(e => { const k = pos[e[1]]; if (k == null || S[k] == null) return;
@@ -210,6 +228,9 @@ function draw() {
     tip.innerHTML = `<div class="t">${ymd(D[i])}</div>
       <div class="r" style="--dc:var(--pc)"><i>${KIND[kind]} P/C 5 日均</i><b>${fmt(M[i])}</b></div>
       <div class="r" style="--dc:#9DB8F0"><i>當日</i><span>${fmt(R[i])}</span></div>
+      ${HI[i] != null ? `<div class="r" style="--dc:var(--hi5)"><i>最高 5% 線</i><span>${fmt(HI[i])}</span></div>
+      <div class="r" style="--dc:var(--lo5)"><i>最低 5% 線</i><span>${fmt(LO[i])}</span></div>
+      <div class="r"><span>${M[i] >= HI[i] ? "<b style='color:#F4A3A3'>恐慌中</b>" : M[i] <= LO[i] ? "<b style='color:#F5C27A'>警惕樂觀過頭</b>" : "介於兩線之間"}</span></div>` : ""}
       <div class="r" style="--dc:var(--idx)"><i>SOX</i><b>${fmt(S[i], 0)}</b></div>`
       + (ev ? (() => { const c = CAUSE[ev[1]];
         return `<div class="evs"><div class="ev"><i></i><span><b>${c ? c[0] : "原因待補"}</b>${D[i] === ev[1] ? "（SOX 低點）" : ""}</span></div>
@@ -233,6 +254,8 @@ document.querySelectorAll("button[data-k]").forEach(b => b.addEventListener("cli
   document.querySelectorAll("button[data-k]").forEach(x => x.classList.toggle("on", x === b)); draw();
 }));
 $("bandTog").addEventListener("click", () => { band = !band; $("bandTog").classList.toggle("off", !band); draw(); });
+$("refLo").addEventListener("click", () => { showLo = !showLo; $("refLo").classList.toggle("off", !showLo); draw(); });
+$("refHi").addEventListener("click", () => { showHi = !showHi; $("refHi").classList.toggle("off", !showHi); draw(); });
 let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(draw, 150); });
 
 fetch("data/putcall.json", {cache: "no-store"}).then(r => r.json()).then(j => {
@@ -242,7 +265,8 @@ fetch("data/putcall.json", {cache: "no-store"}).then(r => r.json()).then(j => {
   $("notes").innerHTML = `<p>[註1]：Put/Call＝賣權成交量 ÷ 買權成交量，越高代表買保護的人越多、市場越恐慌；總＝全部選擇權，個股＝散戶情緒為主，指數＝法人避險為主。</p>
     <p>[註2]：淡紅底＝費城半導體 SOX 從高點跌 15% 以上、到低點為止的期間（2017 年起共 ${j.ev.length} 次；跌與反彈都超過 15% 才算一段）${cur ? "，最右側較深色為目前這波，低點暫定為目前最低" : ""}。</p>
     <p>[註3]：紅點＝每次暴跌的 SOX 最低收盤；點紅點或紅底內任一處，浮標會顯示這次暴跌的原因，再點一次關閉。</p>
-    <p>[註4]：暴跌原因為媒體事後歸因，同一波通常是多個因素疊加，僅列主要事件。</p>`;
+    <p>[註4]：暴跌原因為媒體事後歸因，同一波通常是多個因素疊加，僅列主要事件。</p>
+    <p>[註5]：參考線＝每天與自己過去一年（252 個交易日）的 5 日均比較，橘線為最低 5%、紅線為最高 5%，會隨市場移動。2017 年起回測：總 P/C 跌破橘線時，SOX 之後 60 日內再跌 20% 以上的機率約 23%，是平常（11%）的兩倍；高於紅線時多半已在暴跌中，但不代表當天就是低點。</p>`;
   // 暴跌一覽表：由 ev 自動列出，原因取 CAUSE；跌幅超過 30% 上淡紅底（2026-11-20 使用者要求）
   const md = (a, b) => a.slice(0, 4) === b.slice(0, 4) ? b.slice(5).replace("-", "/").replace(/^0/, "").replace("/0", "/") : ymd(b);
   $("tlBody").innerHTML = j.ev.map((e, k) => { const c = CAUSE[e[1]];
