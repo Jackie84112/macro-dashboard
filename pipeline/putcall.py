@@ -17,6 +17,9 @@ import requests
 OUT = Path(__file__).resolve().parent.parent / "data" / "putcall.json"
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36"}
 START, ZZ = "2017-01-01", 0.15
+# 使用者指定合併的期間（同一件事算一次）：區間內的 zigzag 事件併成「第一個高點 → 區間內最低收盤」
+# 2026-11-20：2022 升息空頭 #4–#6（2021/12/27 高點 → 2022/10/14 低點）合併；2023 美債殖利率那次另計
+MERGE = [("2021-12-27", "2022-10-14")]
 
 
 def cboe(iso):
@@ -80,6 +83,12 @@ def main():
         last = px.get(x, last)
         s.append(round(last, 2) if last else None)
     ev = [e for e in zigzag(px, ZZ) if e[1] >= START]
+    for m0, m1 in MERGE:
+        grp = [e for e in ev if m0 <= e[0] and e[1] <= m1]
+        if len(grp) > 1:
+            hi = grp[0][0]; lo = min((d for d in px if hi <= d <= m1), key=lambda d: px[d])
+            ev = [e for e in ev if e not in grp] + [[hi, lo, round(px[lo] / px[hi] - 1, 6), grp[-1][3]]]
+    ev.sort()
     out = {"updated": dt.datetime.now(dt.timezone(dt.timedelta(hours=8))).strftime("%Y/%m/%d %H:%M"),
            "start": START, "idx": {"name": "SOX", "d": ds, "v": s}, "ev": ev, "pc": pc}
     if all(old.get(k) == out[k] for k in ("idx", "ev", "pc")):   # 資料沒變就不動檔案，Actions 才不會每天空提交
