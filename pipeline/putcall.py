@@ -3,8 +3,8 @@
 
 - P/C：Cboe 每日 total / equity / index。2016/12 起的歷史已存在 putcall.json 的 pc 欄（初始來自 Cboe 舊 CSV＋cdn 每日檔），
   每次執行只補 cdn 上缺的日期（https://cdn.cboe.com/data/us/options/market_statistics/daily/<日期>_daily_options）。
-- 標普 500：Yahoo ^GSPC 日線，每次重抓。
-- 暴跌區間：標普收盤 zigzag，跌幅與反彈幅都 ≥7% 才算一段（高點→低點）；最後一段若還沒反彈 7%，低點暫定為目前最低。
+- 費城半導體 SOX：Yahoo ^SOX 日線，每次重抓（2026-11-20 使用者要求由標普改 SOX）。
+- 暴跌區間：SOX 收盤 zigzag，跌幅與反彈幅都 ≥15% 才算一段（高點→低點）；最後一段若還沒反彈 7%，低點暫定為目前最低。
   規則與回測腳本 專案\\總經\\宏觀因果驗證\\putcall\\crash\\events.py 相同。
 """
 import datetime as dt
@@ -16,7 +16,7 @@ import requests
 
 OUT = Path(__file__).resolve().parent.parent / "data" / "putcall.json"
 UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/126 Safari/537.36"}
-START, ZZ = "2017-01-01", 0.07
+START, ZZ = "2017-01-01", 0.15
 
 
 def cboe(iso):
@@ -31,8 +31,8 @@ def cboe(iso):
     return [t, rs.get("EQUITY PUT/CALL RATIO"), rs.get("INDEX PUT/CALL RATIO")] if t else None
 
 
-def spx():
-    j = requests.get(f"https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC?period1=1451606400&period2={int(time.time())}&interval=1d",
+def sox():
+    j = requests.get(f"https://query1.finance.yahoo.com/v8/finance/chart/%5ESOX?period1=1451606400&period2={int(time.time())}&interval=1d",
                      headers=UA, timeout=60).json()["chart"]["result"][0]
     off = j["meta"].get("gmtoffset", 0)
     day = lambda t: dt.datetime.fromtimestamp(t + off, dt.timezone.utc).strftime("%Y-%m-%d")
@@ -73,7 +73,7 @@ def main():
                 pc[d.isoformat()] = v
         d += dt.timedelta(days=1)
     pc = dict(sorted(pc.items()))
-    px = spx()
+    px = sox()
     ds = [x for x in pc if x >= "2016-12-01"]
     s, last = [], None
     for x in ds:
@@ -81,8 +81,8 @@ def main():
         s.append(round(last, 2) if last else None)
     ev = [e for e in zigzag(px, ZZ) if e[1] >= START]
     out = {"updated": dt.datetime.now(dt.timezone(dt.timedelta(hours=8))).strftime("%Y/%m/%d %H:%M"),
-           "start": START, "spx": {"d": ds, "v": s}, "ev": ev, "pc": pc}
-    if all(old.get(k) == out[k] for k in ("spx", "ev", "pc")):   # 資料沒變就不動檔案，Actions 才不會每天空提交
+           "start": START, "idx": {"name": "SOX", "d": ds, "v": s}, "ev": ev, "pc": pc}
+    if all(old.get(k) == out[k] for k in ("idx", "ev", "pc")):   # 資料沒變就不動檔案，Actions 才不會每天空提交
         print("putcall 無變動", max(pc)); return
     OUT.write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
     print("putcall", len(pc), max(pc), "events", len(ev))

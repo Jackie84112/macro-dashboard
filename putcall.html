@@ -9,7 +9,7 @@
   :root{
     --bg:#F6F5F2; --card:#FFFFFF; --ink:#22262B; --muted:#6B7178;
     --line:#E4E2DC; --accent:#B04A2F;
-    --pc:#2563EB; --spx:#22262B; --band:rgba(217,79,61,0.10); --band-cur:rgba(217,79,61,0.20);
+    --pc:#2563EB; --idx:#22262B; --band:rgba(217,79,61,0.10); --band-cur:rgba(217,79,61,0.20);
   }
   *{box-sizing:border-box}
   body{background:var(--bg);color:var(--ink);
@@ -58,7 +58,7 @@
   <header>
     <div>
       <h1>Put/Call 比率</h1>
-      <p class="sub" id="sub">Cboe 美股選擇權 Put/Call（5 日平均）× 標普 500，2017 年起；淡紅底為標普暴跌期間</p>
+      <p class="sub" id="sub">Cboe 美股選擇權 Put/Call（5 日平均）× 費城半導體 SOX，2017 年起；淡紅底為 SOX 暴跌期間</p>
     </div>
   </header>
 
@@ -71,7 +71,7 @@
       <button class="rng on" data-k="0">總</button><button class="rng" data-k="1">個股</button><button class="rng" data-k="2">指數</button>
     </div>
     <div class="grp"><span class="lbl">底色區間</span>
-      <button class="tog" id="bandTog" style="--dc:#F0C9C2"><span class="dot"></span>標普暴跌（高點→低點）</button>
+      <button class="tog" id="bandTog" style="--dc:#F0C9C2"><span class="dot"></span>SOX 暴跌（高點→低點）</button>
     </div>
   </section>
 
@@ -92,7 +92,7 @@ let J, range = "all", kind = 0, band = true, pin = null;
 
 function draw() {
   if (!J) return;
-  const el = $("plot"), allD = J.spx.d, allS = J.spx.v;
+  const el = $("plot"), allD = J.idx.d, allS = J.idx.v;
   const raw = allD.map(d => J.pc[d] ? J.pc[d][kind] : null);
   const ma = raw.map((_, i) => { if (i < 4) return null; const w = raw.slice(i - 4, i + 1); return w.some(x => x == null) ? null : w.reduce((a, b) => a + b, 0) / 5; });
   let i0 = allD.findIndex(d => d >= J.start);
@@ -102,7 +102,7 @@ function draw() {
   const L = 4, Rm = 50, T = 8, H1 = narrow ? 230 : 330, gap = 18, H2 = narrow ? 120 : 170, B = 22, H = T + H1 + gap + H2 + B;
   const X = i => L + (W - L - Rm) * i / n;
   const ext = a => { const v = a.filter(x => x != null); const lo = Math.min(...v), hi = Math.max(...v), p = (hi - lo) * .06; return [lo - p, hi + p]; };
-  const [a1, b1] = ext(M), [a2, b2] = ext(S.map(v => v == null ? null : Math.log(v)));   // 標普用對數刻度，早年跌幅才看得出來
+  const [a1, b1] = ext(M), [a2, b2] = ext(S.map(v => v == null ? null : Math.log(v)));   // SOX 用對數刻度，早年跌幅才看得出來
   const Y1 = v => T + H1 * (1 - (v - a1) / (b1 - a1)), Y2 = v => T + H1 + gap + H2 * (1 - (Math.log(v) - a2) / (b2 - a2));
   const pos = {}; D.forEach((d, i) => pos[d] = i);
   const at = d => pos[d] ?? D.findIndex(x => x >= d);
@@ -117,7 +117,7 @@ function draw() {
   const st1 = step(a1, b1, 5);
   for (let v = Math.ceil(a1 / st1) * st1; v <= b1; v += st1)
     g += `<line x1="${L}" x2="${W - Rm}" y1="${Y1(v)}" y2="${Y1(v)}" stroke="#ECEAE5"/><text x="${W - Rm + 6}" y="${Y1(v) + 4}" font-size="11" fill="#6B7178">${v.toFixed(2)}</text>`;
-  const sT = (b2 - a2 > 0.7 ? [1000, 2000, 3000, 4000, 6000, 8000] : [1000, 1500, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000, 6500, 7000, 7500, 8000, 9000]).filter(v => Math.log(v) >= a2 && Math.log(v) <= b2);
+  const sT = (b2 - a2 > 1.2 ? [500, 1000, 2000, 4000, 8000, 16000] : b2 - a2 > 0.6 ? [500, 1000, 1500, 2000, 3000, 4000, 6000, 8000, 12000, 16000] : [1000, 1500, 2000, 2500, 3000, 3500, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 12000, 14000]).filter(v => Math.log(v) >= a2 && Math.log(v) <= b2);
   (narrow ? sT.filter((_, i) => i % 2 === 0) : sT).forEach(v =>
     g += `<line x1="${L}" x2="${W - Rm}" y1="${Y2(v)}" y2="${Y2(v)}" stroke="#ECEAE5"/><text x="${W - Rm + 6}" y="${Y2(v) + 4}" font-size="11" fill="#6B7178">${v.toLocaleString("en-US")}</text>`);
   // X 軸：區間短標月份，長標年份
@@ -134,13 +134,13 @@ function draw() {
   g += `<line x1="${L}" x2="${W - Rm}" y1="${H - B}" y2="${H - B}" stroke="#B9BDC2"/>`;
   const path = (arr, Y) => { let p = "", up = false; arr.forEach((v, i) => { if (v == null) { up = false; return; } p += (up ? "L" : "M") + X(i).toFixed(1) + " " + Y(v).toFixed(1); up = true; }); return p; };
   g += `<path d="${path(M, Y1)}" fill="none" stroke="var(--pc)" stroke-width="${n > 800 ? 1.2 : 1.6}" stroke-linejoin="round"/>`;
-  g += `<path d="${path(S, Y2)}" fill="none" stroke="var(--spx)" stroke-width="1.4" stroke-linejoin="round"/>`;
+  g += `<path d="${path(S, Y2)}" fill="none" stroke="var(--idx)" stroke-width="1.4" stroke-linejoin="round"/>`;
   g += `<text x="${L + 6}" y="${T + 15}" font-size="12.5" font-weight="500" fill="#22262B">${KIND[kind]} Put/Call（5 日平均）</text>`;
-  g += `<text x="${L + 6}" y="${T + H1 + gap + 15}" font-size="12.5" font-weight="500" fill="#22262B">標普 500（對數刻度）</text>`;
-  el.innerHTML = `<svg width="${W}" height="${H}" role="img" aria-label="Put/Call 與標普 500 長期走勢">${g}
+  g += `<text x="${L + 6}" y="${T + H1 + gap + 15}" font-size="12.5" font-weight="500" fill="#22262B">費城半導體 SOX（對數刻度）</text>`;
+  el.innerHTML = `<svg width="${W}" height="${H}" role="img" aria-label="Put/Call 與費城半導體 SOX 長期走勢">${g}
     <line class="ch" y1="${T}" y2="${H - B}" stroke="#8C9096" stroke-width="1" style="display:none"/>
     <circle class="d1" r="3.5" fill="var(--pc)" stroke="#fff" stroke-width="1.5" style="display:none"/>
-    <circle class="d2" r="3.5" fill="var(--spx)" stroke="#fff" stroke-width="1.5" style="display:none"/>
+    <circle class="d2" r="3.5" fill="var(--idx)" stroke="#fff" stroke-width="1.5" style="display:none"/>
     <rect class="hit" x="0" y="0" width="${W}" height="${H}" fill="transparent"/></svg>`;
   const svg = el.firstChild, ch = svg.querySelector(".ch"), d1 = svg.querySelector(".d1"), d2 = svg.querySelector(".d2"), tip = $("tip");
   const idxAt = e => { const r = svg.getBoundingClientRect(); return Math.max(0, Math.min(n, Math.round((e.clientX - r.left - L) / (W - L - Rm) * n))); };
@@ -161,8 +161,8 @@ function draw() {
     tip.innerHTML = `<div class="t">${ymd(D[i])}</div>
       <div class="r" style="--dc:var(--pc)"><i>${KIND[kind]} P/C 5 日均</i><b>${fmt(M[i])}</b></div>
       <div class="r" style="--dc:#9DB8F0"><i>當日</i><span>${fmt(R[i])}</span></div>
-      <div class="r" style="--dc:var(--spx)"><i>標普 500</i><b>${fmt(S[i], 0)}</b></div>`
-      + (ev ? `<div class="evs"><div class="ev"><i></i><span>標普暴跌 ${ymd(ev[0])}–${ymd(ev[1])}${ev[3] ? "（進行中）" : ""}，${(ev[2] * 100).toFixed(1)}%</span></div></div>` : "");
+      <div class="r" style="--dc:var(--idx)"><i>SOX</i><b>${fmt(S[i], 0)}</b></div>`
+      + (ev ? `<div class="evs"><div class="ev"><i></i><span>SOX 暴跌 ${ymd(ev[0])}–${ymd(ev[1])}${ev[3] ? "（進行中）" : ""}，${(ev[2] * 100).toFixed(1)}%</span></div></div>` : "");
     tip.style.display = "block";
     const box = el.parentElement.getBoundingClientRect(), r = svg.getBoundingClientRect();
     const x = r.left - box.left + X(i), tw = tip.offsetWidth;
@@ -185,9 +185,9 @@ let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(dra
 fetch("data/putcall.json", {cache: "no-store"}).then(r => r.json()).then(j => {
   J = j;
   const lastPc = Object.keys(j.pc).pop(), cur = j.ev.find(e => e[3]);
-  $("sub").textContent = `Cboe 美股選擇權 Put/Call（5 日平均）× 標普 500，2017 年起；資料至 ${ymd(lastPc)}，更新 ${j.updated}（台灣時間）`;
+  $("sub").textContent = `Cboe 美股選擇權 Put/Call（5 日平均）× 費城半導體 SOX，2017 年起；資料至 ${ymd(lastPc)}，更新 ${j.updated}（台灣時間）`;
   $("notes").innerHTML = `<p>[註1]：Put/Call＝賣權成交量 ÷ 買權成交量，越高代表買保護的人越多、市場越恐慌；總＝全部選擇權，個股＝散戶情緒為主，指數＝法人避險為主。</p>
-    <p>[註2]：淡紅底＝標普 500 從高點跌 7% 以上、到低點為止的期間（2017 年起共 ${j.ev.length} 次；跌與反彈都超過 7% 才算一段）${cur ? "，最右側較深色為目前這波，低點暫定為目前最低" : ""}。</p>
+    <p>[註2]：淡紅底＝費城半導體 SOX 從高點跌 15% 以上、到低點為止的期間（2017 年起共 ${j.ev.length} 次；跌與反彈都超過 15% 才算一段）${cur ? "，最右側較深色為目前這波，低點暫定為目前最低" : ""}。</p>
     <p>[註3]：點圖上任一處可看當天數值，再點一次關閉。</p>`;
   draw();
 }).catch(e => { $("sub").textContent = "資料讀取失敗：" + e; });
