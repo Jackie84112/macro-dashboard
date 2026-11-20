@@ -896,9 +896,14 @@ function renderOil() {
   charts.oil.setOption(base({
     // 數值軸放右邊（同 PPT 原圖），最新值已在右上角，不再畫線尾標籤
     grid: { left: 8, right: 8, top: 36, bottom: 28, containLabel: true },
+    // 最新一天原本貼在圖右邊界、跟前一天只差約 2px，滑鼠很難停到 → 右側留 10 天空白＋最新點畫圓點
+    xAxis: { ...base().xAxis, max: (v) => v.max + 10 * 864e5 },
     yAxis: { ...base().yAxis, position: "right" },
     tooltip: { ...base().tooltip, formatter: (p) => `${fmtDay(p[0].value[0])}<br><b>${p[0].value[1].toFixed(2)} 美元</b>` },
-    series: [line("WTI", DATA.wti, css("--series-1"), { markLine: weekLine(), endLabel: { show: false } })],
+    series: [line("WTI", DATA.wti, css("--series-1"), { markLine: weekLine(), endLabel: { show: false },
+      markPoint: { silent: true, symbol: "circle", symbolSize: 7, label: { show: false },
+        itemStyle: { color: css("--series-1"), borderColor: css("--surface"), borderWidth: 1.5 },
+        data: [{ coord: DATA.wti[DATA.wti.length - 1] }] } })],
   }), true);
 }
 
