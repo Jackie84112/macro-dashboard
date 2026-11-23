@@ -394,6 +394,8 @@ def fin_events(hist, since="2008-01-01"):
         name = next((n for a, b, n in FIN_EVENT_NAMES if a <= s <= b), "—")
         pk = FIN_PEAK_FIXED.get(name) or max((x for x in days if d0 <= x <= s), key=lambda x: hist[x][1])
         tr = min((x for x in days if s <= x <= end), key=lambda x: hist[x][1])
+        if name not in FIN_PEAK_FIXED:   # 高點後若持平一段才下跌（如川普關稅 2024/12–2025/3），起點取下跌前最後一天仍在高點 1% 內（2026-11-23 使用者同意）
+            pk = max(x for x in days if pk <= x <= tr and hist[x][1] >= hist[pk][1] * 0.99)
         res.append({"name": name, "start": s, "end": e["end"], "rLow": e["low"], "rLowDate": e["lowDate"],
                     "peakDate": pk, "peak": hist[pk][1], "troughDate": tr, "trough": hist[tr][1],
                     "cut": round((hist[tr][1] / hist[pk][1] - 1) * 100, 1)})
