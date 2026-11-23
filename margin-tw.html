@@ -369,14 +369,15 @@ function renderTables(){
   // 融資餘額降幅表（2026-11-24 使用者要求）：2008 起每次跌破 150%，融資高點 → 事件期間低點
   if (J.finEvents) {
     const FE = J.finEvents, done = FE.filter(e => e.end), avg = done.reduce((a, e) => a + e.cut, 0) / done.length;
+    const rank = c => 1 + FE.filter(x => x.cut < c).length;   // 降幅越大（越負）排名越前；含進行中的本波
     const med = (a => { a = a.slice().sort((x, y) => x - y); const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; })(done.map(e => e.cut));
     document.getElementById("finTable").innerHTML =
-      `<tr><th>時間段</th><th>事件</th><th>最低維持率</th><th>融資餘額降幅</th></tr>` +
-      FE.map(e => `<tr${e.end ? "" : ' class="act"'}><td>${slash(e.start)} – ${e.end ? slash(e.end) : "進行中"}</td><td>${e.name}</td><td>${e.rLow.toFixed(2)}%（${slash(e.rLowDate)}）</td><td class="neg">${signed(e.cut)}</td></tr>`).join("") +
-      `<tr><td colspan="3">已結束 ${done.length} 段：平均／中位數</td><td class="neg">${signed(+avg.toFixed(1))}／${signed(+med.toFixed(1))}</td></tr>`;
+      `<tr><th style="width:1%;white-space:nowrap">#</th><th>時間段</th><th>事件</th><th>最低維持率</th><th>融資餘額降幅</th><th style="width:1%;white-space:nowrap">排名</th></tr>` +
+      FE.map((e, i) => `<tr${e.end ? "" : ' class="act"'}><td style="width:1%;white-space:nowrap">${i + 1}</td><td>${slash(e.start)} – ${e.end ? slash(e.end) : "進行中"}</td><td>${e.name}</td><td>${e.rLow.toFixed(2)}%（${slash(e.rLowDate)}）</td><td class="neg">${signed(e.cut)}</td><td style="width:1%;white-space:nowrap">${rank(e.cut)}</td></tr>`).join("") +
+      `<tr><td colspan="4">已結束 ${done.length} 段：平均／中位數</td><td class="neg">${signed(+avg.toFixed(1))}／${signed(+med.toFixed(1))}</td><td></td></tr>`;
     document.getElementById("finNotes").innerHTML = notes([
       `時間段＝維持率跌破 ${BREAK}% 到回到 ${NORMAL}%；回到 ${NORMAL}% 後 3 個月內又跌破視為同一段合併（2007/11–2009/3 金融海嘯、2011/8–2012/12 歐債危機）。`,
-      `融資餘額降幅＝首破日前 6 個月內融資餘額最高 → 時間段內最低（進行中算到最新），低點 ÷ 高點 − 1。`,
+      `融資餘額降幅＝首破日前 6 個月內融資餘額最高 → 時間段內最低（進行中算到最新），低點 ÷ 高點 − 1；排名依降幅由大到小，含進行中的本波（數值會隨後續資料變動）。`,
       `融資餘額 2023/11 起為逐日資料，更早以月底樣本為主、股災期間另有逐日或事件日樣本，數值可能與實際略有出入。`]);
   }
 
