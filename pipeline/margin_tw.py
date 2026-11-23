@@ -351,6 +351,9 @@ FIN_EVENT_NAMES = [("2007-11-01", "2008-12-31", "金融海嘯"), ("2011-08-01", 
                    ("2020-03-01", "2020-04-30", "新冠疫情"), ("2022-06-01", "2022-12-31", "Fed 升息、美國對中晶片管制"),
                    ("2024-08-01", "2024-08-31", "日圓套利平倉"), ("2025-02-01", "2025-05-31", "川普關稅"), ("2026-11-01", "2026-12-31", "本波")]
 
+# 融資高點指定日（覆蓋「首破前 6 個月最高」）：本波使用者 2026-11-23 定案從 10/5 起算
+FIN_PEAK_FIXED = {"本波": "2026-10-05"}
+
 
 def fin_events(hist, since="2008-01-01"):
     """融資餘額降幅表（2026-11-24 使用者要求，放在水位報酬表下方）：2008 起每次維持率跌破 BREAK 的事件（回到 NORMAL 才結束，同 events），
@@ -388,9 +391,9 @@ def fin_events(hist, since="2008-01-01"):
         if end < since:
             continue
         d0 = (dt.date.fromisoformat(s) - dt.timedelta(days=183)).isoformat()
-        pk = max((x for x in days if d0 <= x <= s), key=lambda x: hist[x][1])
-        tr = min((x for x in days if s <= x <= end), key=lambda x: hist[x][1])
         name = next((n for a, b, n in FIN_EVENT_NAMES if a <= s <= b), "—")
+        pk = FIN_PEAK_FIXED.get(name) or max((x for x in days if d0 <= x <= s), key=lambda x: hist[x][1])
+        tr = min((x for x in days if s <= x <= end), key=lambda x: hist[x][1])
         res.append({"name": name, "start": s, "end": e["end"], "rLow": e["low"], "rLowDate": e["lowDate"],
                     "peakDate": pk, "peak": hist[pk][1], "troughDate": tr, "trough": hist[tr][1],
                     "cut": round((hist[tr][1] / hist[pk][1] - 1) * 100, 1)})
