@@ -117,6 +117,9 @@
     <h2 class="lead-h">維持率水位 × 0050 後續報酬 <span class="h-sub">每月最後一筆維持率，對應其後 0050 報酬</span></h2>
     <div class="tablewrap"><table id="zoneTable"></table></div>
     <div id="zoneNotes"></div>
+    <h3 class="sub-h" style="margin:22px 0 8px;font-size:15px">跌破 150% 時融資餘額降幅（2008 起）</h3>
+    <div class="tablewrap"><table id="finTable"></table></div>
+    <div id="finNotes"></div>
   </section>
 
   <section class="card jump" id="t-event">
@@ -362,6 +365,20 @@ function renderTables(){
     `樣本 ${J.zoneStart.slice(0, 7).replace("-", "/")}–${J.zoneEnd.slice(0, 7).replace("-", "/")}，0050 為 Yahoo 還原權息價；重疊的月份報酬彼此不獨立，勝率與平均僅供參考。`,
     `水位定義同大盤監控：≥${NORMAL}% 正常水位、${BREAK}–${NORMAL}% 中型修正、&lt;${BREAK}% 股災級修正。`,
     ...(thinZone ? [`月底低於 ${BREAK}% 的月份太少（${thinZone.n} 個月），不列報酬，後續表現請看下方事件表。`] : [])]);
+
+  // 融資餘額降幅表（2026-11-24 使用者要求）：2008 起每次跌破 150%，融資高點 → 事件期間低點
+  if (J.finEvents) {
+    const FE = J.finEvents, done = FE.filter(e => e.end), avg = done.reduce((a, e) => a + e.cut, 0) / done.length;
+    const med = (a => { a = a.slice().sort((x, y) => x - y); const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; })(done.map(e => e.cut));
+    document.getElementById("finTable").innerHTML =
+      `<tr><th>首破日</th><th>回到 ${NORMAL}%</th><th>最低維持率</th><th class="gl">融資高點（億）</th><th>融資低點（億）</th><th>降幅</th></tr>` +
+      FE.map(e => `<tr${e.end ? "" : ' class="act"'}><td>${slash(e.start)}</td><td>${e.end ? slash(e.end) : "進行中"}</td><td>${e.rLow.toFixed(2)}%（${slash(e.rLowDate)}）</td><td class="gl">${comma(e.peak)}（${slash(e.peakDate)}）</td><td>${comma(e.trough)}（${slash(e.troughDate)}）</td><td class="neg">${signed(e.cut)}</td></tr>`).join("") +
+      `<tr><td colspan="5">已結束 ${done.length} 次：平均／中位數</td><td class="neg">${signed(+avg.toFixed(1))}／${signed(+med.toFixed(1))}</td></tr>`;
+    document.getElementById("finNotes").innerHTML = notes([
+      `事件定義同下方事件表：維持率跌破 ${BREAK}% 起算，回到 ${NORMAL}% 才結束，期間再度跌破不另計。2007/11 那次延續到 2008/4，一併列出。`,
+      `融資高點＝首破日前 6 個月內融資餘額最高；融資低點＝首破日到回到 ${NORMAL}% 為止的最低（進行中的事件算到最新）；降幅＝低點 ÷ 高點 − 1。`,
+      `融資餘額 2023/11 起為逐日資料，更早以月底樣本為主、股災期間另有逐日或事件日樣本，高低點日期與數值可能與實際略有出入。`]);
+  }
 
   const open = J.events.some(e => !e.end);
   document.getElementById("eventTable").innerHTML =

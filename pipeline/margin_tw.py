@@ -345,6 +345,39 @@ def events(hist, px):
     return res
 
 
+def fin_events(hist, since="2008-01-01"):
+    """融資餘額降幅表（2026-11-24 使用者要求，放在水位報酬表下方）：2008 起每次維持率跌破 BREAK 的事件（回到 NORMAL 才結束，同 events），
+    融資高點＝首破前 6 個月內融資餘額最高、融資低點＝首破日至事件結束（進行中則至最新）的最低；降幅＝低點 ÷ 高點 − 1。不需 0050，所以含 2008。"""
+    out, cur = [], None
+    days = sorted(hist)
+    for d in days:
+        r = hist[d][0]
+        if cur is None and r < BREAK:
+            cur = {"start": d, "low": r, "lowDate": d}
+        elif cur is not None:
+            if r < cur["low"]:
+                cur["low"], cur["lowDate"] = r, d
+            if r >= NORMAL:
+                cur["end"] = d
+                out.append(cur)
+                cur = None
+    if cur is not None:
+        cur["end"] = None
+        out.append(cur)
+    res = []
+    for e in out:
+        s, end = e["start"], e["end"] or days[-1]
+        if end < since:
+            continue
+        d0 = (dt.date.fromisoformat(s) - dt.timedelta(days=183)).isoformat()
+        pk = max((x for x in days if d0 <= x <= s), key=lambda x: hist[x][1])
+        tr = min((x for x in days if s <= x <= end), key=lambda x: hist[x][1])
+        res.append({"start": s, "end": e["end"], "rLow": e["low"], "rLowDate": e["lowDate"],
+                    "peakDate": pk, "peak": hist[pk][1], "troughDate": tr, "trough": hist[tr][1],
+                    "cut": round((hist[tr][1] / hist[pk][1] - 1) * 100, 1)})
+    return res
+
+
 def sensitivity(hist, px):
     """近三年逐日樣本：維持率單日變動 vs 0050 單日漲跌的斜率與相關係數，融資餘額同理。"""
     start = (dt.date.fromisoformat(max(hist)) - dt.timedelta(days=1096)).isoformat()
@@ -403,7 +436,7 @@ def build(hist):
            "soxx": align_ffill(soxx, dates) if soxx else [None] * len(dates),
            "ratio": [hist[d][0] if d in hist else None for d in dates],
            "fin": [hist[d][1] if d in hist else None for d in dates],
-           "zones": zs, "zoneStart": z0, "zoneEnd": z1, "events": events(hist, p), "sens": sensitivity(hist, p), "recent": recent,
+           "zones": zs, "zoneStart": z0, "zoneEnd": z1, "events": events(hist, p), "finEvents": fin_events(hist), "sens": sensitivity(hist, p), "recent": recent,
            "latest": {"p": round(px[ld], 2), "pDate": ld, "pPeak": round(px[peak], 2), "pFromPeak": round((px[ld] / px[peak] - 1) * 100, 1),
                       "pLow": round(min(v for d, v in px.items() if d >= peak), 2),
                       "r": hist[ld_fin][0], "f": hist[ld_fin][1], "fDate": ld_fin, "rLow": hist[r_low][0], "rLowDate": r_low,
