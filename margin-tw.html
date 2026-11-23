@@ -122,7 +122,6 @@
   <section class="card jump" id="t-fin">
     <h2 class="lead-h">跌破 150% 時融資餘額降幅 <span class="h-sub">2008 起，融資餘額從高點到低點</span></h2>
     <div class="tablewrap"><table id="finTable"></table></div>
-    <div id="finNotes"></div>
   </section>
 
   <section class="card jump" id="t-event">
@@ -379,11 +378,6 @@ function renderTables(){
       `<tr><th style="width:1%;white-space:nowrap">#</th><th>時間段</th><th style="width:1%;white-space:nowrap">天數</th><th>事件</th><th>最低維持率</th><th>融資餘額降幅</th><th style="width:1%;white-space:nowrap">排名</th></tr>` +
       FE.map((e, i) => `<tr${e.end ? "" : ' class="act"'}><td style="width:1%;white-space:nowrap">${i + 1}</td><td>${slash(e.peakDate)} – ${slash(e.troughDate)}${e.end ? "" : "（進行中）"}</td><td style="width:1%;white-space:nowrap">${nd(e)}</td><td>${e.name}</td><td>${e.rLow.toFixed(2)}%</td><td class="neg">${signed(e.cut)}</td><td style="width:1%;white-space:nowrap">${rank(e.cut)}</td></tr>`).join("") +
       `<tr><td colspan="5">已結束 ${done.length} 段：平均／中位數</td><td class="neg">${signed(+avg.toFixed(1))}／${signed(+med.toFixed(1))}</td><td></td></tr>`;
-    document.getElementById("finNotes").innerHTML = notes([
-      `時間段＝融資餘額從高點到低點的整段下降期間，天數為日曆天數（含頭尾）；進行中的本波低點算到最新資料日。`,
-      `事件＝維持率跌破 ${BREAK}% 到回到 ${NORMAL}% 為一次；回到 ${NORMAL}% 後 3 個月內又跌破視為同一段合併（金融海嘯、歐債危機各由兩次合併）。`,
-      `融資高點＝首破日前 6 個月內融資餘額最高（若之後持平才下跌，取下跌前最後一天仍在高點 1% 以內的日子）；融資低點＝首破日到回到 ${NORMAL}% 之間最低；降幅＝低點 ÷ 高點 − 1；排名依降幅由大到小，含進行中的本波（數值會隨後續資料變動）。`,
-      `融資餘額 2023/11 起為逐日資料，更早以月底樣本為主、股災期間另有逐日或事件日樣本，數值可能與實際略有出入。`]);
   }
 
   const open = J.events.some(e => !e.end);
