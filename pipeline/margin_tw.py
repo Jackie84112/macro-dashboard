@@ -345,6 +345,13 @@ def events(hist, px):
     return res
 
 
+# 融資降幅表的事件名稱（首破日落在區間內就套用；名稱沿用頁面 EVENTS，2008/2011/2015 為我擬）
+FIN_EVENT_NAMES = [("2007-11-01", "2008-12-31", "金融海嘯"), ("2011-08-01", "2012-12-31", "歐債危機、美債降評"),
+                   ("2015-07-01", "2015-12-31", "中國股災、人民幣貶值"), ("2018-10-01", "2018-12-31", "美債殖利率飆升、中美貿易戰"),
+                   ("2020-03-01", "2020-04-30", "新冠疫情"), ("2022-06-01", "2022-12-31", "Fed 升息、美國對中晶片管制"),
+                   ("2024-08-01", "2024-08-31", "日圓套利平倉"), ("2025-02-01", "2025-05-31", "川普關稅"), ("2026-11-01", "2026-12-31", "本波")]
+
+
 def fin_events(hist, since="2008-01-01"):
     """融資餘額降幅表（2026-11-24 使用者要求，放在水位報酬表下方）：2008 起每次維持率跌破 BREAK 的事件（回到 NORMAL 才結束，同 events），
     融資高點＝首破前 6 個月內融資餘額最高、融資低點＝首破日至事件結束（進行中則至最新）的最低；降幅＝低點 ÷ 高點 − 1。不需 0050，所以含 2008。"""
@@ -364,6 +371,17 @@ def fin_events(hist, since="2008-01-01"):
     if cur is not None:
         cur["end"] = None
         out.append(cur)
+    # 同一段行情合併（2026-11-24 使用者要求）：前一次回到 NORMAL 後 92 天內又跌破，視為同一段（2007/11+2008/6 金融海嘯、2011/8+2012/4 歐債）
+    merged = []
+    for e in out:
+        if merged and merged[-1]["end"] and (dt.date.fromisoformat(e["start"]) - dt.date.fromisoformat(merged[-1]["end"])).days <= 92:
+            m = merged[-1]
+            if e["low"] < m["low"]:
+                m["low"], m["lowDate"] = e["low"], e["lowDate"]
+            m["end"] = e["end"]
+        else:
+            merged.append(dict(e))
+    out = merged
     res = []
     for e in out:
         s, end = e["start"], e["end"] or days[-1]
@@ -372,7 +390,8 @@ def fin_events(hist, since="2008-01-01"):
         d0 = (dt.date.fromisoformat(s) - dt.timedelta(days=183)).isoformat()
         pk = max((x for x in days if d0 <= x <= s), key=lambda x: hist[x][1])
         tr = min((x for x in days if s <= x <= end), key=lambda x: hist[x][1])
-        res.append({"start": s, "end": e["end"], "rLow": e["low"], "rLowDate": e["lowDate"],
+        name = next((n for a, b, n in FIN_EVENT_NAMES if a <= s <= b), "—")
+        res.append({"name": name, "start": s, "end": e["end"], "rLow": e["low"], "rLowDate": e["lowDate"],
                     "peakDate": pk, "peak": hist[pk][1], "troughDate": tr, "trough": hist[tr][1],
                     "cut": round((hist[tr][1] / hist[pk][1] - 1) * 100, 1)})
     return res

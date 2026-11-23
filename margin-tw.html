@@ -371,13 +371,13 @@ function renderTables(){
     const FE = J.finEvents, done = FE.filter(e => e.end), avg = done.reduce((a, e) => a + e.cut, 0) / done.length;
     const med = (a => { a = a.slice().sort((x, y) => x - y); const m = a.length >> 1; return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2; })(done.map(e => e.cut));
     document.getElementById("finTable").innerHTML =
-      `<tr><th>首破日</th><th>回到 ${NORMAL}%</th><th>最低維持率</th><th class="gl">融資高點（億）</th><th>融資低點（億）</th><th>降幅</th></tr>` +
-      FE.map(e => `<tr${e.end ? "" : ' class="act"'}><td>${slash(e.start)}</td><td>${e.end ? slash(e.end) : "進行中"}</td><td>${e.rLow.toFixed(2)}%（${slash(e.rLowDate)}）</td><td class="gl">${comma(e.peak)}（${slash(e.peakDate)}）</td><td>${comma(e.trough)}（${slash(e.troughDate)}）</td><td class="neg">${signed(e.cut)}</td></tr>`).join("") +
-      `<tr><td colspan="5">已結束 ${done.length} 次：平均／中位數</td><td class="neg">${signed(+avg.toFixed(1))}／${signed(+med.toFixed(1))}</td></tr>`;
+      `<tr><th>時間段</th><th>事件</th><th>最低維持率</th><th>融資餘額降幅</th></tr>` +
+      FE.map(e => `<tr${e.end ? "" : ' class="act"'}><td>${slash(e.start)} – ${e.end ? slash(e.end) : "進行中"}</td><td>${e.name}</td><td>${e.rLow.toFixed(2)}%（${slash(e.rLowDate)}）</td><td class="neg">${signed(e.cut)}</td></tr>`).join("") +
+      `<tr><td colspan="3">已結束 ${done.length} 段：平均／中位數</td><td class="neg">${signed(+avg.toFixed(1))}／${signed(+med.toFixed(1))}</td></tr>`;
     document.getElementById("finNotes").innerHTML = notes([
-      `事件定義同下方事件表：維持率跌破 ${BREAK}% 起算，回到 ${NORMAL}% 才結束，期間再度跌破不另計。2007/11 那次延續到 2008/4，一併列出。`,
-      `融資高點＝首破日前 6 個月內融資餘額最高；融資低點＝首破日到回到 ${NORMAL}% 為止的最低（進行中的事件算到最新）；降幅＝低點 ÷ 高點 − 1。`,
-      `融資餘額 2023/11 起為逐日資料，更早以月底樣本為主、股災期間另有逐日或事件日樣本，高低點日期與數值可能與實際略有出入。`]);
+      `時間段＝維持率跌破 ${BREAK}% 到回到 ${NORMAL}%；回到 ${NORMAL}% 後 3 個月內又跌破視為同一段合併（2007/11–2009/3 金融海嘯、2011/8–2012/12 歐債危機）。`,
+      `融資餘額降幅＝首破日前 6 個月內融資餘額最高 → 時間段內最低（進行中算到最新），低點 ÷ 高點 − 1。`,
+      `融資餘額 2023/11 起為逐日資料，更早以月底樣本為主、股災期間另有逐日或事件日樣本，數值可能與實際略有出入。`]);
   }
 
   const open = J.events.some(e => !e.end);
