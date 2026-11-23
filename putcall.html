@@ -146,8 +146,11 @@ const CAUSE = {
   "2025-04-08": ["DeepSeek＋川普關稅", "1/27 DeepSeek 低成本模型引發 AI 資本支出疑慮，輝達單日 −17%；4/2「解放日」對等關稅，全球股市連日重挫，4/9 宣布暫緩 90 天後反彈。"],
   "2026-03-30": ["美伊戰爭", "美伊戰爭期間的下跌（2/26–3/31）；細部導火線尚未整理。"],
   "2026-07-29": ["去槓桿", "融資部位去槓桿（FINRA 融資餘額 7 月下降），詳見融資槓桿頁；細部導火線尚未整理。"],
-  "2026-11-05": ["AI 融資疑慮（CDS）＋民主黨勝選", "10/8 FT 報導 OpenAI 年化營收約 500 億美元、低於傳聞；10 年債逼近 5.35%、Fed 預期再升息；CoreWeave 債券殖利率近 15%；10/30 英特爾財測不佳 −29%；11/5 民主黨贏得期中選舉後市場憂監管拖慢資料中心建設，SOX 單日 −12.25%。詳見股債信用疊圖「SOX 導火線時間軸」。"],
+  "2026-11-05": ["AI 融資疑慮（CDS）＋民主黨勝選＋AI 拋售", "10/8 FT 報導 OpenAI 年化營收約 500 億美元、低於傳聞；10 年債逼近 5.35%、Fed 預期再升息；CoreWeave 債券殖利率近 15%；10/30 英特爾財測不佳 −29%；11/5 民主黨贏得期中選舉後市場憂監管拖慢資料中心建設，SOX 單日 −12.25%。11/11 起再跌：11/20 AI 與晶片股遭拋售（AMD −11%、Anthropic 上市次日 −8.5%），Nasdaq 單日 −5.3%、台股單週跌 17.5%；11/5 後只反彈一週就破底，視為同一波。詳見股債信用疊圖「SOX 導火線時間軸」。"],
 };
+
+// 原因查找：先比低點日；低點會移動的進行中暴跌（或合併過的區間），改找鍵落在 高點→低點 之間的那筆
+const causeOf = e => CAUSE[e[1]] || (Object.entries(CAUSE).find(([k]) => k >= e[0] && k <= e[1]) || [])[1];
 
 function draw() {
   if (!J) return;
@@ -233,7 +236,7 @@ function draw() {
       <div class="r" style="--dc:var(--lo5)"><i>最低 5% 線</i><span>${fmt(LO[i])}</span></div>
       <div class="r"><span>${M[i] >= HI[i] ? "<b style='color:#F4A3A3'>恐慌中</b>" : M[i] <= LO[i] ? "<b style='color:#F5C27A'>警惕樂觀過頭</b>" : "介於兩線之間"}</span></div>` : ""}
       <div class="r" style="--dc:var(--idx)"><i>SOX</i><b>${fmt(S[i], 0)}</b></div>`
-      + (ev ? (() => { const c = CAUSE[ev[1]];
+      + (ev ? (() => { const c = causeOf(ev);
         return `<div class="evs"><div class="ev"><i></i><span><b>${c ? c[0] : "原因待補"}</b>${D[i] === ev[1] ? "（SOX 低點）" : ""}</span></div>
           <div class="evd">SOX ${ymd(ev[0])} 高點 → ${ymd(ev[1])} 低點，${(ev[2] * 100).toFixed(1)}%${ev[3] ? "（進行中）" : ""}</div>
           ${c ? `<div class="evd">${c[1]}</div>` : ""}</div>`; })() : "");
@@ -271,7 +274,7 @@ fetch("data/putcall.json", {cache: "no-store"}).then(r => r.json()).then(j => {
     <p>[註6]：SMH＝VanEck 半導體 ETF 選擇權的 Put/Call，資料來自 OCC（全美各交易所結算量加總），只能回溯到 2024/11，之後每天累積；參考線要滿一年資料才會出現（約 2025/12 起）。ETF 選擇權以法人避險為主，數值本來就比總 P/C 高（中位數約 2.2），單日波動也大，請看 5 日平均與自身參考線，勿與其他三條直接比大小。選 SMH 時圖表從 2024/11 開始，5Y、ALL 與 2Y 範圍相同。</p>`;
   // 暴跌一覽表：由 ev 自動列出，原因取 CAUSE；跌幅超過 30% 上淡紅底（2026-11-20 使用者要求）
   const md = (a, b) => a.slice(0, 4) === b.slice(0, 4) ? b.slice(5).replace("-", "/").replace(/^0/, "").replace("/0", "/") : ymd(b);
-  $("tlBody").innerHTML = j.ev.map((e, k) => { const c = CAUSE[e[1]];
+  $("tlBody").innerHTML = j.ev.map((e, k) => { const c = causeOf(e);
     return `<tr${e[2] <= -0.30 ? ' class="deep"' : ""}><td class="no">${k + 1}</td>
       <td class="d">${ymd(e[0])} → ${md(e[0], e[1])}${e[3] ? "（進行中）" : ""}</td>
       <td class="x">${(e[2] * 100).toFixed(1)}%</td><td>${c ? c[0] : "原因待補"}</td></tr>`; }).join("");
