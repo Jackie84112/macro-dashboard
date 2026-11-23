@@ -175,7 +175,7 @@
   <header>
     <div>
       <h1>股債信用疊圖</h1>
-      <p class="sub" id="sub">S&amp;P 500 / Nasdaq-100 / 費城半導體 × 10 年期公債殖利率 × 投資級、垃圾級信用利差</p>
+      <p class="sub" id="sub">S&amp;P 500 / Nasdaq-100 / 費城半導體 × 10 年期公債殖利率 × 投資級、垃圾級信用利差<span id="subRange"></span><span id="subUpd"></span></p>
     </div>
   </header>
 
@@ -794,7 +794,7 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
     });
     document.querySelectorAll("#rcvHist tr.dvg").forEach(g=>g.addEventListener("click",()=>{ const o=g.classList.toggle("open"); g.nextElementSibling.classList.toggle("fold",!o); }));
   })();
-  document.getElementById("sub").textContent+=` ｜ ${M[0].slice(0,7).replace("-","/")} – ${M[N-1].slice(0,7).replace("-","/")}`;
+  document.getElementById("subRange").textContent=` ｜ ${M[0].slice(0,7).replace("-","/")} – ${M[N-1].slice(0,7).replace("-","/")}`;
   draw();
 });
 </script>
@@ -1023,6 +1023,19 @@ fetch("data/pe_sector.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
   fill("secTrl","secTrlSub","worldperatio",j.trailing,2);
   fill("secFwd","secFwdSub","FactSet Earnings Insight",j.forward,1);
 });
+</script>
+<script>
+// 資料更新時間：取本頁相關檔案在 GitHub 的最後一次 commit 時間（台灣時間），失敗則退回 overlay.json 的 updated
+(function(){
+  const FILES=["overlay.html","data/overlay.json","data/pe.json","data/pe_sector.json","data/cds.json"];
+  const API="https://api.github.com/repos/Jackie84112/macro-dashboard/commits?per_page=1&path=";
+  const show=t=>{ if(!t||isNaN(t)) return;
+    const z=new Date(t+8*3600e3), p=n=>String(n).padStart(2,"0");
+    document.getElementById("subUpd").textContent=` ｜ 資料更新：${z.getUTCFullYear()}/${p(z.getUTCMonth()+1)}/${p(z.getUTCDate())} ${p(z.getUTCHours())}:${p(z.getUTCMinutes())}（台灣時間）`; };
+  Promise.all(FILES.map(f=>fetch(API+encodeURIComponent(f)).then(r=>r.ok?r.json():[]).then(a=>a[0]?Date.parse(a[0].commit.committer.date):0).catch(()=>0)))
+    .then(ts=>{ const m=Math.max(...ts); if(m>0) return show(m); throw 0; })
+    .catch(()=>fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>show(Date.parse(j.updated.replace("Z",":00Z")))).catch(()=>{}));
+})();
 </script>
 </body>
 </html>
