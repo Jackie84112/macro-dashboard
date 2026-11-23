@@ -92,7 +92,7 @@
       <button class="rng" data-r="1260">5Y</button><button class="rng on" data-r="all">ALL</button>
     </div>
     <div class="grp" id="kind"><span class="lbl">Put/Call</span>
-      <button class="rng on" data-k="0">總</button><button class="rng" data-k="1">個股</button><button class="rng" data-k="2">指數</button>
+      <button class="rng on" data-k="0">總</button><button class="rng" data-k="1">個股</button><button class="rng" data-k="2">指數</button><button class="rng" data-k="3">SMH</button>
     </div>
     <div class="grp"><span class="lbl">參考線</span>
       <button class="tog" id="refLo" style="--dc:var(--lo5)"><span class="dot" style="height:3px"></span>最低 5%＝警惕樂觀過頭</button>
@@ -121,7 +121,7 @@
 const $ = id => document.getElementById(id);
 const fmt = (v, d = 2) => v == null ? "—" : Number(v).toLocaleString("en-US", {minimumFractionDigits: d, maximumFractionDigits: d});
 const ymd = s => s.replace(/-/g, "/");
-const KIND = ["總", "個股", "指數"];
+const KIND = ["總", "個股", "指數", "SMH"];   // SMH＝OCC 依標的成交量（2026-11-23 加，2024-11 起）
 let J, range = "all", kind = 0, band = true, pin = null, showLo = true, showHi = true;
 // 參考線（2026-11-20 使用者要求）：每天取「前 252 個交易日 5 日均」的第 5／95 百分位，線會隨市場移動。
 // 回測（宏觀因果驗證\putcall\crash\levels.py）：總 P/C 落在最低 5% 時，SOX 之後 60 日內再跌 ≥20% 的機率約為平常兩倍。
@@ -152,10 +152,11 @@ const CAUSE = {
 function draw() {
   if (!J) return;
   const el = $("plot"), allD = J.idx.d, allS = J.idx.v;
-  const raw = allD.map(d => J.pc[d] ? J.pc[d][kind] : null);
+  const raw = allD.map(d => kind === 3 ? (J.smh && J.smh[d] != null ? J.smh[d] : null) : J.pc[d] ? J.pc[d][kind] : null);
   const ma = raw.map((_, i) => { if (i < 4) return null; const w = raw.slice(i - 4, i + 1); return w.some(x => x == null) ? null : w.reduce((a, b) => a + b, 0) / 5; });
   let i0 = allD.findIndex(d => d >= J.start);
   if (range !== "all") i0 = Math.max(i0, allD.length - +range);
+  if (kind === 3) i0 = Math.max(i0, raw.findIndex(x => x != null));   // SMH 只有 2024-11 起，前面空白不畫
   const lo5all = rollPct(ma, 5), hi5all = rollPct(ma, 95);
   const D = allD.slice(i0), M = ma.slice(i0), R = raw.slice(i0), S = allS.slice(i0), n = D.length - 1;
   const LO = lo5all.slice(i0), HI = hi5all.slice(i0);
@@ -266,7 +267,8 @@ fetch("data/putcall.json", {cache: "no-store"}).then(r => r.json()).then(j => {
     <p>[註2]：淡紅底＝費城半導體 SOX 從高點跌 15% 以上、到低點為止的期間（2017 年起共 ${j.ev.length} 次；跌與反彈都超過 15% 才算一段）${cur ? "，最右側較深色為目前這波，低點暫定為目前最低" : ""}。</p>
     <p>[註3]：紅點＝每次暴跌的 SOX 最低收盤；點紅點或紅底內任一處，浮標會顯示這次暴跌的原因，再點一次關閉。</p>
     <p>[註4]：暴跌原因為媒體事後歸因，同一波通常是多個因素疊加，僅列主要事件。</p>
-    <p>[註5]：參考線＝每天與自己過去一年（252 個交易日）的 5 日均比較，橘線為最低 5%、紅線為最高 5%，會隨市場移動。2017 年起回測：總 P/C 跌破橘線時，SOX 之後 60 日內再跌 20% 以上的機率約 23%，是平常（11%）的兩倍；高於紅線時多半已在暴跌中，但不代表當天就是低點。</p>`;
+    <p>[註5]：參考線＝每天與自己過去一年（252 個交易日）的 5 日均比較，橘線為最低 5%、紅線為最高 5%，會隨市場移動。2017 年起回測：總 P/C 跌破橘線時，SOX 之後 60 日內再跌 20% 以上的機率約 23%，是平常（11%）的兩倍；高於紅線時多半已在暴跌中，但不代表當天就是低點。</p>
+    <p>[註6]：SMH＝VanEck 半導體 ETF 選擇權的 Put/Call，資料來自 OCC（全美各交易所結算量加總），只能回溯到 2024/11，之後每天累積；參考線要滿一年資料才會出現（約 2025/12 起）。ETF 選擇權以法人避險為主，數值本來就比總 P/C 高（中位數約 2.2），單日波動也大，請看 5 日平均與自身參考線，勿與其他三條直接比大小。選 SMH 時圖表從 2024/11 開始，5Y、ALL 與 2Y 範圍相同。</p>`;
   // 暴跌一覽表：由 ev 自動列出，原因取 CAUSE；跌幅超過 30% 上淡紅底（2026-11-20 使用者要求）
   const md = (a, b) => a.slice(0, 4) === b.slice(0, 4) ? b.slice(5).replace("-", "/").replace(/^0/, "").replace("/0", "/") : ymd(b);
   $("tlBody").innerHTML = j.ev.map((e, k) => { const c = CAUSE[e[1]];
