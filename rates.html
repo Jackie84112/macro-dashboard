@@ -261,12 +261,12 @@ footer a { color: inherit; }
   <section class="card">
     <div class="card-head">
       <div>
-        <h3>WTI 原油價格</h3>
-        <p class="desc">日資料，美元／桶。NYMEX WTI 原油期貨（近月），交易時段內為盤中最新價。</p>
+        <h3>WTI／Brent 原油價格</h3>
+        <p class="desc">日資料，美元／桶。NYMEX WTI、ICE Brent 原油期貨（近月），交易時段內為盤中最新價。</p>
       </div>
       <div class="stat" id="stat-oil"></div>
     </div>
-    <div class="chart" id="chart-oil" role="img" aria-label="WTI 原油價格折線圖"></div>
+    <div class="chart" id="chart-oil" role="img" aria-label="WTI 與 Brent 原油價格折線圖"></div>
     <div class="notes" data-notes="oil"></div>
   </section>
 
@@ -408,7 +408,7 @@ footer a { color: inherit; }
   <footer>
     <div id="updated"></div>
     <div id="changes"></div>
-    <div>資料來源：<a href="https://fred.stlouisfed.org/" target="_blank" rel="noopener">FRED</a>（CPIAUCNS、CPILFENS、CPILFESL、PCEPI、PCEPILFE、PCETRIM12M159SFRBDAL、PPIFID、PPIFES、DFEDTARU、DFEDTARL、FEDTARMD、FEDTARMDLR、DGS2、DGS10、NASDAQCOM、BAMLH0A1HYBBEY、BAMLH0A2HYBEY、BAMLH0A3HYCEY、BAMLC0A1CAAA、BAMLC0A2CAA、BAMLC0A3CA、BAMLC0A4CBBB、BAMLC0A0CM、BAMLH0A1HYBB、BAMLH0A2HYB、BAMLH0A3HYC、BAMLH0A0HYM2）；<a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates" target="_blank" rel="noopener">美國財政部</a>（2 年、10 年殖利率最近幾日）；<a href="https://finance.yahoo.com/quote/CL%3DF/" target="_blank" rel="noopener">Yahoo Finance</a>（WTI 期貨 CL=F）；<a href="https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm" target="_blank" rel="noopener">Fed SEP</a>；<a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" rel="noopener">CME FedWatch</a>（手動）；CDS：財經M平方（手動）；發布日：BLS、BEA、Fed。每個工作日自動更新。</div>
+    <div>資料來源：<a href="https://fred.stlouisfed.org/" target="_blank" rel="noopener">FRED</a>（CPIAUCNS、CPILFENS、CPILFESL、PCEPI、PCEPILFE、PCETRIM12M159SFRBDAL、PPIFID、PPIFES、DFEDTARU、DFEDTARL、FEDTARMD、FEDTARMDLR、DGS2、DGS10、NASDAQCOM、BAMLH0A1HYBBEY、BAMLH0A2HYBEY、BAMLH0A3HYCEY、BAMLC0A1CAAA、BAMLC0A2CAA、BAMLC0A3CA、BAMLC0A4CBBB、BAMLC0A0CM、BAMLH0A1HYBB、BAMLH0A2HYB、BAMLH0A3HYC、BAMLH0A0HYM2）；<a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates" target="_blank" rel="noopener">美國財政部</a>（2 年、10 年殖利率最近幾日）；<a href="https://finance.yahoo.com/quote/CL%3DF/" target="_blank" rel="noopener">Yahoo Finance</a>（WTI 期貨 CL=F、Brent 期貨 BZ=F）；<a href="https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm" target="_blank" rel="noopener">Fed SEP</a>；<a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" rel="noopener">CME FedWatch</a>（手動）；CDS：財經M平方（手動）；發布日：BLS、BEA、Fed。每個工作日自動更新。</div>
   </footer>
 </main>
 
@@ -890,20 +890,23 @@ function renderOasd() {
 }
 
 function renderOil() {
-  const t = weekPair(DATA.wti);
+  const t = weekPair(DATA.wti), hasB = !!(DATA.brent && DATA.brent.length), b = hasB ? weekPair(DATA.brent) : null;
+  const bd = b ? b.v - b.pv : 0;
   document.getElementById("stat-oil").innerHTML =
-    `<div class="value">${t.v.toFixed(2)}</div>${deltaHtml(t.v, t.pv, true, " 美元", 2)}<div class="meta">${fmtDay(t.d)}（較一週前）</div>`;
+    `<div class="value">${t.v.toFixed(2)}</div>${deltaHtml(t.v, t.pv, true, " 美元", 2)}<div class="meta">${fmtDay(t.d)}（較一週前）</div>` +
+    (b ? `<div class="meta" style="margin-top:4px"><span style="color:var(--series-2);font-weight:600">Brent ${b.v.toFixed(2)}</span>（${sign(bd)}${bd.toFixed(2)}，${fmtDay(b.d)}）｜價差 ${(b.v - t.v).toFixed(2)}</div>` : "");
+  const dot = (data, color) => ({ silent: true, symbol: "circle", symbolSize: 7, label: { show: false },
+    itemStyle: { color, borderColor: css("--surface"), borderWidth: 1.5 }, data: [{ coord: data[data.length - 1] }] });
   charts.oil.setOption(base({
     // 數值軸放右邊（同 PPT 原圖），最新值已在右上角，不再畫線尾標籤
     grid: { left: 8, right: 8, top: 36, bottom: 28, containLabel: true },
     // 最新一天原本貼在圖右邊界、跟前一天只差約 2px，滑鼠很難停到 → 右側留 10 天空白＋最新點畫圓點
     xAxis: { ...base().xAxis, max: (v) => v.max + 10 * 864e5 },
     yAxis: { ...base().yAxis, position: "right" },
-    tooltip: { ...base().tooltip, formatter: (p) => `${fmtDay(p[0].value[0])}<br><b>${p[0].value[1].toFixed(2)} 美元</b>` },
-    series: [line("WTI", DATA.wti, css("--series-1"), { markLine: weekLine(), endLabel: { show: false },
-      markPoint: { silent: true, symbol: "circle", symbolSize: 7, label: { show: false },
-        itemStyle: { color: css("--series-1"), borderColor: css("--surface"), borderWidth: 1.5 },
-        data: [{ coord: DATA.wti[DATA.wti.length - 1] }] } })],
+    legend: hasB ? legend() : undefined,
+    tooltip: { ...base().tooltip, formatter: multiTip(fmtDay, " 美元", 2) },
+    series: [line("WTI", DATA.wti, css("--series-1"), { markLine: weekLine(), endLabel: { show: false }, markPoint: dot(DATA.wti, css("--series-1")) }),
+      ...(hasB ? [line("Brent", DATA.brent, css("--series-2"), { endLabel: { show: false }, markPoint: dot(DATA.brent, css("--series-2")) })] : [])],
   }), true);
 }
 
@@ -923,7 +926,7 @@ function syncCreditTabs() {
 function applyRange() {
   const groups = {
     infl: Object.values(DATA.infl), fedview: [DATA.pce6], yields: [DATA.dgs10], curve: [DATA.t10y2y],
-    oas: [DATA.oas_hy], oil: [DATA.wti],
+    oas: [DATA.oas_hy], oil: [DATA.wti, ...(DATA.brent ? [DATA.brent] : [])],
   };
   for (const [k, series] of Object.entries(groups)) {
     const start = creditMonths && k === "oas" ? startDateMonths(series, creditMonths) : startDate(series);
