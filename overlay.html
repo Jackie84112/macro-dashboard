@@ -722,13 +722,16 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
         <thead><tr><th class="sub-h">SOX 回補 ${Math.round(p*100)}%（${Math.round(L).toLocaleString()} → ${Math.round(C).toLocaleString()}，目標 ${Math.round(P).toLocaleString()}）</th><th class="x">${md(e.pk)} 高點當天</th><th class="x">本波最寬</th><th class="x">目前</th><th class="x">要回到</th><th class="x">目前進度</th></tr></thead>
         <tbody>${rows}</tbody></table>
         <div class="sprk">${SPRK.map(s=>spark(e,s)).join("")}</div>
-        <div class="notes"><p>[註1]：${md(e.lo)} 起每日 ICE BofA OAS（FRED，晚一個交易日公布）；紅虛線＝監控目標低點，投資級 ${SPRK[0].floor} bp、垃圾級 ${SPRK[1].floor} bp，Y 軸底部即目標。</p><p>[註2]：滑鼠移到圖上，十字虛線右端顯示當日「往底部進度」＝（${md(e.lo)} 當日 − 當日）÷（${md(e.lo)} 當日 − 目標底部），與上方紅色進度條同一算法；利差比 ${md(e.lo)} 還寬為負值，低於目標底部則超過 100%。</p></div>
+        <div class="notes"><p>[註1]：${md(e.lo)} 起每日 ICE BofA OAS（FRED，晚一個交易日公布）；紅虛線＝監控目標低點，投資級 ${SPRK[0].floor} bp、垃圾級 ${SPRK[1].floor} bp，Y 軸底部即目標。</p><p>[註2]：滑鼠移到圖上，十字虛線右端顯示當日「往底部進度」＝（${md(e.lo)} 當日 − 當日）÷（${md(e.lo)} 當日 − 目標底部），與上方紅色進度條同一算法；利差比 ${md(e.lo)} 還寬為負值，低於目標底部則超過 100%。</p><p>[註3]：「回到11/12股價」紅虛線＝SOX 回到 11/12 收盤所需利差＝最寬 −（最寬 − 11/12 當日）× 73%（過去收復前高時利差最少吐回 73%）；目前投資級 ${t12("oas_ig")} bp、垃圾級 ${t12("oas_hy")} bp，11/12 之後利差再擴大會自動重算。</p></div>
         </div></td></tr>`;
     };
     // 往底部進度：0%＝本波 SOX 低點日當天利差，100%＝目標底部；不設上下限（更寬為負、過頭超過 100%）
     const prog=(e,k,v)=>{ const b=asof(k,e.lo), f=SPRK.find(s=>s.k===k).floor; return (b-v)/(b-f); };
     // 本波低點以來的每日利差折線（Y 軸底部＝目標低點）
     const SPRK=[{k:"oas_ig",n:"投資級利差",floor:85,c:"#1D7A46"},{k:"oas_hy",n:"垃圾級利差",floor:303,c:"#22262B"}];
+    // 回到 11/12 股價的利差：11/12 當天利差（SOX 波段前高）→ 之後最寬，吐回 73%（歷史收復最低比例，Burry 投資級）；最寬若再擴大會自動重算
+    const T12={d:"2026-11-12",r:0.73};
+    const t12=k=>{ const pre=asof(k,T12.d), w=maxIn(k,T12.d,last); return Math.round(w-T12.r*(w-pre)); };
     const spark=(e,s)=>{
       const pts=[]; for(let i=0;i<M.length;i++) if(M[i]>=e.lo && RAW[s.k][i]!=null) pts.push([M[i],RAW[s.k][i]]);
       if(!pts.length) return "";
@@ -737,9 +740,12 @@ fetch("data/overlay.json",{cache:"no-store"}).then(r=>r.json()).then(j=>{
       const yMax=Math.ceil((mx+span*0.15)/stp)*stp;
       const X=i=>pl+16+(n<2?0.5:i/(n-1))*(W-pl-pr-32), Y=v=>pt+(yMax-v)/(yMax-s.floor)*(H-pt-pb);
       let g="";
+      const tv=t12(s.k);   // 回到 11/12 股價的利差；格線數字太靠近就不標（避免與紅字重疊）
       for(let v=Math.ceil(s.floor/stp)*stp; v<=yMax; v+=stp){ if(v===s.floor) continue;
-        g+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="rgba(0,0,0,.07)"/><text x="${pl-6}" y="${Y(v)+3.5}" text-anchor="end" fill="#8A9097">${v}</text>`; }
+        g+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(v)}" y2="${Y(v)}" stroke="rgba(0,0,0,.07)"/>`+(Math.abs(Y(v)-Y(tv))<11?"":`<text x="${pl-6}" y="${Y(v)+3.5}" text-anchor="end" fill="#8A9097">${v}</text>`); }
       g+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(s.floor)}" y2="${Y(s.floor)}" stroke="#DC2626" stroke-dasharray="4 3"/><text x="${pl-6}" y="${Y(s.floor)+3.5}" text-anchor="end" fill="#DC2626">${s.floor}</text>`;
+      g+=`<line x1="${pl}" x2="${W-pr}" y1="${Y(tv)}" y2="${Y(tv)}" stroke="#DC2626" stroke-dasharray="4 3"/><text x="${pl-6}" y="${Y(tv)+3.5}" text-anchor="end" fill="#DC2626">${tv}</text>`
+        +`<text x="${W-pr}" y="${Y(tv)-5}" text-anchor="end" fill="#DC2626" stroke="#fff" stroke-width="3" paint-order="stroke">回到11/12股價</text>`;
       const every=Math.ceil(n/9);
       pts.forEach((p,i)=>{ if(i%every===0||i===n-1) g+=`<text x="${X(i)}" y="${H-8}" text-anchor="middle" fill="#8A9097">${md(p[0])}</text>`; });
       g+=`<polyline fill="none" stroke="${s.c}" stroke-width="2" points="${pts.map((p,i)=>X(i).toFixed(1)+","+Y(p[1]).toFixed(1)).join(" ")}"/>`;
