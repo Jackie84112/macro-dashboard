@@ -2,7 +2,7 @@
 
 FRED 的公債殖利率晚 1–2 個交易日、WTI 現貨（EIA）晚約一週，所以：
 - 2 年／10 年殖利率：FRED 歷史 + 美國財政部每日殖利率補最近幾天（FRED DGS 即源自財政部）
-- WTI：改用 Yahoo Finance NYMEX WTI 近月期貨 CL=F（同 PPT 的財經M平方圖）；Brent：ICE 近月期貨 BZ=F
+- WTI：改用 Yahoo Finance NYMEX WTI 近月期貨 CL=F（同 PPT 的財經M平方圖）
 點陣圖、FedWatch、CDS 沒有免費資料源，放在 data/rates-manual.json 手動維護，網頁直接讀。
 沿用 labor.py 的 FRED 抓取與四捨五入工具。
 """
@@ -265,7 +265,6 @@ def main() -> None:
         "dgs2": dgs2, "dgs10": dgs10, "t10y2y": (dgs10 - dgs2).dropna().round(2),
         "hy_bb": fred("BAMLH0A1HYBBEY"), "hy_b": fred("BAMLH0A2HYBEY"), "hy_ccc": fred("BAMLH0A3HYCEY"),
         "wti": yahoo("CL=F"),
-        "brent": yahoo("BZ=F"),   # ICE Brent 近月期貨，與 WTI 同圖
         **{k: (fred(sid) * 100).round(0) for k, sid in OAS.items()},
     }
     # 那斯達克只畫趨勢，改週資料（週五收盤）縮小檔案
