@@ -618,7 +618,7 @@ function renderPath() {
   }, true);
 }
 
-// FedWatch 照 PPT：本週在上、上週在下；左為下次會議長條圖，右為各次會議機率表
+// FedWatch 照 PPT：最新在上、上一次在下（標籤含截圖日期，寫在 rates-manual.json）；左為下次會議長條圖，右為各次會議機率表
 const usDate = (d) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}/${d.slice(0, 4)}`;
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
