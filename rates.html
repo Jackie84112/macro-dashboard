@@ -141,10 +141,10 @@ table.data tbody tr:last-child td { border-bottom: none; }
 table.data td.updated { background: var(--group-bg); }
 table.data tbody.gap td { height: 14px; padding: 0; border: none; background: transparent; }
 table.data.snap { min-width: 640px; }
-/* FedWatch：照 PPT 版面，每週一列＝週別｜下次會議長條圖｜各次會議機率表 */
-.fw-week { display: grid; grid-template-columns: 48px minmax(0, 1fr) minmax(0, 2fr); gap: 12px; align-items: center; padding: 14px 0; }
+/* FedWatch：照 PPT 版面，每期一列＝下次會議長條圖（標題＝期別與日期）｜各次會議機率表 */
+.fw-week { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 12px; align-items: center; padding: 14px 0; }
 .fw-week + .fw-week { border-top: 1px solid var(--grid); }
-.fw-week .wk { font-size: 20px; font-weight: 700; }
+/* 期別標籤（最新／上一次＋美國交易日）改為長條圖置中標題，取代原 Fed Meeting 標題 */
 .fw-bar { height: 280px; min-width: 0; }
 .fw-tbl { overflow-x: auto; padding: 2px; } /* 留邊讓 border-collapse 的 2px 外框不被捲動容器裁掉一半 */
 table.fwt { border-collapse: collapse; width: 100%; min-width: 440px; font-size: 12px; font-variant-numeric: tabular-nums; }
@@ -618,7 +618,7 @@ function renderPath() {
   }, true);
 }
 
-// FedWatch 照 PPT：最新在上、上一次在下（標籤含截圖日期，寫在 rates-manual.json）；左為下次會議長條圖，右為各次會議機率表
+// FedWatch 照 PPT：最新在上、上一次在下（標籤含美國交易日，寫在 rates-manual.json）；左為下次會議長條圖，右為各次會議機率表
 const usDate = (d) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}/${d.slice(0, 4)}`;
 const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -639,7 +639,7 @@ function renderFedwatch() {
         return `<td class="${r === top ? "hi" : (v > 0 ? "mid" : "")}">${v.toFixed(2)} %</td>`;
       }).join("") + `</tr>`;
     });
-    return `<div class="fw-week"><div class="wk">${w.label}</div>` +
+    return `<div class="fw-week">` +
       `<div class="fw-bar" id="chart-fw${i}" role="img" aria-label="${w.label}下次會議機率長條圖"></div>` +
       `<div class="fw-tbl"><table class="fwt">${h}</tbody></table></div></div>`;
   }).join("");
@@ -657,7 +657,7 @@ function renderFwBars() {
       animation: false,
       textStyle: { fontFamily: getComputedStyle(document.body).fontFamily },
       title: [
-        { text: `${Number(d.slice(8, 10))} ${MON[Number(d.slice(5, 7)) - 1]} ${d.slice(0, 4)} Fed Meeting`, left: 0, top: 0,
+        { text: w.label, left: "center", top: 0,
           textStyle: { fontSize: 14, fontWeight: 600, color: css("--text-primary") } },
         { text: `Current target rate is ${MAN.fedwatch.current}`, left: "center", top: 24,
           textStyle: { fontSize: 12, fontWeight: 400, color: css("--text-secondary") } },
