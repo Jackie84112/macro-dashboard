@@ -92,7 +92,7 @@
 
   <section class="card controls">
     <div class="grp"><span class="lbl">區間</span>
-      <button class="rng" data-r="12">1Y</button><button class="rng" data-r="24">2Y</button>
+      <button class="rng" data-r="6">6M</button><button class="rng" data-r="12">1Y</button><button class="rng" data-r="24">2Y</button>
       <button class="rng" data-r="36">3Y</button><button class="rng" data-r="60">5Y</button>
       <button class="rng" data-r="120">10Y</button><button class="rng" data-r="180">15Y</button>
       <button class="rng on" data-r="all">ALL</button>
@@ -247,7 +247,7 @@ function draw(){
   ctx.textAlign = "center"; ctx.fillStyle = "#8A9097";
   const months = (t1 - t0) / 2.63e9, a = new Date(t0), b = new Date(t1);
   if(months <= 36){
-    const step = months <= 14 ? 2 : 6;
+    const step = months <= 8 ? 1 : months <= 14 ? 2 : 6;
     for(let d = new Date(a.getFullYear(), 0, 1); d <= b; d.setMonth(d.getMonth() + step)){
       if(d.getTime() >= t0) ctx.fillText(`${d.getFullYear()}/${d.getMonth() + 1}`, X(d.getTime()), H - 10);
     }
